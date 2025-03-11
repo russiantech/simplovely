@@ -1,0 +1,565 @@
+ <!-- Full screen modal -->
+    <div class="modal fade" id="modalFullscreenUsage" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Unit/Volume Usage</h5>
+            <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            
+            <main class="content-wrapper">
+                <div class="container py-5 mt-n2 mt-sm-0">
+                  <div class="row pt-md-2 pt-lg-3 pb-sm-2 pb-md-3 pb-lg-4 pb-xl-5">
+          
+                    <!-- Orders content -->
+                    <div class="col-lg-9">
+                      <div class="ps-lg-3 ps-xl-0">
+          
+                        <!-- Page title + Sorting selects -->
+                        <div class="row align-items-center pb-3 pb-md-4 mb-md-1 mb-lg-2">
+                          <div class="col-md-4 col-xl-6 mb-3 mb-md-0">
+                            <h1 class="h2 me-3 mb-0">Orders</h1>
+                          </div>
+                          <div class="col-md-8 col-xl-6">
+                            <div class="row row-cols-1 row-cols-sm-2 g-3 g-xxl-4">
+                              <div class="col">
+                                <div class="choices" data-type="select-one" tabindex="0" role="listbox" aria-haspopup="true" aria-expanded="false"><div class="form-select"><select class="form-select choices__input" data-select="{
+                                  &quot;placeholderValue&quot;: &quot;Select status&quot;,
+                                  &quot;choices&quot;: [
+                                    {
+                                      &quot;value&quot;: &quot;&quot;,
+                                      &quot;label&quot;: &quot;Select status&quot;,
+                                      &quot;placeholder&quot;: true
+                                    },
+                                    {
+                                      &quot;value&quot;: &quot;inprogress&quot;,
+                                      &quot;label&quot;: &quot;<div class=\&quot;d-flex align-items-center text-nowrap\&quot;><span class=\&quot;bg-info rounded-circle p-1 me-2\&quot;></span>In progress</div>&quot;
+                                    },
+                                    {
+                                      &quot;value&quot;: &quot;delivered&quot;,
+                                      &quot;label&quot;: &quot;<div class=\&quot;d-flex align-items-center text-nowrap\&quot;><span class=\&quot;bg-success rounded-circle p-1 me-2\&quot;></span>Delivered</div>&quot;
+                                    },
+                                    {
+                                      &quot;value&quot;: &quot;canceled&quot;,
+                                      &quot;label&quot;: &quot;<div class=\&quot;d-flex align-items-center text-nowrap\&quot;><span class=\&quot;bg-danger rounded-circle p-1 me-2\&quot;></span>Canceled</div>&quot;
+                                    },
+                                    {
+                                      &quot;value&quot;: &quot;delayed&quot;,
+                                      &quot;label&quot;: &quot;<div class=\&quot;d-flex align-items-center text-nowrap\&quot;><span class=\&quot;bg-warning rounded-circle p-1 me-2\&quot;></span>Delayed</div>&quot;
+                                    }
+                                  ]
+                                }" data-select-template="true" aria-label="Status sorting" hidden="" tabindex="-1" data-choice="active"><option value="">Select status</option><option value="inprogress">&lt;div class="d-flex align-items-center text-nowrap"&gt;&lt;span class="bg-info rounded-circle p-1 me-2"&gt;&lt;/span&gt;In progress&lt;/div&gt;</option><option value="delivered">&lt;div class="d-flex align-items-center text-nowrap"&gt;&lt;span class="bg-success rounded-circle p-1 me-2"&gt;&lt;/span&gt;Delivered&lt;/div&gt;</option><option value="canceled">&lt;div class="d-flex align-items-center text-nowrap"&gt;&lt;span class="bg-danger rounded-circle p-1 me-2"&gt;&lt;/span&gt;Canceled&lt;/div&gt;</option><option value="delayed">&lt;div class="d-flex align-items-center text-nowrap"&gt;&lt;span class="bg-warning rounded-circle p-1 me-2"&gt;&lt;/span&gt;Delayed&lt;/div&gt;</option></select><div class="choices__list choices__list--single"><div class="choices__item choices__item--selectable choices__placeholder" data-item="" data-id="0" data-value="" aria-selected="true" data-placeholder="">
+                              Select status
+                            <button type="button" class="choices__button" aria-label="Remove item" data-button=""></button>
+                          </div></div></div><div class="choices__list choices__list--dropdown" aria-expanded="false"><div class="choices__list" role="listbox"><div class="choices__item choices__item--choice choices__item--selectable is-highlighted" data-select-text="" data-choice="" data-choice-selectable="" data-id="2" data-value="inprogress" role="option" aria-selected="true">
+                            <div>
+                              <div class="d-flex align-items-center text-nowrap"><span class="bg-info rounded-circle p-1 me-2"></span>In progress</div>
+                              
+                            </div>
+                          </div><div class="choices__item choices__item--choice choices__item--selectable " data-select-text="" data-choice="" data-choice-selectable="" data-id="3" data-value="delivered" role="option">
+                            <div>
+                              <div class="d-flex align-items-center text-nowrap"><span class="bg-success rounded-circle p-1 me-2"></span>Delivered</div>
+                              
+                            </div>
+                          </div><div class="choices__item choices__item--choice choices__item--selectable " data-select-text="" data-choice="" data-choice-selectable="" data-id="4" data-value="canceled" role="option">
+                            <div>
+                              <div class="d-flex align-items-center text-nowrap"><span class="bg-danger rounded-circle p-1 me-2"></span>Canceled</div>
+                              
+                            </div>
+                          </div><div class="choices__item choices__item--choice choices__item--selectable " data-select-text="" data-choice="" data-choice-selectable="" data-id="5" data-value="delayed" role="option">
+                            <div>
+                              <div class="d-flex align-items-center text-nowrap"><span class="bg-warning rounded-circle p-1 me-2"></span>Delayed</div>
+                              
+                            </div>
+                          </div></div></div></div>
+                              </div>
+                              <div class="col">
+                                <div class="choices" data-type="select-one" tabindex="0" role="listbox" aria-haspopup="true" aria-expanded="false"><div class="form-select"><select class="form-select choices__input" data-select="{&quot;removeItemButton&quot;: false}" aria-label="Timeframe sorting" hidden="" tabindex="-1" data-choice="active">
+                                  <option value="all-time" selected="">For all time</option>
+                                  <option value="last-year">For last year</option>
+                                  <option value="last-3-months">For last 3 months</option>
+                                  <option value="last-30-days">For last 30 days</option>
+                                  <option value="last-week">For last week</option>
+                                </select><div class="choices__list choices__list--single"><div class="choices__item choices__item--selectable" data-item="" data-id="1" data-value="all-time" aria-selected="true" role="option">For all time</div></div></div><div class="choices__list choices__list--dropdown" aria-expanded="false"><div class="choices__list" role="listbox"><div id="choices--ihkh-item-choice-1" class="choices__item choices__item--choice is-selected choices__item--selectable is-highlighted" role="option" data-choice="" data-id="1" data-value="all-time" data-choice-selectable="" aria-selected="true">For all time</div><div id="choices--ihkh-item-choice-2" class="choices__item choices__item--choice choices__item--selectable" role="option" data-choice="" data-id="2" data-value="last-year" data-choice-selectable="">For last year</div><div id="choices--ihkh-item-choice-3" class="choices__item choices__item--choice choices__item--selectable" role="option" data-choice="" data-id="3" data-value="last-3-months" data-choice-selectable="">For last 3 months</div><div id="choices--ihkh-item-choice-4" class="choices__item choices__item--choice choices__item--selectable" role="option" data-choice="" data-id="4" data-value="last-30-days" data-choice-selectable="">For last 30 days</div><div id="choices--ihkh-item-choice-5" class="choices__item choices__item--choice choices__item--selectable" role="option" data-choice="" data-id="5" data-value="last-week" data-choice-selectable="">For last week</div></div></div></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+          
+          
+                        <!-- Sortable orders table -->
+                        <div data-filter-list="{&quot;listClass&quot;: &quot;orders-list&quot;, &quot;sortClass&quot;: &quot;orders-sort&quot;, &quot;valueNames&quot;: [&quot;date&quot;, &quot;total&quot;]}">
+                          
+                          <!-- Admin Editable Table for Tracking and Deducting Usage -->
+<table class="table table-striped table-hover align-middle fs-sm text-nowrap">
+  <thead>
+      <tr>
+          <th scope="col">Order #</th>
+          <th scope="col">Order Date</th>
+          <th scope="col">Status</th>
+          <th scope="col">Volume Used</th>
+          <th scope="col">Total Units</th>
+          <th scope="col">Remaining Units</th>
+          <th scope="col">Deduct Usage</th>
+      </tr>
+  </thead>
+  <tbody id="ordersTable">
+      <!-- Example Order -->
+      <tr data-order-id="78A6431D409">
+          <td>
+              <span>78A6431D409</span>
+          </td>
+          <td>Feb 6, 2025</td>
+          <td>In Progress</td>
+          <td>
+              <input type="number" class="form-control form-control-sm" value="1200" min="0" step="1" data-field="volume_used" />
+          </td>
+          <td>1500</td>
+          <td class="remaining-units">$1,200</td>
+          <td>
+              <button class="btn btn-primary btn-sm" onclick="deductUsage('78A6431D409')">Deduct Usage</button>
+          </td>
+      </tr>
+      <!-- More rows go here -->
+  </tbody>
+</table>
+
+                          <!-- Admin Interface Table for Tracking and Recording Usage -->
+<table class="table align-middle fs-sm text-nowrap">
+  <thead>
+      <tr>
+          <th scope="col" class="py-3 ps-0">Order #</th>
+          <th scope="col" class="py-3 d-none d-md-table-cell">Order Date</th>
+          <th scope="col" class="py-3 d-none d-md-table-cell">Status</th>
+          <th scope="col" class="py-3 d-none d-md-table-cell">Volume Used</th>
+          <th scope="col" class="py-3 d-none d-md-table-cell">Total</th>
+          <th scope="col" class="py-3 d-none d-md-table-cell">Remaining</th>
+          <th scope="col" class="py-3">&nbsp;</th>
+          <th scope="col" class="py-3 d-none d-md-table-cell">Deduct Usage</th>
+      </tr>
+  </thead>
+  <tbody class="text-body-emphasis orders-list">
+      <tr>
+          <td class="fw-medium pt-2 pb-3 py-md-2 ps-0">
+              <span class="animate-target">78A6431D409</span>
+          </td>
+          <td class="fw-medium py-3 d-none d-md-table-cell">Feb 6, 2025</td>
+          <td class="fw-medium py-3 d-none d-md-table-cell">In Progress</td>
+          <td class="fw-medium py-3 d-none d-md-table-cell">1,200 GB</td>
+          <td class="fw-medium py-3 d-none d-md-table-cell">$2,105.90</td>
+          <td class="fw-medium py-3 d-none d-md-table-cell">$1,000.00</td>
+          <td class="fw-medium py-3">
+              <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#deductModal" onclick="openDeductModal('78A6431D409', 1200)">Deduct Usage</button>
+          </td>
+          <td class="fw-medium py-3 d-none d-md-table-cell">
+              <!-- Admin can input the usage to deduct -->
+              <input type="number" id="deduct-78A6431D409" class="form-control form-control-sm" min="0" step="1" placeholder="Enter usage to deduct" />
+          </td>
+      </tr>
+      <!-- Repeat similar structure for other orders -->
+  </tbody>
+</table>
+<!-- Modal for Deducting Usage -->
+<div class="modal fade" id="deductModal" tabindex="-1" aria-labelledby="deductModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="deductModalLabel">Deduct Usage</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+              <div class="mb-3">
+                  <label for="deductAmount" class="form-label">Amount to Deduct (GB)</label>
+                  <input type="number" class="form-control" id="deductAmount" min="0" step="1" placeholder="Enter amount to deduct">
+              </div>
+              <div class="alert alert-danger" id="errorMessage" style="display: none;">Error: Deduction amount exceeds remaining usage.</div>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" onclick="submitDeductUsage()">Submit</button>
+          </div>
+      </div>
+  </div>
+</div>
+
+                          <table class="table align-middle fs-sm text-nowrap">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="py-3 ps-0">
+                                        <span class="text-body fw-normal">Order <span class="d-none d-md-inline">#</span></span>
+                                    </th>
+                                    <th scope="col" class="py-3 d-none d-md-table-cell">
+                                        <button type="button" class="btn orders-sort fw-normal text-body p-0" data-sort="date">Order date</button>
+                                    </th>
+                                    <th scope="col" class="py-3 d-none d-md-table-cell">
+                                        <span class="text-body fw-normal">Status</span>
+                                    </th>
+                                    <th scope="col" class="py-3 d-none d-md-table-cell">
+                                        <button type="button" class="btn orders-sort fw-normal text-body p-0" data-sort="total">Volume Used</button>
+                                    </th>
+                                    <th scope="col" class="py-3">&nbsp;</th>
+                                    <th scope="col" class="py-3 d-none d-md-table-cell">
+                                        <button type="button" class="btn orders-sort fw-normal text-body p-0" data-sort="total">Total</button>
+                                    </th>
+                                    <th scope="col" class="py-3 d-none d-md-table-cell">
+                                        <button type="button" class="btn orders-sort fw-normal text-body p-0" data-sort="remaining">Remaining</button>
+                                    </th>
+                                    <th scope="col" class="py-3">&nbsp;</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-body-emphasis orders-list">
+                                <!-- Record 1 -->
+                                <tr>
+                                    <td class="fw-medium pt-2 pb-3 py-md-2 ps-0">
+                                        <a class="d-inline-block animate-underline text-body-emphasis text-decoration-none py-2" href="#orderDetails" data-bs-toggle="offcanvas" aria-controls="orderDetails" aria-label="Show order details">
+                                            <span class="animate-target">78A6431D409</span>
+                                        </a>
+                                        <ul class="list-unstyled fw-normal text-body m-0 d-md-none">
+                                            <li>Feb 6, 2025</li>
+                                            <li class="d-flex align-items-center">
+                                                <span class="bg-info rounded-circle p-1 me-2"></span>
+                                                In progress
+                                            </li>
+                                            <li class="fw-medium text-body-emphasis">$2,105.90</li>
+                                        </ul>
+                                    </td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">Feb 6, 2025</td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">
+                                        <span class="bg-info rounded-circle p-1 me-2"></span> In progress
+                                    </td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">1,200 GB</td>
+                                    <td class="fw-medium py-3"></td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">$2,105.90</td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">$1,000.00</td>
+                                    <td class="fw-medium py-3"></td>
+                                </tr>
+                                <!-- Record 2 -->
+                                <tr>
+                                    <td class="fw-medium pt-2 pb-3 py-md-2 ps-0">
+                                        <a class="d-inline-block animate-underline text-body-emphasis text-decoration-none py-2" href="#orderDetails" data-bs-toggle="offcanvas" aria-controls="orderDetails" aria-label="Show order details">
+                                            <span class="animate-target">A2B7341L215</span>
+                                        </a>
+                                        <ul class="list-unstyled fw-normal text-body m-0 d-md-none">
+                                            <li>Feb 5, 2025</li>
+                                            <li class="d-flex align-items-center">
+                                                <span class="bg-warning rounded-circle p-1 me-2"></span>
+                                                Pending
+                                            </li>
+                                            <li class="fw-medium text-body-emphasis">$1,500.00</li>
+                                        </ul>
+                                    </td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">Feb 5, 2025</td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">
+                                        <span class="bg-warning rounded-circle p-1 me-2"></span> Pending
+                                    </td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">800 GB</td>
+                                    <td class="fw-medium py-3"></td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">$1,500.00</td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">$1,200.00</td>
+                                    <td class="fw-medium py-3"></td>
+                                </tr>
+                                <!-- Record 3 -->
+                                <tr>
+                                    <td class="fw-medium pt-2 pb-3 py-md-2 ps-0">
+                                        <a class="d-inline-block animate-underline text-body-emphasis text-decoration-none py-2" href="#orderDetails" data-bs-toggle="offcanvas" aria-controls="orderDetails" aria-label="Show order details">
+                                            <span class="animate-target">F7D5368G902</span>
+                                        </a>
+                                        <ul class="list-unstyled fw-normal text-body m-0 d-md-none">
+                                            <li>Feb 4, 2025</li>
+                                            <li class="d-flex align-items-center">
+                                                <span class="bg-success rounded-circle p-1 me-2"></span>
+                                                Completed
+                                            </li>
+                                            <li class="fw-medium text-body-emphasis">$3,200.00</li>
+                                        </ul>
+                                    </td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">Feb 4, 2025</td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">
+                                        <span class="bg-success rounded-circle p-1 me-2"></span> Completed
+                                    </td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">1,500 GB</td>
+                                    <td class="fw-medium py-3"></td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">$3,200.00</td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">$500.00</td>
+                                    <td class="fw-medium py-3"></td>
+                                </tr>
+                                <!-- Record 4 -->
+                                <tr>
+                                    <td class="fw-medium pt-2 pb-3 py-md-2 ps-0">
+                                        <a class="d-inline-block animate-underline text-body-emphasis text-decoration-none py-2" href="#orderDetails" data-bs-toggle="offcanvas" aria-controls="orderDetails" aria-label="Show order details">
+                                            <span class="animate-target">H8S9432Q734</span>
+                                        </a>
+                                        <ul class="list-unstyled fw-normal text-body m-0 d-md-none">
+                                            <li>Feb 3, 2025</li>
+                                            <li class="d-flex align-items-center">
+                                                <span class="bg-danger rounded-circle p-1 me-2"></span>
+                                                Canceled
+                                            </li>
+                                            <li class="fw-medium text-body-emphasis">$950.00</li>
+                                        </ul>
+                                    </td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">Feb 3, 2025</td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">
+                                        <span class="bg-danger rounded-circle p-1 me-2"></span> Canceled
+                                    </td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">0 GB</td>
+                                    <td class="fw-medium py-3"></td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">$950.00</td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">$0.00</td>
+                                    <td class="fw-medium py-3"></td>
+                                </tr>
+                                <!-- Record 5 -->
+                                <tr>
+                                    <td class="fw-medium pt-2 pb-3 py-md-2 ps-0">
+                                        <a class="d-inline-block animate-underline text-body-emphasis text-decoration-none py-2" href="#orderDetails" data-bs-toggle="offcanvas" aria-controls="orderDetails" aria-label="Show order details">
+                                            <span class="animate-target">J3D1958T218</span>
+                                        </a>
+                                        <ul class="list-unstyled fw-normal text-body m-0 d-md-none">
+                                            <li>Feb 2, 2025</li>
+                                            <li class="d-flex align-items-center">
+                                                <span class="bg-secondary rounded-circle p-1 me-2"></span>
+                                                Pending
+                                            </li>
+                                            <li class="fw-medium text-body-emphasis">$1,250.00</li>
+                                        </ul>
+                                    </td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">Feb 2, 2025</td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">
+                                        <span class="bg-secondary rounded-circle p-1 me-2"></span> Pending
+                                    </td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">1,000 GB</td>
+                                    <td class="fw-medium py-3"></td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">$1,250.00</td>
+                                    <td class="fw-medium py-3 d-none d-md-table-cell">$500.00</td>
+                                    <td class="fw-medium py-3"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                          <table class="table align-middle fs-sm text-nowrap">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="py-3 ps-0">
+                                            <span class="text-body fw-normal">Order <span class="d-none d-md-inline">#</span></span>
+                                        </th>
+                                        <th scope="col" class="py-3 d-none d-md-table-cell">
+                                            <button type="button" class="btn orders-sort fw-normal text-body p-0" data-sort="date">Order date</button>
+                                        </th>
+                                        <th scope="col" class="py-3 d-none d-md-table-cell">
+                                            <span class="text-body fw-normal">Status</span>
+                                        </th>
+                                        <th scope="col" class="py-3 d-none d-md-table-cell">
+                                            <button type="button" class="btn orders-sort fw-normal text-body p-0" data-sort="total">Volume Used</button>
+                                        </th>
+                                        <th scope="col" class="py-3">&nbsp;</th>
+                                        <th scope="col" class="py-3 d-none d-md-table-cell">
+                                            <button type="button" class="btn orders-sort fw-normal text-body p-0" data-sort="total">Total</button>
+                                        </th>
+                                        <th scope="col" class="py-3 d-none d-md-table-cell">
+                                            <button type="button" class="btn orders-sort fw-normal text-body p-0" data-sort="remaining">Remaining</button>
+                                        </th>
+                                        <th scope="col" class="py-3">&nbsp;</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-body-emphasis orders-list">
+                                    <tr>
+                                        <td class="fw-medium pt-2 pb-3 py-md-2 ps-0">
+                                            <a class="d-inline-block animate-underline text-body-emphasis text-decoration-none py-2" href="#orderDetails" data-bs-toggle="offcanvas" aria-controls="orderDetails" aria-label="Show order details">
+                                                <span class="animate-target">78A6431D409</span>
+                                            </a>
+                                            <ul class="list-unstyled fw-normal text-body m-0 d-md-none">
+                                                <li>Feb 6, 2025</li>
+                                                <li class="d-flex align-items-center">
+                                                    <span class="bg-info rounded-circle p-1 me-2"></span>
+                                                    In progress
+                                                </li>
+                                                <li class="fw-medium text-body-emphasis">$2,105.90</li>
+                                            </ul>
+                                        </td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">Feb 6, 2025</td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">
+                                            <span class="d-flex align-items-center">
+                                                <span class="bg-info rounded-circle p-1 me-2"></span>
+                                                In progress
+                                            </span>
+                                        </td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">$2,105.90</td>
+                                        <td class="py-3 pe-0"></td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">$2,105.90</td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">N/A</td>
+                                        <td class="py-3 pe-0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium pt-2 pb-3 py-md-2 ps-0">
+                                            <a class="d-inline-block animate-underline text-body-emphasis text-decoration-none py-2" href="#orderDetails" data-bs-toggle="offcanvas" aria-controls="orderDetails" aria-label="Show order details">
+                                                <span class="animate-target">47H76G09F33</span>
+                                            </a>
+                                            <ul class="list-unstyled fw-normal text-body m-0 d-md-none">
+                                                <li>Dec 12, 2024</li>
+                                                <li class="d-flex align-items-center">
+                                                    <span class="bg-success rounded-circle p-1 me-2"></span>
+                                                    Delivered
+                                                </li>
+                                                <li class="fw-medium text-body-emphasis">$360.75</li>
+                                            </ul>
+                                        </td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">Dec 12, 2024</td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">
+                                            <span class="d-flex align-items-center">
+                                                <span class="bg-success rounded-circle p-1 me-2"></span>
+                                                Delivered
+                                            </span>
+                                        </td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">$360.75</td>
+                                        <td class="py-3 pe-0">
+                                            <span class="d-flex align-items-center justify-content-end position-relative gap-1 gap-sm-2 ms-n2 ms-sm-0">
+                                                <span><img src="assets/img/shop/electronics/thumbs/14.png" width="64" alt="Thumbnail"></span>
+                                                <a class="btn btn-icon btn-ghost btn-secondary stretched-link border-0" href="#orderDetails" data-bs-toggle="offcanvas" aria-controls="orderDetails" aria-label="Show order details">
+                                                    <i class="ci-chevron-right fs-lg"></i>
+                                                </a>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium pt-2 pb-3 py-md-2 ps-0">
+                                            <a class="d-inline-block animate-underline text-body-emphasis text-decoration-none py-2" href="#orderDetails" data-bs-toggle="offcanvas" aria-controls="orderDetails" aria-label="Show order details">
+                                                <span class="animate-target">502TR872W2</span>
+                                            </a>
+                                            <ul class="list-unstyled fw-normal text-body m-0 d-md-none">
+                                                <li>Nov 7, 2024</li>
+                                                <li class="d-flex align-items-center">
+                                                    <span class="bg-success rounded-circle p-1 me-2"></span>
+                                                    Delivered
+                                                </li>
+                                                <li class="fw-medium text-body-emphasis">$4,268.00</li>
+                                            </ul>
+                                        </td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">Nov 7, 2024</td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">
+                                            <span class="d-flex align-items-center">
+                                                <span class="bg-success rounded-circle p-1 me-2"></span>
+                                                Delivered
+                                            </span>
+                                        </td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">$4,268.00</td>
+                                        <td class="py-3 pe-0">$4,268.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium pt-2 pb-3 py-md-2 ps-0">
+                                            <a class="d-inline-block animate-underline text-body-emphasis text-decoration-none py-2" href="#orderDetails" data-bs-toggle="offcanvas" aria-controls="orderDetails" aria-label="Show order details">
+                                                <span class="animate-target">34VB5540K83</span>
+                                            </a>
+                                            <ul class="list-unstyled fw-normal text-body m-0 d-md-none">
+                                                <li>Sep 15, 2024</li>
+                                                <li class="d-flex align-items-center">
+                                                    <span class="bg-danger rounded-circle p-1 me-2"></span>
+                                                    Canceled
+                                                </li>
+                                                <li class="fw-medium text-body-emphasis">$987.50</li>
+                                            </ul>
+                                        </td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">Sep 15, 2024</td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">
+                                            <span class="d-flex align-items-center">
+                                                <span class="bg-danger rounded-circle p-1 me-2"></span>
+                                                Canceled
+                                            </span>
+                                        </td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">$987.50</td>
+                                        <td class="py-3 pe-0">N/A</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium pt-2 pb-3 py-md-2 ps-0">
+                                            <a class="d-inline-block animate-underline text-body-emphasis text-decoration-none py-2" href="#orderDetails" data-bs-toggle="offcanvas" aria-controls="orderDetails" aria-label="Show order details">
+                                                <span class="animate-target">112P45A90V2</span>
+                                            </a>
+                                            <ul class="list-unstyled fw-normal text-body m-0 d-md-none">
+                                                <li>May 12, 2024</li>
+                                                <li class="d-flex align-items-center">
+                                                    <span class="bg-success rounded-circle p-1 me-2"></span>
+                                                    Delivered
+                                                </li>
+                                                <li class="fw-medium text-body-emphasis">$53.00</li>
+                                            </ul>
+                                        </td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">May 12, 2024</td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">
+                                            <span class="d-flex align-items-center">
+                                                <span class="bg-success rounded-circle p-1 me-2"></span>
+                                                Delivered
+                                            </span>
+                                        </td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">$53.00</td>
+                                        <td class="py-3 pe-0">
+                                            <span class="d-flex align-items-center justify-content-end position-relative gap-1 gap-sm-2 ms-n2 ms-sm-0">
+                                                <span><img src="assets/img/shop/electronics/thumbs/17.png" width="64" alt="Thumbnail"></span>
+                                                <a class="btn btn-icon btn-ghost btn-secondary stretched-link border-0" href="#orderDetails" data-bs-toggle="offcanvas" aria-controls="orderDetails" aria-label="Show order details">
+                                                    <i class="ci-chevron-right fs-lg"></i>
+                                                </a>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium pt-2 pb-3 py-md-2 ps-0">
+                                            <a class="d-inline-block animate-underline text-body-emphasis text-decoration-none py-2" href="#orderDetails" data-bs-toggle="offcanvas" aria-controls="orderDetails" aria-label="Show order details">
+                                                <span class="animate-target">28BA67U0981</span>
+                                            </a>
+                                            <ul class="list-unstyled fw-normal text-body m-0 d-md-none">
+                                                <li>Apr 20, 2024</li>
+                                                <li class="d-flex align-items-center">
+                                                    <span class="bg-danger rounded-circle p-1 me-2"></span>
+                                                    Canceled
+                                                </li>
+                                                <li class="fw-medium text-body-emphasis">$1,029.50</li>
+                                            </ul>
+                                        </td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">Apr 20, 2024</td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">
+                                            <span class="d-flex align-items-center">
+                                                <span class="bg-danger rounded-circle p-1 me-2"></span>
+                                                Canceled
+                                            </span>
+                                        </td>
+                                        <td class="fw-medium py-3 d-none d-md-table-cell">$1,029.50</td>
+                                        <td class="py-3 pe-0">N/A</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                        </div>
+          
+          
+                        <!-- Pagination -->
+                        <nav class="pt-3 pb-2 pb-sm-0 mt-2 mt-md-3" aria-label="Page navigation example">
+                          <ul class="pagination">
+                            <li class="page-item active" aria-current="page">
+                              <span class="page-link">
+                                1
+                                <span class="visually-hidden">(current)</span>
+                              </span>
+                            </li>
+                            <li class="page-item">
+                              <a class="page-link" href="#">2</a>
+                            </li>
+                            <li class="page-item">
+                              <a class="page-link" href="#">3</a>
+                            </li>
+                            <li class="page-item">
+                              <a class="page-link" href="#">4</a>
+                            </li>
+                          </ul>
+                        </nav>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </main>
+
+          </div>
+          <div class="modal-footer flex-column flex-sm-row align-items-stretch">
+            <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>

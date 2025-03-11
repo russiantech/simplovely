@@ -1,0 +1,283 @@
+{% extends "incs/base.html" %}
+{% block title %} Account - Laundry And Fashion {% endblock title %}
+
+{% block content %}
+{% include 'incs/modals/add_plan_modal.html' %}
+    <!-- Page content -->
+    <main class="content-wrapper">
+        <div class="container pt-4 pt-lg-5 pb-5">
+            <div class="row pt-sm-2 pt-md-3 pt-lg-0 pb-2 pb-sm-3 pb-md-4 pb-lg-5">
+                <!-- Sidebar navigation that turns into offcanvas on screens < 992px wide (lg breakpoint) -->
+                
+                {% include 'incs/user_pages/sidebar.html' %}
+
+                <!-- Dashboard content -->
+                <div class="col-lg-9 pt-2 pt-xl-3">
+                    <!-- Header -->
+                    <div class="d-flex align-items-center justify-content-between gap-3 pb-3 mb-2 mb-md-3">
+                        <h1 class="h2 mb-0">Dashboard</h1>
+                    </div>
+                    <!-- Stats -->
+                    <div class="row g-3 g-xl-4 pb-3 mb-2 mb-sm-3">
+
+                        <div class="col-md-6 col-sm-6">
+                            <div class="h-100 bg-info-subtle rounded-4 text-center p-4">
+                                <h2 class="fs-sm pb-2 mb-1">Total Subscriptions</h2>
+                                <div class="h2 pb-1 mb-2">35</div>
+                                <p class="fs-sm text-body-secondary mb-0">
+                                    <button
+                                        class="badge border-0 p-2 fs-xs text-warning bg-warning-subtle rounded-pill">Top
+                                        up units</button>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-6">
+                            <div class="h-100 bg-warning-subtle rounded-4 text-center p-4">
+                                <h2 class="fs-sm pb-2 mb-1">Volume & Usage</h2>
+                                <div class="h2 pb-1 mb-2">100 unit</div>
+                                <!-- Dark progress bar that switches to light color in dark mode -->
+                                <div class="progress mb-3" role="progressbar" aria-label="Dark example"
+                                    aria-valuenow="33" aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar bg-dark fw-medium rounded-pill d-none-dark"
+                                        style="width: 33%">33%</div>
+                                    <div class="progress-bar bg-light text-dark fw-medium rounded-pill d-none d-block-dark"
+                                        style="width: 33%">33%</div>
+                                </div>
+                                <button
+                                    class="badge border-0 fs-xs text-info bg-info-subtle rounded-pill">Track-usage</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border rounded-4 py-4 px-3 px-sm-4">
+                        <div>
+                            {# <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3 mb-2 mb-sm-3 mb-md-4">
+                                <h2 class="h5 text-center text-sm-start mb-0">Services:</h2>
+                                
+                            </div>#}
+
+                            <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3">
+                                <div class="d-flex align-items-center gap-3 me-4">
+                                  <h1 class="h2 mb-1 mb-sm-2">Services</h1>
+                                  <a class="nav-link animate-underline fs-base px-0" href="#newPlanModal" data-bs-toggle="modal">
+                                    <i class="ci-plus fs-lg ms-n1 me-2"></i>
+                                    <span class="animate-target badge text-bg-info rounded-pill">Add Plans</span>
+                                  </a>
+                                </div>
+              
+                                <a class="nav-link animate-underline fs-base px-0" href="#newPlanModal" data-bs-toggle="modal">
+                                  <i class="ci-plus fs-lg ms-n1 me-2"></i>
+                                  <span class="animate-target badge text-bg-info rounded-pill">Add plans</span>
+                                </a>
+                              </div>
+
+                            <!---->
+                            <table class="table align-middle fs-sm mb-0 table-hover">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-0" scope="col">
+                                            <span class="fw-normal text-body">Plans</span>
+                                        </th>
+                                        <th class="d-none d-md-table-cell" scope="col">
+                                            <span class="fw-normal text-body">Amount</span>
+                                        </th>
+                                        <th class="text-end d-none d-sm-table-cell" scope="col">
+                                            <span class="fw-normal text-body">Volume</span>
+                                        </th>
+                                        <th class="text-end" scope="col">
+                                            <span class="fw-normal text-body">Action</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="product-list plans-container">
+                                    <!-- Plans will be populated here -->
+                                </tbody>
+                            </table>
+                            
+                            <!---->
+                            <table class="table align-middle fs-sm mb-0 table-hover">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-0" scope="col">
+                                            <span class="fw-normal text-body">Plans</span>
+                                        </th>
+                                        <th class="d-none d-md-table-cell" scope="col">
+                                            <span class="fw-normal text-body">Amount</span>
+                                        </th>
+                                        <th class="text-end d-none d-sm-table-cell" scope="col">
+                                            <button type="button" class="btn fw-normal text-body product-sort p-0 me-n2"
+                                                data-sort="tendered">Volume</button>
+                                        </th>
+
+                                    </tr>
+                                </thead>
+                                <tbody class="product-list">
+                                    <!-- Item -->
+                                    <tr class="cursor-pointer">
+                                        <td class="py-3 ps-0">
+                                            <div
+                                                class="d-flex align-items-start align-items-md-center hover-effect-scale position-relative">
+                                                <div class="ratio bg-body-secondary rounded-2 overflow-hidden flex-shrink-0"
+                                                    style="--cz-aspect-ratio: calc(52 / 66 * 100%); width: 66px">
+                                                    <img src="static/img/account/products/03.jpg"
+                                                        class="hover-effect-target" alt="Image">
+                                                </div>
+                                                <div class="ps-2 ms-1">
+                                                    <h6 class="product mb-1 mb-md-0">
+                                                        <a class="fs-sm fw-medium hover-effect-underline stretched-link"
+                                                            href="shop-product-marketplace.html">Basic</a>
+                                                    </h6>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="d-none d-md-table-cell py-3">
+                                            <span class="badge fs-xs text-info bg-info-subtle rounded-pill">5k</span>
+                                        </td>
+                                        <td class="tendered text-end d-none d-sm-table-cell py-3">30</td>
+                                    </tr>
+                                    <!-- Item -->
+
+                                    <tr class="cursor-pointer">
+                                        <td class="py-3 ps-0">
+                                            <div
+                                                class="d-flex align-items-start align-items-md-center hover-effect-scale position-relative">
+                                                <div class="ratio bg-body-secondary rounded-2 overflow-hidden flex-shrink-0"
+                                                    style="--cz-aspect-ratio: calc(52 / 66 * 100%); width: 66px">
+                                                    <img src="static/img/account/products/03.jpg"
+                                                        class="hover-effect-target" alt="Image">
+                                                </div>
+                                                <div class="ps-2 ms-1">
+                                                    <h6 class="product mb-1 mb-md-0">
+                                                        <a class="fs-sm fw-medium hover-effect-underline stretched-link"
+                                                            href="shop-product-marketplace.html">Pro</a>
+                                                    </h6>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="d-none d-md-table-cell py-3">
+                                            <span class="badge fs-xs text-info bg-info-subtle rounded-pill">
+                                                8k (popular)</span>
+                                        </td>
+                                        <td class="tendered text-end d-none d-sm-table-cell py-3">40</td>
+                                    </tr>
+                                    <!-- Item -->
+
+                                    <tr class="cursor-pointer">
+                                        <td class="py-3 ps-0">
+                                            <div
+                                                class="d-flex align-items-start align-items-md-center hover-effect-scale position-relative">
+                                                <div class="ratio bg-body-secondary rounded-2 overflow-hidden flex-shrink-0"
+                                                    style="--cz-aspect-ratio: calc(52 / 66 * 100%); width: 66px">
+                                                    <img src="static/img/account/products/03.jpg"
+                                                        class="hover-effect-target" alt="Image">
+                                                </div>
+                                                <div class="ps-2 ms-1">
+                                                    <h6 class="product mb-1 mb-md-0">
+                                                        <a class="fs-sm fw-medium hover-effect-underline stretched-link"
+                                                            href="shop-product-marketplace.html">Premium</a>
+                                                    </h6>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="d-none d-md-table-cell py-3">
+                                            <span class="badge fs-xs text-info bg-info-subtle rounded-pill">10k</span>
+                                        </td>
+                                        <td class="tendered text-end d-none d-sm-table-cell py-3">50</td>
+                                    </tr>
+                                    <!-- Item -->
+
+                                </tbody>
+                            </table>-->
+                            
+                        </div>
+                    </div>
+
+                    <!---->
+                    <section id="scrollbar-horizontal" class="docs-section pb-sm-2 mb-5">
+                        <!--<h4>Horizontal</h4>-->
+                        <div class="card border-0 shadow">
+                            <span
+                                class="d-none d-block-dark position-absolute top-0 start-0 w-100 h-100 bg-dark rounded"
+                                style="opacity: .4"></span>
+                            <div class="card-body position-relative z-2">
+                                <ul class="nav nav-tabs m-n2" role="tablist" style="max-width: 240px">
+                                    <li class="nav-item" role="presentation">
+                                        <button type="button" class="nav-link active" data-bs-toggle="tab"
+                                            data-bs-target="#preview-2" role="tab" aria-controls="preview-2"
+                                            aria-selected="true">
+                                            <i class="ci-eye opacity-75 ms-n1 me-2"></i>
+                                            <caption class="card-title">Request Fashion Services:</caption>
+                                        </button>
+                                    </li>
+                                </ul>
+                                <div class="tab-content">
+                                    <div id="preview-2" class="tab-pane pt-4 pb-2 mt-3 fade show active"
+                                        role="tabpanel">
+                                        <div class="overflow-x-auto pb-4 simplebar-scrollable-x" data-simplebar="init"
+                                            data-simplebar-auto-hide="false">
+                                            <div class="simplebar-wrapper" style="margin: 0px 0px -24px;">
+                                                <div class="simplebar-height-auto-observer-wrapper">
+                                                    <div class="simplebar-height-auto-observer"></div>
+                                                </div>
+                                                <div class="simplebar-mask">
+                                                    <div class="simplebar-offset" style="right: 0px; bottom: 0px;">
+                                                        <div class="simplebar-content-wrapper" tabindex="0"
+                                                            role="region" aria-label="scrollable content"
+                                                            style="height: auto; overflow: scroll hidden;">
+                                                            <div class="simplebar-content"
+                                                                style="padding: 0px 0px 24px;">
+                                                                <div class="d-flex gap-4">
+                                                                <button class="rounded">
+                                                                    <div class="card" style="min-width: 230px;">
+                                                                        <div class="card-body">
+                                                                            <h6 class="card-title">Pick Up</h6>
+                                                                            <p class="card-text fs-sm">
+                                                                                We prepare your fabrics down, so you can come take them away.
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                </button>
+                                                                <button class="rounded">
+                                                                    <div class="card" style="min-width: 230px;">
+                                                                        <div class="card-body">
+                                                                            <h6 class="card-title">Delivery</h6>
+                                                                            <p class="card-text fs-sm">We convey your fabrics to your destination.</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </button>
+
+                                                                <button class="rounded">
+                                                                    <div class="card" style="min-width: 230px;">
+                                                                        <div class="card-body">
+                                                                            <h6 class="card-title">Take Measurement</h6>
+                                                                            <p class="card-text fs-sm">
+                                                                                Our tailor comes over to measure and confirm fabrics.
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                </button>
+
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                </div>
+                </section>
+                <!---->
+
+            </div>
+        </div>
+        </div>
+    </main>
+
+{% endblock content %}

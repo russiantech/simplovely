@@ -1,0 +1,389 @@
+<!-- Vendor scripts -->
+<script src="static/vendor/swiper/swiper-bundle.min.js"></script>
+<!-- Bootstrap + Theme scripts -->
+<script src="static/js/theme.min.js"></script>
+<script src="./static/vendor/choices_js/choices.min.js"></script>
+<script src="./static/js/auth.js"></script>
+
+<script>
+    // Set apiurl and plan_url on the window object
+    window.apiUrl = `http://localhost:5000/api`;
+    window.planUrl = `${window.apiurl}/plans`;
+
+    response_modal = (message) => {
+        // Set the message in the response text element
+        document.getElementById('response_text').innerText = message;
+
+        // Show the modal using Bootstrap's JavaScript method
+        const modal = new bootstrap.Modal(document.getElementById('response_modal'));
+
+        // Set z-index to ensure the modal appears above other elements
+        const modalElement = document.getElementById('response_modal');
+        modalElement.style.zIndex = 1058; // Bootstrap modals typically have a z-index of 1050
+
+        modal.show(); // Show the modal
+    }
+
+    // Fetch wrapper function
+    async function make_request(url, options = {}) {
+        const token = localStorage.getItem('access_token') || getCookie('access_token'); // Retrieve the token
+        //alert(getCookie('access_token'))
+        // Set default headers
+        options.headers = {
+            'Content-Type': 'application/json',
+            ...options.headers, // Merge any existing headers
+        };
+
+        // Attach the token if available
+        if (token && token.trim()) {
+            options.headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        try {
+            const response = await fetch(url, options);
+            // console.log('Response Status Code:', response.status);
+            // console.log('Response Data:', response);
+            // Handle errors
+            if (!response.ok) {
+                const errorData = await response.json();
+                // Check for token expiration
+                if (response.status === 401 || errorData.error === 'Token expired') {
+                    // Attempt to refresh the token
+                    const refreshToken = localStorage.getItem('refresh_token'); // Retrieve the refresh token
+                    if (refreshToken) {
+                    const refreshed = await refresh_token();
+                    if (refreshed) {
+                        // Retry the original request with the new token
+                        return make_request(url, options);
+                    } else {
+                        throw new Error(`Unable to refresh token. Please log in again.`);
+                        //window.location.href = "./signin"
+                    }
+                    
+                    }
+
+                }
+
+                throw new Error(errorData.error || 'Error making API request');
+            }
+
+            return response.json();
+        } catch (error) {
+            console.error('Request failed:', error);
+            throw error; // Re-throw the error for further handling
+        }
+    }
+
+    // Function to refresh the token
+    async function refresh_token() {
+        const refreshToken = localStorage.getItem('refresh_token'); // Retrieve the refresh token
+        console.log('Access Token:', localStorage.getItem('access_token'));
+        console.log('Refresh Token:', localStorage.getItem('refresh_token'));
+
+        // Check if refreshToken is provided and not null or empty
+        if (!refreshToken || !refreshToken.trim()) {
+            console.warn('No refresh token available. Cannot refresh access token.');
+            return false; // No refresh token available
+        }
+
+        try {
+            const response = await fetch(`${window.apiUrl}/users/refresh-token`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ refresh_token: refreshToken }),
+            });
+
+            console.log("refresh token response", response);
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Token refresh failed:', errorData);
+                return false; // Token refresh failed
+            }
+
+            const data = await response.json();
+
+            // Update the access token
+            if (data.access_token) {
+                localStorage.setItem('access_token', data.access_token); // Store the new access token
+            }
+
+            // Update the refresh token only if it's provided and not null
+            if (data.refresh_token) {
+                localStorage.setItem('refresh_token', data.refresh_token); // Update the refresh token if provided
+            }
+
+            return true; // Token refreshed successfully
+        } catch (error) {
+            console.error('Error refreshing token:', error);
+            return false; // Error during token refresh
+        }
+    }
+
+    // Toggle button function
+    const toggleButton = (button, disable = true, spinner = true) => {
+        button.disabled = disable; // Disable/Enable the button
+        if (spinner) {
+            const originalText = button.dataset.originalText || button.innerHTML;
+            button.dataset.originalText = originalText; // Save original text
+            button.innerHTML = disable
+                ? '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...'
+                : originalText; // Restore original text when not disabled
+        } else {
+            // Restore original text if spinner is not enabled
+            button.innerHTML = button.dataset.originalText || button.innerHTML;
+        }
+    };
+
+    // Attach functions to the window object
+    window.make_request = make_request;
+    window.refresh_token = refresh_token;
+    window.response_modal = response_modal;
+    window.toggleButton = toggleButton;
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+        // Get current page URL
+        const currentPage = window.location.pathname.split("/").pop();
+        // Get all navigation links
+        const navLinks = document.querySelectorAll("nav a");
+        navLinks.forEach(link => {
+            if (link.getAttribute("href") === currentPage) {
+                link.classList.add("active");
+            }
+        });
+
+
+        // Form handler function
+        const handleFormSubmit = (formId, action) => {
+            const form = document.getElementById(formId);
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const submitButton = form.querySelector('button[type="submit"]');
+                toggleButton(submitButton, true, true); // Disable and show spinner
+
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+                //console.log(data)
+                try {
+                    // const response = await fetch(`${window.apiUrl}/${action}`, {
+                    const response = await window.make_request(`${window.apiUrl}/${action}`, {
+                        method: form.method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                    });
+                    // const result = await response.json();
+                    const result = await response;
+                    // console.log(result);
+                    if (result.success) {
+                        // Save tokens to local storage only for login action
+                        if (action === 'users/signin') { // Check if action is 'login'
+                            // Check if access_token and refresh_token are provided and not null
+                            if (result.access_token && result.access_token.trim()) {
+                                localStorage.setItem('access_token', result.access_token);
+                            } else {
+                                console.warn('Access token not provided or is null.');
+                            }
+
+                            if (result.refresh_token && result.refresh_token.trim()) {
+                                localStorage.setItem('refresh_token', result.refresh_token);
+                            } else {
+                                console.warn('Refresh token not provided or is null.');
+                            }
+                            //
+                            if (result.redirect) {
+                                window.location.href = result.redirect; // Redirect if needed
+                            }
+                        }
+
+                        window.response_modal(result.message || 'Operation successful.');
+
+
+                    } else {
+                        window.response_modal(result.error || 'Operation failed.');
+                    }
+                } catch (error) {
+                    window.response_modal(`unexpected-error->. ${error}`);
+                } finally {
+                    window.toggleButton(submitButton, false, true); // Re-enable button and restore text
+                }
+            });
+        };
+
+        window.handleFormSubmit = handleFormSubmit; // attach to window object to make it accessible.
+        //
+        const signupForm = document.getElementById('signup_form');
+        const signinForm = document.getElementById('signin_form');
+        const resetPasswordForm = document.getElementById('reset_password_modal');
+        const messageForm = document.getElementById('message_form');
+        const planForm = document.getElementById('add_plan_form');
+        const addressForm = document.getElementById('add_address_form');
+
+        if (signupForm) {
+            signupForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent default form submission
+                handleFormSubmit('signup_form', 'users/signup');
+            });
+        }
+
+        if (signinForm) {
+            signinForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent default form submission
+                handleFormSubmit('signin_form', 'users/signin');
+            });
+        }
+
+        if (resetPasswordForm) {
+            resetPasswordForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent default form submission
+                handleFormSubmit('reset_password_modal', 'users/reset-password');
+            });
+        }
+
+        if (messageForm) {
+            messageForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent default form submission
+                handleFormSubmit('message_form', 'users/send-message');
+            });
+        }
+
+        if (planForm) {
+            planForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent default form submission
+                handleFormSubmit('add_plan_form', 'plans');
+            });
+        }
+
+        if (addressForm) {
+            addressForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent default form submission
+                handleFormSubmit('add_address_form', 'addresses');
+            });
+        }
+
+        async function get_user_home() {
+            try {
+                // Fetch the current user data
+                const data = await window.make_request(`${window.apiUrl}/users/current`);
+
+                // Update the display for basic info
+                const nameElement = document.querySelector('.name');
+                const initialElement = document.querySelector('.initial');
+
+                // Update name and initial
+                if (nameElement) {
+                    nameElement.innerText = data.name;
+                }
+                if (initialElement) {
+                    initialElement.innerText = data.name.charAt(0).toUpperCase(); // Get the first letter
+                }
+
+                // Select the anchor element and the span within it
+                const anchor = document.querySelector('.btn.btn-dark.rounded-pill.animate-scale');
+                const span = anchor.querySelector('span');
+
+                // Update the href attribute and the span text
+                if (anchor && span) {
+                    anchor.setAttribute('href', './account'); // Update the href to the new URL
+                    span.textContent = data.username; // Change the span text
+                }
+
+            } catch (error) {
+                console.error('get-user-home-error', error);
+                //window.response_modal('get-user-error: ' + error.message);
+            }
+        }
+
+        // Fetch user data on page load
+        if (document.querySelector('.name') || document.querySelector('.initial')) {
+            window.onload = get_user_home;
+        }
+
+        //
+        
+        async function initiateOAuth(provider) {
+            try {
+                // Prepare headers
+                const headers = new Headers({
+                    'Client-Callback-Url': window.location.href,
+                    'Content-Type': 'application/json' // Adjust as necessary
+                });
+    
+                // Make a request to your backend to initiate OAuth2 flow
+                const response = await fetch(`${window.apiUrl}/users/authorize/google`, {
+                    method: 'GET', // or 'POST' if needed
+                    headers: headers
+                });
+    
+                const data = await response.json();
+                console.log(data);
+    
+                if (response.ok) {
+                    // Redirect to the provider's authorization URL
+                    window.location.href = data.redirect;
+                } else {
+                    console.error('Authorization error:', data.message);
+                    alert('Failed to initiate sign-in. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error during sign-in:', error);
+                alert('An error occurred. Please try again.');
+            }
+        
+        }
+        // init oauth
+        if (document.getElementById('google-signin-btn')) {
+            document.getElementById('google-signin-btn').addEventListener('click', async function() {
+                initiateOAuth('google');
+            });
+        }
+
+        //
+        const urlParams = new URLSearchParams(window.location.search);
+        if(urlParams.get('success') && urlParams.get('access_token') || urlParams.get("refresh_token")) {
+        const success = urlParams.get('success');
+        if (success && success === "True") {
+            const accessToken = urlParams.get('access_token');
+            const refreshToken = urlParams.get('refresh_token');
+    
+            // Store access token if provided
+            if (accessToken && accessToken.trim()) {
+                localStorage.setItem('access_token', accessToken.trim());
+            } else {
+                console.warn('Access token not provided or is null.');
+            }
+    
+            // Store refresh token if provided
+            if (refreshToken && refreshToken.trim()) {
+                localStorage.setItem('refresh_token', refreshToken.trim());
+            } else {
+                console.warn('Refresh token not provided or is null.');
+            }
+    
+            // Notify user of successful sign-in
+            window.response_modal("Sign-in successful!");
+    
+            // Redirect if a redirect URL is provided
+            const redirectUrl = urlParams.get("redirect");
+            if (redirectUrl) {
+                window.location.href = redirectUrl.trim();
+            }
+        } else {
+            // Display error message to the user
+            window.response_modal(`${success} Could not sign in, please try again.`);
+        }
+    }
+
+   // window.authRequired(['admin'])
+   // Check authentication and roles based on route requirements
+   // window.authRequired = authRequired; 
+
+   // authRequired([]);
+        
+    });
+
+</script>

@@ -1,0 +1,407 @@
+ <!-- Full screen modal -->
+    <div class="modal fade" id="modalFullscreenUsage" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Unit/Volume Usage</h5>
+            <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            
+            <main class="content-wrapper">
+                <div class="container py-5 mt-n2 mt-sm-0">
+                  <div class="row pt-md-2 pt-lg-3 pb-sm-2 pb-md-3 pb-lg-4 pb-xl-5">
+          
+                    <!-- Orders content -->
+                    <div class="col-lg-12">
+                      <div class="ps-lg-3 ps-xl-0">
+                        
+                        <!---->
+                     <!-- Table with integrated search and sortable columns -->
+<div data-filter-list='{"searchClass": "table-search", "listClass": "table-list", "sortClass": "table-sort", "valueNames": ["order", "date", "status", "volume_used", "phone"]}'>
+
+  <!-- Search field -->
+  <div class="volume_used-relative mb-2" style="max-width: 280px">
+    <i class="ci-search volume_used-absolute top-50 start-0 translate-middle-y ms-3"></i>
+    <input type="search" class="table-search form-control form-icon-start" placeholder="Search users/usage.">
+  </div>
+
+  <!-- Table with sticky header and sortable columns -->
+  <div class="table-responsive overflow-auto" style="height: 400px;">
+    <!---->
+    <button id="recordUsageBtn" class="btn btn-primary">Record Usage</button>
+
+<table class="table table-bordered border-info">
+  <thead class="volume_used-sticky top-0">
+    <tr>
+      <th scope="col">
+        <button type="button" class="btn fs-base fw-semibold text-dark-emphasis table-sort p-0" data-sort="order">S/N</button>
+      </th>
+      <th scope="col">
+        <button type="button" class="btn fs-base fw-semibold text-dark-emphasis table-sort p-0" data-sort="order">User</button>
+      </th>
+      <th scope="col">
+        <button type="button" class="btn fs-base fw-semibold text-dark-emphasis table-sort p-0" data-sort="date">Date</button>
+      </th>
+      <th scope="col">
+        <button type="button" class="btn fs-base fw-semibold text-dark-emphasis table-sort p-0" data-sort="status">Status</button>
+      </th>
+      <th scope="col">
+        <button type="button" class="btn fs-base fw-semibold text-dark-emphasis table-sort p-0" data-sort="volume_used">Volume used</button>
+      </th>
+      <th scope="col">Total Unit</th>
+      <th scope="col">Remaining Unit</th>
+    </tr>
+  </thead>
+  <tbody class="table-list">
+    <!-- Editable row for new usage -->
+    <tr id="newUsageRow" style="display: none;">
+      <th class="order" scope="row">New</th>
+      <td>
+        <select id="newUser" class="form-control" placeholder="Select user">
+          <option value="">Select user...</option>
+          <option value="Chris James">Chris James</option>
+          <option value="Alex Smith">Alex Smith</option>
+          <option value="Jordan Lee">Jordan Lee</option>
+          <!-- Add more users as needed -->
+        </select>
+      </td>
+      <td><input type="date" id="newDate" class="form-control"></td>
+      <td>
+        <select id="newStatus" class="form-control">
+          <option value="In progress">In progress</option>
+          <option value="Completed">Completed</option>
+        </select>
+      </td>
+      <td><input type="number" id="newVolumeUsed" placeholder="Volume used" class="form-control"></td>
+      <td><input type="number" id="newTotalUnit" placeholder="Total Units" class="form-control"></td>
+      <td><input type="number" id="newRemainingUnit" placeholder="Remaining Units" class="form-control"></td>
+    </tr>
+    <!-- Existing rows -->
+    <tr>
+      <th class="order" scope="row">1</th>
+      <th class="order" scope="row">Chris James</th>
+      <td class="date">Feb 6, 2025</td>
+      <td class="status">In progress</td>
+      <td class="volume_used">33</td>
+      <td class="phone text-nowrap">40</td>
+      <td class="phone text-nowrap">7</td>
+    </tr>
+    <tr>
+      <th class="order" scope="row">2</th>
+      <th class="order" scope="row">Chris James</th>
+      <td class="date">Feb 6, 2025</td>
+      <td class="status">In progress</td>
+      <td class="volume_used">33</td>
+      <td class="phone text-nowrap">40</td>
+      <td class="phone text-nowrap">7</td>
+    </tr>
+    <tr>
+      <th class="order" scope="row">3</th>
+      <th class="order" scope="row">Chris James</th>
+      <td class="date">Feb 6, 2025</td>
+      <td class="status">In progress</td>
+      <td class="volume_used">33</td>
+      <td class="phone text-nowrap">40</td>
+      <td class="phone text-nowrap">7</td>
+    </tr>
+  </tbody>
+</table>
+
+<script>
+  document.getElementById('recordUsageBtn').addEventListener('click', function() {
+    const newUsageRow = document.getElementById('newUsageRow');
+    newUsageRow.style.display = 'table-row';
+    // Optionally reset the input fields
+    document.getElementById('newUser').value = '';
+    document.getElementById('newDate').value = '';
+    document.getElementById('newVolumeUsed').value = '';
+    document.getElementById('newTotalUnit').value = '';
+    document.getElementById('newRemainingUnit').value = '';
+  });
+</script>
+
+    <!---->
+    <table class="table table-bordered border-info">
+      <thead class="volume_used-sticky top-0">
+        <tr>
+          <th scope="col">
+            <button type="button" class="btn fs-base fw-semibold text-dark-emphasis table-sort p-0" data-sort="order">S/N</button>
+          </th>
+          <th scope="col">
+            <button type="button" class="btn fs-base fw-semibold text-dark-emphasis table-sort p-0" data-sort="order">User</button>
+          </th>
+          <th scope="col">
+            <button type="button" class="btn fs-base fw-semibold text-dark-emphasis table-sort p-0" data-sort="date">Date</button>
+          </th>
+          <th scope="col">
+            <button type="button" class="btn fs-base fw-semibold text-dark-emphasis table-sort p-0" data-sort="status">Status</button>
+          </th>
+          <th scope="col">
+            <button type="button" class="btn fs-base fw-semibold text-dark-emphasis table-sort p-0" data-sort="volume_used">Volume used</button>
+          </th>
+          <th scope="col">Total Unit</th>
+          <th scope="col">Remaining Unit</th>
+        </tr>
+      </thead>
+      <tbody class="table-list">
+        <tr>
+          <th class="order" scope="row">1</th>
+          <th class="order" scope="row">Chris James</th>
+          <td class="date">Feb 6, 2025</td>
+          <td class="status">In progress</td>
+          <td class="volume_used">33</td>
+          <td class="phone text-nowrap">40</td>
+          <td class="phone text-nowrap">7</td>
+        </tr>
+        <tr>
+          <th class="order" scope="row">2</th>
+          <th class="order" scope="row">Chris James</th>
+          <td class="date">Feb 6, 2025</td>
+          <td class="status">In progress</td>
+          <td class="volume_used">33</td>
+          <td class="phone text-nowrap">40</td>
+          <td class="phone text-nowrap">7</td>
+        </tr>
+        <tr>
+          <th class="order" scope="row">3</th>
+          <th class="order" scope="row">Chris James</th>
+          <td class="date">Feb 6, 2025</td>
+          <td class="status">In progress</td>
+          <td class="volume_used">33</td>
+          <td class="phone text-nowrap">40</td>
+          <td class="phone text-nowrap">7</td>
+        </tr>
+        <tr>
+          <th class="order" scope="row">4</th>
+          <th class="order" scope="row">Chris James</th>
+          <td class="date">Feb 6, 2025</td>
+          <td class="status">In progress</td>
+          <td class="volume_used">33</td>
+          <td class="phone text-nowrap">40</td>
+          <td class="phone text-nowrap">7</td>
+        </tr>
+        <tr>
+          <th class="order" scope="row">5</th>
+          <th class="order" scope="row">Chris James</th>
+          <td class="date">Feb 6, 2025</td>
+          <td class="status">In progress</td>
+          <td class="volume_used">33</td>
+          <td class="phone text-nowrap">40</td>
+          <td class="phone text-nowrap">7</td>
+        </tr>
+        <tr>
+          <th class="order" scope="row">5</th>
+          <th class="order" scope="row">Chris James</th>
+          <td class="date">Feb 6, 2025</td>
+          <td class="status">In progress</td>
+          <td class="volume_used">33</td>
+          <td class="phone text-nowrap">40</td>
+          <td class="phone text-nowrap">7</td>
+        </tr>
+        <tr>
+          <th class="order" scope="row">5</th>
+          <th class="order" scope="row">Chris James</th>
+          <td class="date">Feb 6, 2025</td>
+          <td class="status">In progress</td>
+          <td class="volume_used">33</td>
+          <td class="phone text-nowrap">40</td>
+          <td class="phone text-nowrap">7</td>
+        </tr>
+        <tr>
+          <th class="order" scope="row">5</th>
+          <th class="order" scope="row">Chris James</th>
+          <td class="date">Feb 6, 2025</td>
+          <td class="status">In progress</td>
+          <td class="volume_used">33</td>
+          <td class="phone text-nowrap">40</td>
+          <td class="phone text-nowrap">7</td>
+        </tr>
+        <tr>
+          <th class="order" scope="row">5</th>
+          <th class="order" scope="row">Chris James</th>
+          <td class="date">Feb 6, 2025</td>
+          <td class="status">In progress</td>
+          <td class="volume_used">33</td>
+          <td class="phone text-nowrap">40</td>
+          <td class="phone text-nowrap">7</td>
+        </tr>
+        <tr>
+          <th class="order" scope="row">5</th>
+          <th class="order" scope="row">Chris James</th>
+          <td class="date">Feb 6, 2025</td>
+          <td class="status">In progress</td>
+          <td class="volume_used">33</td>
+          <td class="phone text-nowrap">40</td>
+          <td class="phone text-nowrap">7</td>
+        </tr>
+        <tr>
+          <th class="order" scope="row">5</th>
+          <th class="order" scope="row">Chris James</th>
+          <td class="date">Feb 6, 2025</td>
+          <td class="status">In progress</td>
+          <td class="volume_used">33</td>
+          <td class="phone text-nowrap">40</td>
+          <td class="phone text-nowrap">7</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  // Sample data to simulate fetching usage data
+const mockData = [
+{ orderId: '78A6431D409', orderDate: 'Feb 6, 2025', status: 'In Progress', volumeUsed: 1200, totalUnits: 1500, remainingUnits: 300 },
+{ orderId: 'LND-7373-vbr', orderDate: 'Feb 7, 2025', status: 'Completed', volumeUsed: 1000, totalUnits: 1000, remainingUnits: 0 },
+{ orderId: 'LND-8046-ECt', orderDate: 'Feb 8, 2025', status: 'Pending', volumeUsed: 500, totalUnits: 1500, remainingUnits: 1000 },
+];
+
+// Function to render the table with rows based on fetched data
+function renderTable() {
+const tableBody = document.querySelector('#usageTable tbody');
+tableBody.innerHTML = '';  // Clear the table body
+
+mockData.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-order-id', row.orderId);
+
+    // Create editable cells
+    tr.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm" value="${row.orderId}" readonly /></td>
+        <td><input type="text" class="form-control form-control-sm" value="${row.orderDate}" readonly /></td>
+        <td><input type="text" class="form-control form-control-sm" value="${row.status}" readonly /></td>
+        <td><input type="number" class="form-control form-control-sm" value="${row.volumeUsed}" oninput="autoUpdateRow('${row.orderId}')"/></td>
+        <td><input type="number" class="form-control form-control-sm" value="${row.totalUnits}" readonly /></td>
+        <td><input type="number" class="form-control form-control-sm" value="${row.remainingUnits}" readonly /></td>
+        <td>
+            <button class="btn btn-primary btn-sm" onclick="updateRow('${row.orderId}')">Update</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteRow('${row.orderId}')">Delete</button>
+        </td>
+    `;
+
+    tableBody.appendChild(tr);
+});
+}
+
+// Function to automatically update rows when user changes the volume used
+function autoUpdateRow(orderId) {
+const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
+const volumeUsed = row.querySelector('input[type="number"]').value;
+const remainingUnitsInput = row.querySelectorAll('input[type="number"]')[1];
+
+// Calculate remaining units and update the input field for remaining units
+const totalUnits = row.querySelectorAll('input[type="number"]')[2].value;
+remainingUnitsInput.value = totalUnits - volumeUsed; // Update the remaining units
+}
+
+// Function to update a row (manual update)
+function updateRow(orderId) {
+const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
+const volumeUsed = row.querySelector('input[type="number"]').value;
+const remainingUnits = row.querySelectorAll('input[type="number"]')[1].value;
+
+// Send updated data to the backend via AJAX
+fetch('/admin/update_usage', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+        order_id: orderId,
+        volume_used: volumeUsed,
+        remaining_units: remainingUnits
+    })
+})
+.then(response => response.json())
+.then(data => {
+    if (data.success) {
+        alert(`Successfully updated Order #${orderId}`);
+    } else {
+        alert('Error updating order.');
+    }
+})
+.catch(error => {
+    alert('Error occurred while updating.');
+});
+}
+
+// Function to delete a row
+function deleteRow(orderId) {
+const rowIndex = mockData.findIndex(row => row.orderId === orderId);
+if (rowIndex >= 0) {
+    mockData.splice(rowIndex, 1); // Remove the row from the data array
+    renderTable(); // Re-render the table
+}
+}
+
+// Function to add a new usage record via modal
+document.getElementById('addNewRowBtn').addEventListener('click', () => {
+// Populate the user select dropdown (simulate fetching users)
+const userSelect = document.getElementById('userSelect');
+userSelect.innerHTML = '<option value="">Select a User</option>'; // Clear previous options
+// Simulate users (replace with your actual users from your backend)
+const users = [{ id: 1, name: 'John Doe' }, { id: 2, name: 'Jane Smith' }];
+users.forEach(user => {
+    userSelect.innerHTML += `<option value="${user.id}">${user.name}</option>`;
+});
+
+// Show the modal to add a new usage
+const modal = new bootstrap.Modal(document.getElementById('newUsageModal'));
+modal.show();
+});
+
+// Function to save new usage
+document.getElementById('saveNewUsageBtn').addEventListener('click', () => {
+const userSelect = document.getElementById('userSelect').value;
+const usageDate = document.getElementById('usageDate').value;
+const volumeUsed = document.getElementById('volumeUsed').value;
+const totalUnits = document.getElementById('totalUnits').value;
+
+if (!userSelect || !usageDate || !volumeUsed || !totalUnits) {
+    alert('All fields are required!');
+    return;
+}
+
+// Simulate adding the new record to the backend and the table
+const newUsage = {
+    orderId: generateNewOrderId(),
+    orderDate: usageDate,
+    status: 'Pending',
+    volumeUsed: volumeUsed,
+    totalUnits: totalUnits,
+    remainingUnits: totalUnits - volumeUsed
+};
+mockData.push(newUsage);
+renderTable();
+
+// Close the modal
+const modal = bootstrap.Modal.getInstance(document.getElementById('newUsageModal'));
+modal.hide();
+});
+
+// Function to generate a new order ID (this could be from the backend)
+function generateNewOrderId() {
+return 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+}
+
+// Initially render the table
+renderTable();
+
+</script>
+                        <!---->
+          
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </main>
+
+          </div>
+          <div class="modal-footer flex-column flex-sm-row align-items-stretch">
+            <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>

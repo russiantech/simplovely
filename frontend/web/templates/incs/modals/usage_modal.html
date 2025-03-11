@@ -1,0 +1,113 @@
+ <!-- Full screen modal -->
+    <div class="modal fade" id="modalFullscreenUsage" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Unit/Volume Usage</h5>
+            <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            
+            <section id="tables-color-borders" class="docs-section">
+              <div class="card border-0 shadow">
+                <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3">
+                  <div class="d-flex align-items-center gap-3 me-4">
+                    <h1 class="h2 mb-1 mb-sm-2">Usages</h1>
+                    <button id="recordUsageBtn" class="nav-link animate-underline fs-base px-0">
+                      <i class="ci-plus fs-lg ms-n1 me-2"></i>
+                      <span class="animate-target badge text-bg-info rounded-pill">Record Usage</span>
+                    </button>
+                  </div>
+                </div>
+                <span class="d-none d-block-dark position-absolute top-0 start-0 w-100 h-100 bg-dark rounded" style="opacity: .4"></span>
+                <div class="card-body position-relative z-2">
+                 
+                  <div class="tab-content">
+                    <div id="preview-10" class="tab-pane pt-4 pb-2 mt-3 fade show active" role="tabpanel">
+                      <div class="table-responsive mb-3" style="height: 400px;">
+
+                        <table class="table table-bordered border-info border-rounded">
+                          <thead class="volume_used-sticky top-0">
+                            <tr>
+                              <th scope="col">
+                                <button type="button" class="btn fs-base fw-semibold text-dark-emphasis table-sort p-0" data-sort="order">S/N</button>
+                              </th>
+                              <th scope="col">
+                                <button type="button" class="btn fs-base fw-semibold text-dark-emphasis table-sort p-0" data-sort="order">User</button>
+                              </th>
+                              <th scope="col">
+                                <button type="button" class="btn fs-base fw-semibold text-dark-emphasis table-sort p-0" data-sort="date">Date</button>
+                              </th>
+                              <th scope="col">
+                                <button type="button" class="btn fs-base fw-semibold text-dark-emphasis table-sort p-0" data-sort="status">Status</button>
+                              </th>
+                              <th scope="col">
+                                <button type="button" class="btn fs-base fw-semibold text-dark-emphasis table-sort p-0" data-sort="volume_used">Volume used</button>
+                              </th>
+                              <th scope="col">Total Unit</th>
+                              <th scope="col">Remaining Unit</th>
+                            </tr>
+                          </thead>
+                          <tbody class="table-list">
+                            <!-- Editable row for new usage -->
+                            <tr id="newUsageRow" style="display: none;">
+                              <th class="order" scope="row">New</th>
+                              <td colspan="3">
+                                <select id="selectUser" class="form-control select2" placeholder="Select user">
+                                  <option value="">Select user...</option>
+                                  <option value="Chris James">Chris James</option>
+                                  <option value="Alex Smith">Alex Smith</option>
+                                  <option value="Jordan Lee">Jordan Lee</option>
+                                  <!-- Add more users as needed -->
+                                </select>
+                              </td>
+                              <td><input type="number" id="volumeUsed" value="0" placeholder="Volume used" class="form-control"></td>
+                              <td colspan="2"><button id="submit_usage" class="btn btn-dark animate-scale w-100">Save</button> </td>
+                            </tr>
+                            <!-- Existing rows -->
+                            <tr>
+                              <th class="order" scope="row">1</th>
+                              <th class="order" scope="row">Chris James</th>
+                              <td class="date">Feb 6, 2025</td>
+                              <td class="status">In progress</td>
+                              <td class="volume_used">33</td>
+                              <td class="phone text-nowrap">40</td>
+                              <td class="phone text-nowrap">7</td>
+                            </tr>
+                            <tr>
+                              <th class="order" scope="row">2</th>
+                              <th class="order" scope="row">Chris James</th>
+                              <td class="date">Feb 6, 2025</td>
+                              <td class="status">In progress</td>
+                              <td class="volume_used">33</td>
+                              <td class="phone text-nowrap">40</td>
+                              <td class="phone text-nowrap">7</td>
+                            </tr>
+                            <tr>
+                              <th class="order" scope="row">3</th>
+                              <th class="order" scope="row">Chris James</th>
+                              <td class="date">Feb 6, 2025</td>
+                              <td class="status">In progress</td>
+                              <td class="volume_used">33</td>
+                              <td class="phone text-nowrap">40</td>
+                              <td class="phone text-nowrap">7</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            
+          </div>
+          <div class="modal-footer flex-column flex-sm-row align-items-stretch">
+            <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./static/js/pages/usage.js"></script>

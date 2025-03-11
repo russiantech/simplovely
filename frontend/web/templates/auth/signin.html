@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light" data-pwa="true">
+
+<head>
+
+    {% include "incs/metas.html" %}
+    <!-- SEO Meta Tags -->
+    <title>
+        {% block title %} Sign into - Laundry & Fashion {% endblock title %}
+    </title>
+
+</head>
+
+<body>
+
+    {% block content %}
+    <!-- Page content -->
+<main class="content-wrapper w-100 px-3 ps-lg-5 pe-lg-4 mx-auto" style="max-width: 1920px">
+    <div class="d-lg-flex">
+
+      <!-- Login form + Footer -->
+      <div class="d-flex flex-column min-vh-100 w-100 py-4 mx-auto me-lg-5" style="max-width: 416px">
+
+        <!-- Logo -->
+        <header class="navbar px-0 pb-4 mt-n2 mt-sm-0 mb-2 mb-md-3 mb-lg-4">
+          <a href="./" class="navbar-brand pt-0">
+            <span class="d-flex flex-shrink-0 text-primary me-2">
+              <img src="./static/img/logo_11.png" alt="Simply Lovely"> </span>
+            Simply Lovely
+          </a>
+        </header>
+
+        <h1 class="h2 mt-auto">Welcome back</h1>
+        <div class="nav fs-sm mb-4">
+          Don't have an account?
+          <a class="nav-link text-decoration-underline p-0 ms-2" href="./signup">Create an account</a>
+        </div>
+
+        <!-- Form -->
+        <form class="needs-validation" id="signin_form" action="/api/users/signin" method="post" novalidate="">
+          <div class="position-relative mb-4">
+            <input type="username" name="username" class="form-control form-control-lg" placeholder="Email or Username or Phone" required="">
+            <div class="invalid-tooltip bg-transparent py-0">Enter Your Logins any of email-or-username-or-phone!</div>
+          </div>
+          <div class="mb-4">
+            <div class="password-toggle">
+              <input type="password" name="password" class="form-control form-control-lg" placeholder="Password" required="">
+              <div class="invalid-tooltip bg-transparent py-0">Password is incorrect!</div>
+              <label class="password-toggle-button fs-lg" aria-label="Show/hide password">
+                <input type="checkbox" class="btn-check">
+              </label>
+            </div>
+          </div>
+          <div class="d-flex align-items-center justify-content-between mb-4">
+            <div class="form-check me-2">
+              <input type="checkbox" class="form-check-input" id="remember-30">
+              <label for="remember-30" class="form-check-label">Remember for 30 days</label>
+            </div>
+            <div class="nav">
+              <a class="nav-link animate-underline p-0" href="./reset-password">
+                <span class="animate-target">Forgot password?</span>
+              </a>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-lg btn-info w-100">Sign In</button>
+        </form>
+
+        <!-- Divider -->
+        <div class="d-flex align-items-center my-4">
+          <hr class="w-100 m-0">
+          <span class="text-body-emphasis fw-medium text-nowrap mx-4">or continue with</span>
+          <hr class="w-100 m-0">
+        </div>
+
+        <!-- Social login -->
+        <div class="d-flex flex-column flex-sm-row gap-3 pb-4 mb-3 mb-lg-4">
+          <button id="google-signin-btn" type="button" class="btn btn-lg btn-outline-secondary w-100 px-2">
+            <i class="ci-google ms-1 me-1"></i>
+            Google
+          </button>
+          <button type="button" disabled class="btn btn-lg btn-outline-secondary w-100 px-2">
+            <i class="ci-facebook ms-1 me-1"></i>
+            Facebook
+          </button>
+          <button type="button" disabled class="btn btn-lg btn-outline-secondary w-100 px-2">
+            <i class="ci-apple ms-1 me-1"></i>
+            Apple
+          </button>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-auto">
+          <p class="fs-xs mb-0">
+            © All rights reserved. <span class="animate-underline"><a class="animate-target text-dark-emphasis text-decoration-none" 
+                href="https://dunistech.ng" target="_blank" rel="noreferrer">Dunis Softwares.</a></span>
+          </p>
+        </footer>
+      </div>
+
+
+      <!-- Cover image visible on screens > 992px wide (lg breakpoint) -->
+      <div class="d-none d-lg-block w-100 py-4 ms-auto" style="max-width: 1034px">
+        <div class="d-flex flex-column justify-content-end h-100 rounded-5 overflow-hidden">
+          <span class="position-absolute top-0 start-0 w-100 h-100 d-none-dark" style="background: linear-gradient(-90deg, #accbee 0%, #e7f0fd 100%)"></span>
+          <span class="position-absolute top-0 start-0 w-100 h-100 d-none d-block-dark" style="background: linear-gradient(-90deg, #1b273a 0%, #1f2632 100%)"></span>
+          <div class="ratio position-relative z-2" style="--cz-aspect-ratio: calc(1030 / 1032 * 100%)">
+            <img src="./static/img/fashion/03.jpg" alt="Girl">
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  {% endblock content %}
+
+  {% include "incs/modals/response_modal.html" %}
+  {% include "incs/bottom_js.html" %}
+
+</body>
+
+</html>

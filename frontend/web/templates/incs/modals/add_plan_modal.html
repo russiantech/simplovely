@@ -1,0 +1,55 @@
+  <!-- Add new address modal -->
+    <div class="modal fade" id="newPlanModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="newPlanModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="newPlanModalLabel">Add new plan</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form class="row g-3 g-lg-4 needs-validation" id="add_plan_form" method="post" action="/api/plans" novalidate="">
+                <div class="col-lg-6">
+                    <div class="position-relative">
+                        <label for="plan_name" class="form-label">Plan Name</label>
+                        <input type="text" name="name" class="form-control" id="plan_name" required="">
+                        <div class="invalid-feedback">Please enter the plan name!</div>
+                      </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="position-relative">
+                        <label for="plan_amount" class="form-label">Plan Amount</label>
+                        <input type="number" name="amount" class="form-control" id="plan_amount" required="">
+                        <div class="invalid-feedback">Please enter the plan amount!</div>
+                      </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="position-relative">
+                        <label for="plan_volume" class="form-label">Plan Volume(Unit)</label>
+                        <input type="number" name="units" class="form-control" id="plan_volume" required="">
+                        <div class="invalid-feedback">Please enter the plan unit/volume!</div>
+                      </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="position-relative">
+                        <label for="plan_description" class="form-label">Plan Description</label>
+                        <textarea class="form-control" name="description" placeholder="Type your description here..." rows="5" aria-label="Description" aria-describedby="addon-icon"></textarea>
+
+                        <div class="invalid-feedback">Please enter the plan description!</div>
+                      </div>
+                </div>
+
+                <div class="col-12">    
+                  <div class="d-flex gap-3 pt-2 pt-sm-0">
+                    <button type="submit" class="btn btn-primary">Save plan</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+   

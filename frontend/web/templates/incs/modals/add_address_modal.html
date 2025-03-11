@@ -1,0 +1,240 @@
+{# 
+ <!-- Add new address modal --
+    <div class="modal fade" id="newAddressModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="newAddressModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="newAddressModalLabel">Add new address</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form class="row g-3 g-lg-4 needs-validation" id="add_address_form" method="post" action="/api/addresses" novalidate="">
+                <div class="col-lg-4">
+                  <div class="position-relative">
+                    <label class="form-label">Country</label>
+                    <select class="form-select" data-select="{&quot;searchEnabled&quot;: true}" aria-label="Select country" required="">
+                      <option value="">Select country...</option>
+                        <option value="Nigeria">Nigeria</option>
+                        <option value="South Africa">South Africa</option>
+                        <option value="Kenya">Kenya</option>
+                        <option value="Egypt">Egypt</option>
+                        <option value="Ethiopia">Ethiopia</option>
+                  
+                    </select>
+                    <div class="invalid-feedback">Please select your country!</div>
+                  </div>
+                </div>
+                <div class="col-lg-4">
+                  <div class="position-relative">
+                    <label class="form-label">State</label>
+                    <select class="form-select" data-select="{&quot;searchEnabled&quot;: true}" aria-label="Select city" required="">
+                      <option value="">Select State...</option>
+                      <option value="Austin">Austin</option>
+                      <option value="Charlotte">Charlotte</option>
+                      <option value="Chicago">Chicago</option>
+                      <option value="Columbus">Columbus</option>
+                      <option value="Dallas">Dallas</option>
+                      <option value="Houston">Houston</option>
+                      <option value="Jacksonville">Jacksonville</option>
+                      <option value="Los Angeles">Los Angeles</option>
+                      <option value="New York">New York</option>
+                      <option value="Orlando">Orlando</option>
+                      <option value="Philadelphia">Philadelphia</option>
+                      <option value="Phoenix">Phoenix</option>
+                      <option value="San Antonio">San Antonio</option>
+                      <option value="San Diego">San Diego</option>
+                      <option value="San Jose">San Jose</option>
+                    </select>
+                    <div class="invalid-feedback">Please select your city!</div>
+                  </div>
+                </div>
+                <div class="col-lg-4">
+                  <div class="position-relative">
+                    <label class="form-label">City</label>
+                    <select class="form-select" data-select="{&quot;searchEnabled&quot;: true}" aria-label="Select city" required="">
+                      <option value="">Select city...</option>
+                      <option value="Austin">Austin</option>
+                      <option value="Charlotte">Charlotte</option>
+                      <option value="Chicago">Chicago</option>
+                      <option value="Columbus">Columbus</option>
+                      <option value="Dallas">Dallas</option>
+                      <option value="Houston">Houston</option>
+                      <option value="Jacksonville">Jacksonville</option>
+                      <option value="Los Angeles">Los Angeles</option>
+                      <option value="New York">New York</option>
+                      <option value="Orlando">Orlando</option>
+                      <option value="Philadelphia">Philadelphia</option>
+                      <option value="Phoenix">Phoenix</option>
+                      <option value="San Antonio">San Antonio</option>
+                      <option value="San Diego">San Diego</option>
+                      <option value="San Jose">San Jose</option>
+                    </select>
+                    <div class="invalid-feedback">Please select your city!</div>
+                  </div>
+                </div>
+
+                <div class="col-lg-4">
+                  <div class="position-relative">
+                    <label for="add-zip" class="form-label">ZIP code</label>
+                    <input type="text" class="form-control" id="add-zip" required="">
+                    <div class="invalid-feedback">Please enter your ZIP code!</div>
+                  </div>
+                </div>
+                <div class="col-lg-8">
+                  <div class="position-relative">
+                    <label for="add-address" class="form-label">Address</label>
+                    <input type="text" class="form-control" id="add-address" required="">
+                    <div class="invalid-feedback">Please enter your address!</div>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-check mb-0">
+                    <input type="checkbox" class="form-check-input" id="set-primary-3">
+                    <label for="set-primary-3" class="form-check-label">Set as primary address</label>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="d-flex gap-3 pt-2 pt-sm-0">
+                    <button type="submit" class="btn btn-primary">Add address</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>-->
+  #}
+
+<!-- Add new address modal -->
+<div class="modal fade" id="newAddressModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="newAddressModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="newAddressModalLabel">Add new address</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+              <form class="row g-3 g-lg-4 needs-validation" id="add_address_form" method="post" action="/addresses" novalidate="">
+                  <div class="col-lg-4">
+                      <div class="position-relative">
+                          <label class="form-label">Country</label>
+                          <select class="form-select" id="countrySelect" required="">
+                              <option value="">Select country...</option>
+                          </select>
+                          <div class="invalid-feedback">Please select your country!</div>
+                      </div>
+                  </div>
+                  <div class="col-lg-4">
+                      <div class="position-relative">
+                          <label class="form-label">State</label>
+                          <select class="form-select" id="stateSelect" required="" disabled>
+                              <option value="">Select State...</option>
+                          </select>
+                          <div class="invalid-feedback">Please select your state!</div>
+                      </div>
+                  </div>
+                  <div class="col-lg-4">
+                      <div class="position-relative">
+                          <label class="form-label">City</label>
+                          <select class="form-select" name="city" id="citySelect" required="" disabled>
+                              <option value="">Select city...</option>
+                          </select>
+                          <div class="invalid-feedback">Please select your city!</div>
+                      </div>
+                  </div>
+
+                  <div class="col-lg-4">
+                      <div class="position-relative">
+                          <label for="add-zip" class="form-label">ZIP code</label>
+                          <input type="text" name="zip_code" class="form-control" id="add-zip" required="">
+                          <div class="invalid-feedback">Please enter your ZIP code!</div>
+                      </div>
+                  </div>
+                  <div class="col-lg-8">
+                      <div class="position-relative">
+                          <label for="add-address" class="form-label">Address</label>
+                          <input type="text" required name="address" class="form-control" id="add-address" required="">
+                          <div class="invalid-feedback">Please enter your address!</div>
+                      </div>
+                  </div>
+                  <div class="col-12">
+                      <div class="form-check mb-0">
+                          <input type="checkbox" checked name="is_primary" class="form-check-input" id="is_primary">
+                          <label for="is_primary" class="form-check-label">Set as primary address</label>
+                      </div>
+                  </div>
+                  <div class="col-12">
+                      <div class="d-flex gap-3 pt-2 pt-sm-0">
+                          <button type="submit" class="btn btn-primary">Add address</button>
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      </div>
+                  </div>
+              </form>
+          </div>
+      </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      // Fetch countries on modal open
+      fetch(`${window.apiUrl}/countries?page_size=300`)
+          .then(response => response.json())
+          .then(data => {
+              const countrySelect = document.getElementById('countrySelect');
+              data.countries.forEach(country => {
+                  const option = document.createElement('option');
+                  option.value = country.id; // Use the ID for API calls
+                  option.textContent = country.name;
+                  countrySelect.appendChild(option);
+              });
+          });
+
+      // Fetch states when a country is selected
+      document.getElementById('countrySelect').addEventListener('change', function () {
+          const countryId = this.value;
+          const stateSelect = document.getElementById('stateSelect');
+          stateSelect.innerHTML = '<option value="">Select State...</option>'; // Reset states
+          stateSelect.disabled = true; // Disable until states are loaded
+
+          if (countryId) {
+              fetch(`${window.apiUrl}/states/${countryId}/countries`)
+              //fetch(`${window.apiUrl}/states?country_id=${countryId}`)
+                  .then(response => response.json())
+                  .then(data => {
+                      data.states.forEach(state => {
+                          const option = document.createElement('option');
+                          option.value = state.id; // Use the ID for API calls
+                          option.textContent = state.name;
+                          stateSelect.appendChild(option);
+                      });
+                      stateSelect.disabled = false; // Enable states select
+                  });
+          }
+      });
+
+      // Fetch cities when a state is selected
+      document.getElementById('stateSelect').addEventListener('change', function () {
+          const stateId = this.value;
+          const citySelect = document.getElementById('citySelect');
+          citySelect.innerHTML = '<option value="">Select city...</option>'; // Reset cities
+          citySelect.disabled = true; // Disable until cities are loaded
+
+          if (stateId) {
+            fetch(`${window.apiUrl}/cities/${stateId}/states`)
+            // fetch(`${window.apiUrl}/cities?state_id=${stateId}`)
+                  .then(response => response.json())
+                  .then(data => {
+                      data.cities.forEach(city => {
+                          const option = document.createElement('option');
+                          option.value = city.id; // Use the ID for API calls
+                          option.textContent = city.name;
+                          citySelect.appendChild(option);
+                      });
+                      citySelect.disabled = false; // Enable cities select
+                  });
+          }
+      });
+  });
+</script>

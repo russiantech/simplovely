@@ -1,0 +1,427 @@
+    <!-- Vendor scripts -->
+    <script src="static/vendor/swiper/swiper-bundle.min.js"></script>
+    <!-- Bootstrap + Theme scripts -->
+    <script src="static/js/theme.min.js"></script>
+    <script src="./static/vendor/choices_js/choices.min.js"></script>
+    
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+        // Fetch wrapper function
+        async function make_request(url, options = {}) {
+            const token = localStorage.getItem('access_token'); // Retrieve the token
+
+            // Set default headers
+            options.headers = {
+                'Content-Type': 'application/json',
+                ...options.headers, // Merge any existing headers
+            };
+
+            // Attach the token if available
+            if (token) {
+                options.headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(url, options);
+
+            // Handle errors
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error making API request');
+            }
+
+            return response.json();
+        }
+
+        //
+
+        // Get current page URL
+        const currentPage = window.location.pathname.split("/").pop();
+        // Get all navigation links
+        const navLinks = document.querySelectorAll("nav a");
+        navLinks.forEach(link => {
+            if (link.getAttribute("href") === currentPage) {
+                link.classList.add("active");
+            }
+        });
+        
+        function response_modal(message) {
+            // Set the message in the response text element
+            document.getElementById('response_text').innerText = message;
+        
+            // Show the modal using Bootstrap's JavaScript method
+            const modal = new bootstrap.Modal(document.getElementById('response_modal'));
+            modal.show(); // Show the modal
+        }
+        
+        
+        // const apibaseurl = `${window.location.origin}`;
+        const apibaseurl = `http://localhost:5000/api`;
+        const plan_url = `${apibaseurl}/plans`;
+    
+        // Toggle button function
+        const toggleButton = (button, disable = true, spinner = true) => {
+            button.disabled = disable; // Disable/Enable the button
+            if (spinner) {
+                const originalText = button.dataset.originalText || button.innerHTML;
+                button.dataset.originalText = originalText; // Save original text
+                button.innerHTML = disable ? '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...' : originalText;
+            }
+        };
+    
+        // Form handler function
+        const handleFormSubmit = (formId, action) => {
+            const form = document.getElementById(formId);
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const submitButton = form.querySelector('button[type="submit"]');
+                toggleButton(submitButton, true, true); // Disable and show spinner
+    
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+                console.log(data)
+                try {
+                    const response = await fetch(`${apibaseurl}/${action}`, {
+                        method: form.method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                    });
+                    const result = await response.json();
+                    console.log(result);
+                    if (result.success) {
+                        response_modal(result.message || 'Operation successful.');
+                        // Save tokens to local storage only for login action
+                        if (action === 'users/signin') { // Check if action is 'login'
+                            localStorage.setItem('access_token', result.access_token);
+                            localStorage.setItem('refresh_token', result.refresh_token);
+                            console.log("Tokens saved successfully.");
+                        }
+                        
+                        if (result.redirect) {
+                            window.location.href = result.redirect; // Redirect if needed
+                        }
+                    } else {
+                        response_modal(result.error || 'Operation failed.');
+                    }
+                } catch (error) {
+                    response_modal(`An unexpect ed error occurred. ${error}`);
+                } finally {
+                    toggleButton(submitButton, false, true); // Re-enable button and restore text
+                }
+            });
+        };
+    
+        // Initialize form handlers
+        //handleFormSubmit('signup_form', 'signup');
+        //handleFormSubmit('signin_form', 'signin');
+        //handleFormSubmit('reset_password_modal', 'reset-password');
+        //handleFormSubmit('message_form', 'send-message');
+
+        /*
+        // Fetch plans from the API
+        fetch(plan_url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    const plansContainer = document.querySelector(".plans-container");
+                    plansContainer.innerHTML = '';
+    
+                    data.data.forEach(plan => {
+                        const cardBackgroundClass = {
+                            weekly: "text-bg-primary",
+                            monthly: "text-bg-dark",
+                            yearly: "text-bg-warning",
+                        }[plan.plan_type.toLowerCase()] || "text-bg-secondary";
+    
+                        const spanText = {
+                            weekly: "Start scaling!",
+                            monthly: "Get started now",
+                            yearly: "Get InventoryPro",
+                        }[plan.plan_type.toLowerCase()] || "Explore the plan";
+    
+                        const planFeatures = plan.plan_features
+                            .map(feature => `
+                                <li class="py-2 d-flex align-items-center">
+                                    <div class="icon icon-xs text-base icon-shape rounded-circle bg-primary-subtle me-3">
+                                        <i class="bi bi-check"></i>
+                                    </div>
+                                    <p>${feature}</p>
+                                </li>`).join("");
+    
+                        const planCard = `
+                            <div class="col">
+                                <div class="card card-pricing ${cardBackgroundClass} border-0 shadow-4 shadow-6-hover">
+                                    <div class="p-6">
+                                        <h3 class="text-reset ls-tight mb-1">${plan.plan_title}</h3>
+                                        <div class="d-flex align-items-center my-5">
+                                            <span class="d-block display-5 text-reset">${plan.plan_currency} ${plan.plan_amount}</span>
+                                        </div>
+                                        <p class="text-reset text-opacity-75 mb-4">${plan.plan_descr}</p>
+                                        <div class="mt-7 mb-2 d-flex justify-content-between align-items-center">
+                                            <span class="text-sm fw-semibold">${spanText}</span>
+                                            <button class="btn btn-sm btn-square btn-dark stretched-link subscribe-btn" 
+                                                    data-plan-id="${plan.id}">
+                                                <i class="bi bi-arrow-right"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <ul class="list-unstyled mt-7">${planFeatures}</ul>
+                            </div>`;
+    
+                        plansContainer.insertAdjacentHTML('beforeend', planCard);
+                    });
+    
+                    // Event listener for subscribe buttons
+                    plansContainer.addEventListener('click', (event) => {
+                        if (event.target.classList.contains('subscribe-btn')) {
+                            const planId = event.target.dataset.planId;
+                            const subscriptionForm = document.getElementById("subscription-form");
+                            subscriptionForm.addEventListener('submit', async (e) => {
+                                e.preventDefault();
+                                const submitButton = subscriptionForm.querySelector('button[type="submit"]');
+                                toggleButton(submitButton, true, true); // Disable and show spinner
+    
+                                const email = subscriptionForm.querySelector("#email").value;
+    
+                                try {
+                                    const response = await fetch(`${apibaseurl}/api/init-subscribe/${planId}`, {
+                                        method: "POST",
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify({ email }),
+                                    });
+                                    const result = await response.json();
+    
+                                    if (result.success) {
+                                        response_modal(result.message || "Processing payment");
+                                        window.location.href = result.data.redirect;
+                                    } else {
+                                        response_modal(result.error || "Error processing payment");
+                                    }
+                                } catch (error) {
+                                    response_modal(`Error: ${error.message || "Unknown error"}`);
+                                } finally {
+                                    toggleButton(submitButton, false, true); // Re-enable button and restore text
+                                }
+                            });
+                        }
+                    });
+    
+                } else {
+                    response_modal("Failed to load plans.");
+                }
+            })
+            .catch(() => {
+                response_modal("Error fetching plans.");
+            });
+    
+        // Verify a transaction
+        const getQueryParams = () => {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                status: params.get('status'),
+                tx_ref: params.get('tx_ref'),
+            };
+        };
+    
+        const queryParams = getQueryParams();
+    
+        if (queryParams.status && queryParams.tx_ref) {
+            response_modal("Verifying your transaction, please wait...");
+    
+            fetch(`${apibaseurl}/api/transaction-callback?status=${queryParams.status}&tx_ref=${queryParams.tx_ref}`)
+                .then(response => response.json())
+                .then(result => {
+                    response_modal(result.success ? result.message || "Transaction completed successfully!" : result.error || "Error processing transaction.");
+                })
+                .catch(error => {
+                    response_modal(`Error: ${error.message || "Unknown error occurred."}`);
+                });
+        }
+        */
+        // Fetch plans from the API
+// Function to format amount as currency
+function formatCurrency(amount) {
+    // Convert the amount to a number and format it
+    const formattedAmount = amount.toLocaleString('en-NG', {
+        style: 'currency',
+        currency: 'NGN',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    //return formattedAmount.replace('₦', 'N'); // Replace the currency symbol for display
+    return formattedAmount; // Replace the currency symbol for display
+}
+
+    fetch(plan_url)
+    .then(response => response.json())
+    .then(data => {
+        // console.log(data);
+        if (data.success && data.plans) {
+            const plansContainer = document.querySelector(".plans-container");
+            plansContainer.innerHTML = '';
+
+            data.plans.forEach(plan => {
+                const planRow = `
+                    <tr class="cursor-pointer">
+                        <td class="py-3 ps-0">
+                            <div class="d-flex align-items-start align-items-md-center">
+                                <div class="ratio bg-body-secondary rounded-2 overflow-hidden flex-shrink-0" style="width: 66px">
+                                    <img src="static/img/account/products/03.jpg" class="hover-effect-target" alt="Image">
+                                </div>
+                                <div class="ps-2 ms-1">
+                                    <h6 class="product mb-1 mb-md-0">
+                                        <span class="fs-sm fw-medium">${plan.name}</span>
+                                    </h6>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="d-none d-md-table-cell py-3">
+                            <span class="badge fs-xs text-info bg-info-subtle rounded-pill">${formatCurrency(plan.amount)}</span>
+                        </td>
+                        <td class="text-end d-none d-sm-table-cell py-3">${plan.units || 'N/A'}</td>
+                        <td class="text-end py-3">
+                            <button class="btn btn-sm btn-dark subscribe-btn" data-plan-id="${plan.id}">Subscribe</button>
+                        </td>
+                    </tr>`;
+
+                plansContainer.insertAdjacentHTML('beforeend', planRow);
+            });
+
+            // Event listener for subscribe buttons
+            plansContainer.addEventListener('click', (event) => {
+                if (event.target.classList.contains('subscribe-btn')) {
+                    const planId = event.target.dataset.planId;
+                    // console.log(planId)
+                    //const email = prompt("Please enter your email for subscription:");
+                    const email = null;
+                    subscribeUser(planId, email);
+                    /*if (email && validateEmail(email)) {
+                        subscribeUser(planId, email);
+                    } else {
+                        alert("Please enter a valid email address.");
+                    }*/
+                }
+            });
+
+        } else {
+            response_modal("Failed to load plans.");
+        }
+    })
+    .catch(() => {
+        response_modal("Error fetching plans.");
+    });
+
+    // Email validation function
+    function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase());
+    }
+
+
+        // Function to handle subscription
+        function subscribeUser(planId, email) {
+        //fetch(`${apibaseurl}/api/init-subscribe/${planId}`, {
+        //fetch(`${apibaseurl}/payment/${planId}/paystack`, {
+        make_request(`${apibaseurl}/payment/${planId}/paystack`, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }),
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                window.location.href = result.data.redirect;
+            } else {
+                response_modal(result.error || "Error processing payment");
+            }
+        })
+        .catch(error => {
+            response_modal(`Error: ${error.message || "Unknown error"}`);
+        });
+        }
+
+        // Verify a transaction
+        const getQueryParams = () => {
+        const params = new URLSearchParams(window.location.search);
+        return {
+            status: params.get('status'),
+            tx_ref: params.get('tx_ref'),
+        };
+        };
+
+        const queryParams = getQueryParams();
+
+        if (queryParams.status && queryParams.tx_ref) {
+        response_modal("Verifying your transaction, please wait...");
+
+        fetch(`${apibaseurl}/api/transaction-callback?status=${queryParams.status}&tx_ref=${queryParams.tx_ref}`)
+            .then(response => response.json())
+            .then(result => {
+                response_modal(result.success ? result.message || "Transaction completed successfully!" : result.error || "Error processing transaction.");
+            })
+            .catch(error => {
+                response_modal(`Error: ${error.message || "Unknown error occurred."}`);
+            });
+        }
+
+        //
+        const signupForm = document.getElementById('signup_form');
+        const signinForm = document.getElementById('signin_form');
+        const resetPasswordForm = document.getElementById('reset_password_modal');
+        const messageForm = document.getElementById('message_form');
+        const planForm = document.getElementById('add_plan_form');
+        const addressForm = document.getElementById('add_address_form');
+    
+        if (signupForm) {
+            signupForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent default form submission
+                handleFormSubmit('signup_form', 'users/signup');
+            });
+        }
+    
+        if (signinForm) {
+            signinForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent default form submission
+                handleFormSubmit('signin_form', 'users/signin');
+            });
+        }
+    
+        if (resetPasswordForm) {
+            resetPasswordForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent default form submission
+                handleFormSubmit('reset_password_modal', 'users/reset-password');
+            });
+        }
+    
+        if (messageForm) {
+            messageForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent default form submission
+                handleFormSubmit('message_form', 'users/send-message');
+            });
+        }
+
+        if (planForm) {
+            planForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent default form submission
+                handleFormSubmit('add_plan_form', 'plans');
+            });
+        }
+
+        if (addressForm) {
+            addressForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent default form submission
+                handleFormSubmit('add_address_form', 'addresses');
+            });
+        }
+
+    });
+    
+</script>
+    

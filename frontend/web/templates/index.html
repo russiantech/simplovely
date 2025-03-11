@@ -1,0 +1,383 @@
+
+    {% extends "incs/base.html" %}
+    {% block title %} SimplyLovely - Laundry And Fashion {% endblock title %}
+
+    {% block content %}
+        <main class="content-wrapper">
+
+        <!-- Hero with slider -->
+        <section class="bg-body-tertiary">
+            <div class="container">
+                <div class="row">
+
+                    <!-- Titles master slider -->
+                    <div class="col-md-6 col-lg-5 d-flex flex-column">
+                        <div class="py-4 mt-auto">
+                            <div class="swiper pb-1 pt-3 pt-sm-4 py-md-4 py-lg-3 swiper-initialized swiper-horizontal swiper-backface-hidden"
+                                data-swiper="{
+              &quot;spaceBetween&quot;: 24,
+              &quot;loop&quot;: true,
+              &quot;speed&quot;: 400,
+              &quot;controlSlider&quot;: &quot;#heroImages&quot;,
+              &quot;pagination&quot;: {
+                &quot;el&quot;: &quot;#sliderBullets&quot;,
+                &quot;clickable&quot;: true
+              },
+              &quot;autoplay&quot;: {
+                &quot;delay&quot;: 5500,
+                &quot;disableOnInteraction&quot;: false
+              }
+            }">
+                                <div class="swiper-wrapper align-items-center">
+                                    <div class="swiper-slide text-center text-md-start">
+                                        <p class="fs-xl mb-2 mb-lg-3 mb-xl-4">
+                                            Discover fashion that blends style and comfort with every piece.</p>
+                                        <h2 class="display-4 text-uppercase mb-4 mb-xl-5">Effortless Elegance</h2>
+                                        <a class="btn btn-lg btn-outline-dark" href="./laundry">
+                                            Shop now
+                                            <i class="ci-arrow-up-right fs-lg ms-2 me-n1"></i>
+                                        </a>
+                                    </div>
+                                    <div class="swiper-slide text-center text-md-start">
+                                        <p class="fs-xl mb-2 mb-lg-3 mb-xl-4">
+                                            Simplify your routine with top-tier laundry essentials.</p>
+                                        <h2 class="display-4 text-uppercase mb-4 mb-xl-5">Laundry Made Easy</h2>
+                                        <a class="btn btn-lg btn-outline-dark" href="./laundry">
+                                            Visit Us
+                                            <i class="ci-arrow-up-right fs-lg ms-2 me-n1"></i>
+                                        </a>
+                                    </div>
+                                    <div class="swiper-slide text-center text-md-start">
+                                        <p class="fs-xl mb-2 mb-lg-3 mb-xl-4">
+                                            Fashion-forward outfits, paired with laundry solutions that shine.</p>
+                                        <h2 class="display-4 text-uppercase mb-4 mb-xl-5">-50% on Chic & Clean</h2>
+                                        <a class="btn btn-lg btn-outline-dark" href="./laundry">
+                                            Get in touch
+                                            <i class="ci-arrow-up-right fs-lg ms-2 me-n1"></i>
+                                        </a>
+                                    </div>
+                                    <div class="swiper-slide text-center text-md-start">
+                                        <p class="fs-xl mb-2 mb-lg-3 mb-xl-4">
+                                            The perfect combination of fashion and easy laundry care..</p>
+                                        <h2 class="display-4 text-uppercase mb-4 mb-xl-5">Style, Simplified</h2>
+                                        <a class="btn btn-lg btn-outline-dark" href="./laundry">
+                                            Shop now
+                                            <i class="ci-arrow-up-right fs-lg ms-2 me-n1"></i>
+                                        </a>
+                                    </div>
+                                    <div class="swiper-slide text-center text-md-start">
+                                        <p class="fs-xl mb-2 mb-lg-3 mb-xl-4">
+                                            Stay stylish, while keeping your wardrobe fresh and spotless.</p>
+                                        <h2 class="display-4 text-uppercase mb-4 mb-xl-5">Fresh & Fabulous</h2>
+                                        <a class="btn btn-lg btn-outline-dark" href="./laundry">
+                                            Shop now
+                                            <i class="ci-arrow-up-right fs-lg ms-2 me-n1"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slider bullets (pagination) -->
+                        <div
+                            class="d-flex justify-content-center justify-content-md-start pb-4 pb-xl-5 mt-n1 mt-md-auto mb-md-3 mb-lg-4">
+                            <div class="swiper-pagination position-static w-auto pb-1" id="sliderBullets"></div>
+                        </div>
+                    </div>
+
+                    <!-- Linked images (controlled slider) -->
+                    <div class="col-md-6 col-lg-7 align-self-end">
+                        <div class="position-relative ms-md-n4">
+                            <div class="ratio" style="--cz-aspect-ratio: calc(662 / 770 * 100%)"></div>
+                            <div class="swiper position-relative top-0 start-0 w-100 h-100 user-select-none swiper-fade swiper-initialized 
+            swiper-horizontal swiper-watch-progress swiper-backface-hidden" id="heroImages" data-swiper="{
+              &quot;allowTouchMove&quot;: false,
+              &quot;loop&quot;: true,
+              &quot;effect&quot;: &quot;fade&quot;,
+              &quot;fadeEffect&quot;: {
+                &quot;crossFade&quot;: true
+              }
+            }">
+                                <div class="swiper-wrapper">
+                                    <div class="swiper-slide">
+                                        <img src="./static/img/hero/01.png" class="rtl-flip1" alt="Image">
+                                    </div>
+                                    <div class="swiper-slide">
+                                        <img src="./static/img/hero/06.png" class="rtl-flip1" alt="Image">
+                                    </div>
+                                    <div class="swiper-slide">
+                                        <img src="./static/img/hero/02.png" class="rtl-flip1" alt="Image">
+                                    </div>
+                                    <div class="swiper-slide">
+                                        <img src="./static/img/hero/04.png" class="rtl-flip1" alt="Image">
+                                    </div>
+                                    <div class="swiper-slide">
+                                        <img src="./static/img/hero/055.png" class="rtl-flip1" alt="Image">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!--- Devlivery & pick-up -->
+        
+        <section class="container pt-2 pt-sm-3 pt-md-4 pt-lg-5 pb-5 my-xxl-3">
+            <div class="row mb-4">
+                <div class="col-md-5 order-md-2 mb-4 mb-md-0">
+                    <div class="position-relative h-100 bg-body-tertiary rounded-5 overflow-hidden">
+                        <div class="d-none d-md-block" style="height: 440px"></div>
+                        <div class="d-none d-sm-block d-md-none" style="height: 350px"></div>
+                        <div class="d-sm-none" style="height: 250px"></div>
+                        <img src="static/img/laundry/basket_towels.jpg"
+                            class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" alt="Image">
+                    </div>
+                </div>
+                <div class="col-md-7 order-md-1">
+                    <div class="d-flex align-items-center h-100 bg-body-tertiary rounded-5 p-4 p-xl-5">
+                        <div class="p-sm-3 p-xxl-2">
+                            <h2 class="mb-lg-4">Service at your Convenience.</h2>
+                            <p class="fs-lg pb-sm-2 pb-lg-3">
+                                SimplyLovely laundry gently weaves freshness, softness and warmth into every fold,
+                                enveloping the senses.
+                            </p>
+                            <div class="d-flex flex-column flex-sm-row gap-2 gap-lg-3">
+                                <div class="d-flex align-items-center text-body-emphasis bg-body rounded-pill shadow px-3"
+                                    style="padding: 10px 0">
+                                    <i class="fi-package me-2"></i>
+                                    <a data-bs-toggle="modal" data-bs-target="#modalServiceRequests" class="text-decoration-none text-dark-emphasis cursor-pointer">
+                                        <div class="fs-sm fw-bold">Pick-up</div>
+                                    </a>
+                                </div>
+                                <div class="d-flex align-items-center text-body-emphasis bg-body rounded-pill shadow px-3"
+                                    style="padding: 10px 0">
+                                    <i class="ci-bike me-2"></i>
+                                    <i class="fi-delivery me-2"></i>
+                                    <a data-bs-toggle="modal" data-bs-target="#modalServiceRequests" class="text-decoration-none text-dark-emphasis cursor-pointer">
+                                        <div class="fs-sm fw-bold">Devlivery</div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- latest styles -->
+        <section class="container py-2 py-sm-3 py-md-4 py-lg-5 my-xxl-3">
+            <div class="d-flex align-items-start justify-content-between gap-4 pb-3 mb-2 mb-sm-3 mb-lg-4">
+                <h2 class="mb-0">Latest styles</h2>
+                <div class="nav">
+                    <a class="nav-link position-relative fs-base text-nowrap py-1 px-0" href="#!">
+                        <span class="hover-effect-underline stretched-link me-1">View all</span>
+                        <i class="fi-chevron-right fs-lg"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-2 g-4 pb-5">
+                <!-- Project -->
+                <div class="col">
+                    <article class="card hover-effect-scale bg-transparent overflow-hidden">
+                        <div class="row h-100 g-0">
+                            <div class="col-sm-4 position-relative bg-body-tertiary overflow-hidden"
+                                style="min-height: 178px">
+                                <img src="static/img/fashion/01.jpg"
+                                    class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 object-fit-cover"
+                                    alt="Image">
+                            </div>
+                            <div class="col-sm-8 card-body d-flex flex-column align-items-start p-3 p-sm-4">
+                                <h3 class="h6 mt-1 mt-sm-0 mb-2">
+                                    <a class="stretched-link hover-effect-underline" href="">
+                                        Women wears.</a>
+                                </h3>
+                                <div class="d-flex align-items-center gap-3 mb-4">
+                                    <div class="d-flex align-items-center gap-1">
+                                        <i class="fi-star-filled text-warning"></i>
+                                        <span class="fs-sm text-secondary-emphasis">4.5</span>
+                                    </div>
+                                    <div class="fs-sm text-dark-emphasis">ankara</div>
+                                </div>
+                                <button type="button" class="btn btn-outline-dark position-relative z-2 mt-auto">Home
+                                    Service</button>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Project -->
+                <div class="col">
+                    <article class="card hover-effect-scale bg-transparent overflow-hidden">
+                        <div class="row h-100 g-0">
+                            <div class="col-sm-4 position-relative bg-body-tertiary overflow-hidden"
+                                style="min-height: 178px">
+                                <img src="static/img/fashion/02.jpg"
+                                    class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 object-fit-cover"
+                                    alt="Image">
+                            </div>
+                            <div class="col-sm-8 card-body d-flex flex-column align-items-start p-3 p-sm-4">
+                                <h3 class="h6 mt-1 mt-sm-0 mb-2">
+                                    <a class="stretched-link hover-effect-underline" href="">Men's wears.</a>
+                                </h3>
+                                <div class="d-flex align-items-center gap-3 mb-4">
+                                    <div class="d-flex align-items-center gap-1">
+                                        <i class="fi-star-filled text-warning"></i>
+                                        <span class="fs-sm text-secondary-emphasis">4.3</span>
+                                    </div>
+                                    <div class="fs-sm text-dark-emphasis">native</div>
+                                </div>
+                                <button type="button" class="btn btn-outline-dark position-relative z-2 mt-auto">Home
+                                    Service</button>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Project -->
+                <div class="col">
+                    <article class="card hover-effect-scale bg-transparent overflow-hidden">
+                        <div class="row h-100 g-0">
+                            <div class="col-sm-4 position-relative bg-body-tertiary overflow-hidden"
+                                style="min-height: 178px">
+                                <img src="static/img/fashion/03.jpg"
+                                    class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 object-fit-cover"
+                                    alt="Image">
+                            </div>
+                            <div class="col-sm-8 card-body d-flex flex-column align-items-start p-3 p-sm-4">
+                                <h3 class="h6 mt-1 mt-sm-0 mb-2">
+                                    <a class="stretched-link hover-effect-underline" href="#">
+                                        Children's wears.</a>
+                                </h3>
+                                <div class="d-flex align-items-center gap-3 mb-4">
+                                    <div class="d-flex align-items-center gap-1">
+                                        <i class="fi-star-filled text-warning"></i>
+                                        <span class="fs-sm text-secondary-emphasis">4.7</span>
+                                    </div>
+                                    <div class="fs-sm text-dark-emphasis">native</div>
+                                </div>
+                                <button type="button" class="btn btn-outline-dark position-relative z-2 mt-auto">Home
+                                    Service</button>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Project -->
+                <div class="col">
+                    <article class="card hover-effect-scale bg-transparent overflow-hidden">
+                        <div class="row h-100 g-0">
+                            <div class="col-sm-4 position-relative bg-body-tertiary overflow-hidden"
+                                style="min-height: 178px">
+                                <img src="static/img/fashion/04.jpg"
+                                    class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 object-fit-cover"
+                                    alt="Image">
+                            </div>
+                            <div class="col-sm-8 card-body d-flex flex-column align-items-start p-3 p-sm-4">
+                                <h3 class="h6 mt-1 mt-sm-0 mb-2">
+                                    <a class="stretched-link hover-effect-underline" href="">Aseobi - mordern
+                                        styles.</a>
+                                </h3>
+                                <div class="d-flex align-items-center gap-3 mb-4">
+                                    <div class="d-flex align-items-center gap-1">
+                                        <i class="fi-star-filled text-warning"></i>
+                                        <span class="fs-sm text-secondary-emphasis">4.9</span>
+                                    </div>
+                                    <div class="fs-sm text-dark-emphasis">native</div>
+                                </div>
+                                <button type="button" class="btn btn-outline-dark position-relative z-2 mt-auto">Home
+                                    Service</button>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- why choose us -->
+        <section class="container py-2 py-sm-3 py-md-4 py-lg-5 mb-xxl-3">
+            <h2 class="pt-5">Why SimplyLovely.</h2>
+            <p class="fs-lg pb-3">Laundry and Fashion</p>
+
+            <!-- Row of items that turns into carousel on screens < 800px wide -->
+            <div class="swiper pb-5" data-swiper="{
+          &quot;slidesPerView&quot;: 1,
+          &quot;spaceBetween&quot;: 24,
+          &quot;pagination&quot;: {
+            &quot;el&quot;: &quot;.swiper-pagination&quot;,
+            &quot;clickable&quot;: true
+          },
+          &quot;breakpoints&quot;: {
+            &quot;450&quot;: {
+              &quot;slidesPerView&quot;: 2
+            },
+            &quot;800&quot;: {
+              &quot;slidesPerView&quot;: 3
+            }
+          }
+        }">
+                <div class="swiper-wrapper">
+
+                    <!-- Item -->
+                    <div class="swiper-slide">
+                        <svg class="text-secondary-emphasis" xmlns="http://www.w3.org/2000/svg" width="48" height="48"
+                            fill="currentColor">
+                            <path
+                                d="M41.441 35.281a.95.95 0 0 1-.184-.018.99.99 0 0 1-.175-.054.93.93 0 0 1-.162-.086.91.91 0 0 1-.142-.116c-.043-.043-.082-.091-.117-.142s-.063-.105-.085-.162-.042-.116-.053-.175a.95.95 0 0 1-.019-.184.93.93 0 0 1 .019-.183.88.88 0 0 1 .053-.175c.023-.057.052-.112.085-.162a.93.93 0 0 1 .117-.142c.174-.174.416-.275.663-.275a.94.94 0 0 1 .663.275c.043.043.082.091.116.142a.97.97 0 0 1 .087.162c.024.057.041.115.053.175a.93.93 0 0 1 .019.183.95.95 0 0 1-.019.184c-.012.059-.03.118-.053.175a.94.94 0 0 1-.087.162c-.034.052-.073.099-.116.142s-.091.082-.143.116a.86.86 0 0 1-.162.086.95.95 0 0 1-.175.054.93.93 0 0 1-.183.018zM27.48 37.367c-9.238 0-16.753-7.515-16.753-16.752S18.242 3.862 27.48 3.862s16.754 7.515 16.754 16.752-7.516 16.753-16.754 16.753zm0-31.63c-8.204 0-14.878 6.674-14.878 14.877A14.9 14.9 0 0 0 27.48 35.492a14.9 14.9 0 0 0 14.879-14.878A14.9 14.9 0 0 0 27.48 5.737zm-3.993 17.638a.94.94 0 0 1-.925-.79.94.94 0 0 1 .617-1.033c.162-.489.689-.756 1.18-.596l1.025.334a.94.94 0 0 1 .644.965c-.034.432-.359.784-.787.852l-1.605.256a.94.94 0 0 1-.149.012zm8.37 0a.94.94 0 0 1-.149-.012l-1.605-.256a.94.94 0 0 1-.143-1.817l1.025-.334a.94.94 0 0 1 1.18.596.94.94 0 0 1 .617 1.033.94.94 0 0 1-.925.79zM41.989 6.104A20.38 20.38 0 0 0 27.478.094a20.39 20.39 0 0 0-14.511 6.01 20.38 20.38 0 0 0-6.011 14.51 20.37 20.37 0 0 0 5.363 13.833l-1.308 1.308-1.546-1.546a.94.94 0 0 0-1.326 0l-6.95 6.95C.423 41.925 0 42.945 0 44.03s.423 2.105 1.189 2.871a4.05 4.05 0 0 0 2.872 1.188 4.05 4.05 0 0 0 2.872-1.188l6.95-6.949c.176-.176.275-.414.275-.663s-.099-.487-.275-.663l-1.546-1.546 1.308-1.308c3.018 2.76 6.728 4.53 10.788 5.136 1.029.154 2.057.23 3.08.23a20.38 20.38 0 0 0 9.325-2.256.94.94 0 0 0 .407-1.262.94.94 0 0 0-1.262-.407c-7.226 3.703-15.941 2.332-21.688-3.414a18.52 18.52 0 0 1-5.463-13.186A18.52 18.52 0 0 1 14.293 7.43c7.271-7.27 19.101-7.27 26.371 0 5.964 5.963 7.184 15.221 2.966 22.512a.94.94 0 0 0 .342 1.281.94.94 0 0 0 1.281-.342c4.643-8.025 3.3-18.214-3.263-24.777zM11.895 39.289l-6.287 6.287a2.19 2.19 0 0 1-3.092 0 2.17 2.17 0 0 1 0-3.092l6.287-6.287.883.883-2.639 2.639a.94.94 0 0 0 0 1.326c.183.183.423.275.663.275s.48-.092.663-.275l2.639-2.639.883.883zm23.459-13.825v-2.415c.184-.75 1.136-4.809 1.137-8.386 0-1.47-.33-2.859-.607-3.765l-.418-1.188c-.201-.5-.284-.707-.579-.879a.94.94 0 0 0-1.058.078l-.241.193a6.23 6.23 0 0 1-5.206 1.234c-2.622-.557-5.338.498-6.898 2.64-.835.124-1.604.543-2.164 1.192a3.55 3.55 0 0 0-.824 2.839 1.01 1.01 0 0 0 .024.114l1.46 5.258v3.086c0 1.853.942 3.422 2.725 4.535.703.439 1.511.796 2.408 1.063l-.022 1.583a.94.94 0 0 0 .938.95h3.273a.94.94 0 0 0 .938-.95l-.022-1.581c.9-.266 1.709-.622 2.413-1.061 1.779-1.111 2.72-2.68 2.72-4.539zm-6.222 3.95l-.103.025a.94.94 0 0 0-.693.918l.018 1.363h-1.372l.019-1.363a.94.94 0 0 0-.693-.918l-.097-.024c-1.309-.314-4.352-1.325-4.352-3.952v-6.082c0-.19.155-.345.345-.345h3.445a8.71 8.71 0 0 0 6.002-2.385.94.94 0 0 0 .038-1.325.94.94 0 0 0-1.325-.038c-1.28 1.208-2.955 1.873-4.715 1.873h-3.444c-.601 0-1.148.241-1.548.63l-.309-1.111a1.67 1.67 0 0 1 .395-1.288c.319-.369.781-.58 1.268-.58a.94.94 0 0 0 .799-.447l.015-.024c1.09-1.724 3.168-2.596 5.169-2.171a8.09 8.09 0 0 0 5.992-1.054c.291.869.63 2.176.63 3.547l-.103 2.099a.95.95 0 0 0-.148-.01.94.94 0 0 0-.93.945l.043 5.239v2.528c0 2.636-3.04 3.641-4.347 3.95zm-1.461-1.163a2.41 2.41 0 0 1-2.201-1.433.94.94 0 0 1 .479-1.237.94.94 0 0 1 1.236.478.53.53 0 0 0 .971 0c.209-.474.763-.688 1.236-.478a.94.94 0 0 1 .479 1.237 2.41 2.41 0 0 1-2.201 1.433z">
+                            </path>
+                        </svg>
+                        <h3 class="h5 pt-3 pt-md-4 mb-2">Quality Care.</h3>
+                        <p class="mb-0">We use eco-friendly products, and skilled techniques for pristine results.</p>
+                    </div>
+
+                    <!-- Item -->
+                    <div class="swiper-slide">
+                        <svg class="text-secondary-emphasis" xmlns="http://www.w3.org/2000/svg" width="48" height="48"
+                            fill="currentColor">
+                            <path
+                                d="M43.313 0H18.938c-2.585 0-4.687 2.103-4.687 4.688v8.438H4.688C2.103 13.125 0 15.228 0 17.813v19.875c0 2.585 2.103 4.688 4.688 4.688h1.875v4.688a.94.94 0 0 0 .938.937.94.94 0 0 0 .663-.275l5.35-5.35h15.549c2.585 0 4.688-2.103 4.688-4.687V29.25h1.875v4.688a.94.94 0 0 0 .938.937.94.94 0 0 0 .663-.275l5.35-5.35h1.487c2.392 0 3.938-1.84 3.938-4.687V4.688A4.7 4.7 0 0 0 43.313 0zM31.875 37.688c0 1.551-1.262 2.813-2.812 2.813H13.125a.94.94 0 0 0-.663.275l-4.025 4.025v-3.362A.94.94 0 0 0 7.5 40.5H4.688c-1.551 0-2.812-1.262-2.812-2.812V17.813C1.875 16.262 3.137 15 4.688 15h24.375c1.551 0 2.813 1.262 2.813 2.813v19.875zm14.25-13.125c0 1.05-.268 2.813-2.062 2.813h-1.875a.94.94 0 0 0-.663.275L37.5 31.674v-3.362a.94.94 0 0 0-.937-.937H33.75v-6.75h5.813a.94.94 0 0 0 .938-.937.94.94 0 0 0-.937-.937H33.75v-.937c0-2.585-2.103-4.687-4.687-4.687H16.125V4.688c0-1.551 1.262-2.812 2.813-2.812h24.375c1.551 0 2.813 1.262 2.813 2.813v19.875zM39.563 7.5H22.688a.94.94 0 0 0-.937.938.94.94 0 0 0 .938.938h16.875a.94.94 0 0 0 .938-.937.94.94 0 0 0-.937-.937zm0 5.625h-3.75a.94.94 0 0 0-.937.938.94.94 0 0 0 .938.938h3.75a.94.94 0 0 0 .938-.937.94.94 0 0 0-.937-.937zM8.438 22.5a.94.94 0 0 0 .938-.937.94.94 0 0 0-.937-.937.94.94 0 0 0-.937.938.94.94 0 0 0 .938.938zm16.875-1.875H12.188a.94.94 0 0 0-.937.938.94.94 0 0 0 .938.938h13.125a.94.94 0 0 0 .938-.937.94.94 0 0 0-.937-.937zm0 5.625h-9.375a.94.94 0 0 0-.937.938.94.94 0 0 0 .938.938h9.375a.94.94 0 0 0 .938-.937.94.94 0 0 0-.937-.937zM8.438 28.125h3.75a.94.94 0 0 0 .938-.937.94.94 0 0 0-.937-.937h-3.75a.94.94 0 0 0-.937.938.94.94 0 0 0 .938.938zm9.375 3.75H8.625a.94.94 0 0 0-.937.938.94.94 0 0 0 .938.938h9.188a.94.94 0 0 0 .938-.937.94.94 0 0 0-.937-.937z">
+                            </path>
+                        </svg>
+                        <h3 class="h5 pt-3 pt-md-4 mb-2">Fashion Focus.</h3>
+                        <p class="mb-0">
+                            Our services cater for your styles, ensuring garments are tailored to your unique taste.</p>
+                    </div>
+
+                    <!-- Item -->
+                    <div class="swiper-slide">
+                        <svg class="text-secondary-emphasis" xmlns="http://www.w3.org/2000/svg" width="48" height="48"
+                            fill="currentColor">
+                            <path
+                                d="M4.519 8.136c.196.471.752.703 1.224.507s.703-.752.507-1.224-.752-.703-1.224-.507-.704.753-.507 1.224zm3.875 0c.153.368.535.607.935.576.391-.03.729-.307.834-.685.222-.798-.673-1.478-1.384-1.054-.393.234-.56.74-.384 1.163zM4.752 44.84h35.053A8.21 8.21 0 0 0 48 36.645a8.21 8.21 0 0 0-7.257-8.141l-.001-20.593A4.76 4.76 0 0 0 35.99 3.16H4.752A4.76 4.76 0 0 0 0 7.912v32.175a4.76 4.76 0 0 0 4.752 4.753zm0-1.875a2.88 2.88 0 0 1-2.877-2.878V12.202h36.993v16.302a8.28 8.28 0 0 0-6.536 4.779H5.76a.94.94 0 0 0-.937.938v4.766a.94.94 0 0 0 .938.938h9.613a.94.94 0 0 0 .938-.937.94.94 0 0 0-.937-.937H6.698V35.16h25.048a8.24 8.24 0 0 0-.135 1.487c0 .47.04.941.12 1.405h-8.109a.94.94 0 0 0-.937.938.94.94 0 0 0 .938.938h8.675a8.28 8.28 0 0 0 2.298 3.04H4.752zm41.373-6.32a6.33 6.33 0 0 1-6.32 6.32 6.39 6.39 0 0 1-6.32-6.32 6.31 6.31 0 0 1 .132-1.285c.595-2.871 3.144-5.035 6.188-5.035a6.33 6.33 0 0 1 6.32 6.319zM4.752 5.035H35.99a2.88 2.88 0 0 1 2.877 2.877v2.415H1.875V7.912a2.88 2.88 0 0 1 2.877-2.877zm2.879 23.769a8.43 8.43 0 0 0 5.579 2.124 8.43 8.43 0 0 0 5.58-2.125 8.4 8.4 0 0 0-5.579-14.654 8.4 8.4 0 0 0-5.579 14.655zm5.293.242a6.54 6.54 0 0 1-3.678-1.339 4.04 4.04 0 0 1 3.954-3.3c1.973.004 3.628 1.419 3.972 3.3-1.208.927-2.728 1.407-4.249 1.34zm-1.021-7.821a1.31 1.31 0 0 1 1.307-1.307 1.31 1.31 0 0 1 1.307 1.307 1.31 1.31 0 0 1-1.301 1.307 1.31 1.31 0 0 1-1.312-1.307zm1.307-5.201c3.593 0 6.515 2.922 6.515 6.514 0 1.287-.383 2.534-1.08 3.589-.563-1.321-1.596-2.39-2.879-3.01.393-.529.626-1.184.626-1.893 0-1.755-1.428-3.182-3.182-3.182s-3.182 1.427-3.182 3.182c0 .708.233 1.363.626 1.892-1.283.62-2.315 1.69-2.878 3.011a6.52 6.52 0 0 1-1.08-3.589c0-3.592 2.922-6.514 6.514-6.514zm25.504 21.598l-1.285-1.285a.94.94 0 0 0-1.326 0 .94.94 0 0 0 0 1.326l1.948 1.948a.94.94 0 0 0 1.326 0l4.368-4.367a.94.94 0 0 0 0-1.326.94.94 0 0 0-1.326 0l-3.704 3.705z">
+                            </path>
+                        </svg>
+                        <h3 class="h5 pt-3 pt-md-4 mb-2">Convenience.</h3>
+                        <p class="mb-0">
+                            Multiple locations makes drop-off and pick-up effortless for busy customers.</p>
+                    </div>
+
+                    <!-- Item -->
+                    <div class="swiper-slide">
+                        <svg class="text-secondary-emphasis" xmlns="http://www.w3.org/2000/svg" width="48" height="48"
+                            fill="currentColor">
+                            <path
+                                d="M4.519 8.136c.196.471.752.703 1.224.507s.703-.752.507-1.224-.752-.703-1.224-.507-.704.753-.507 1.224zm3.875 0c.153.368.535.607.935.576.391-.03.729-.307.834-.685.222-.798-.673-1.478-1.384-1.054-.393.234-.56.74-.384 1.163zM4.752 44.84h35.053A8.21 8.21 0 0 0 48 36.645a8.21 8.21 0 0 0-7.257-8.141l-.001-20.593A4.76 4.76 0 0 0 35.99 3.16H4.752A4.76 4.76 0 0 0 0 7.912v32.175a4.76 4.76 0 0 0 4.752 4.753zm0-1.875a2.88 2.88 0 0 1-2.877-2.878V12.202h36.993v16.302a8.28 8.28 0 0 0-6.536 4.779H5.76a.94.94 0 0 0-.937.938v4.766a.94.94 0 0 0 .938.938h9.613a.94.94 0 0 0 .938-.937.94.94 0 0 0-.937-.937H6.698V35.16h25.048a8.24 8.24 0 0 0-.135 1.487c0 .47.04.941.12 1.405h-8.109a.94.94 0 0 0-.937.938.94.94 0 0 0 .938.938h8.675a8.28 8.28 0 0 0 2.298 3.04H4.752zm41.373-6.32a6.33 6.33 0 0 1-6.32 6.32 6.39 6.39 0 0 1-6.32-6.32 6.31 6.31 0 0 1 .132-1.285c.595-2.871 3.144-5.035 6.188-5.035a6.33 6.33 0 0 1 6.32 6.319zM4.752 5.035H35.99a2.88 2.88 0 0 1 2.877 2.877v2.415H1.875V7.912a2.88 2.88 0 0 1 2.877-2.877zm2.879 23.769a8.43 8.43 0 0 0 5.579 2.124 8.43 8.43 0 0 0 5.58-2.125 8.4 8.4 0 0 0-5.579-14.654 8.4 8.4 0 0 0-5.579 14.655zm5.293.242a6.54 6.54 0 0 1-3.678-1.339 4.04 4.04 0 0 1 3.954-3.3c1.973.004 3.628 1.419 3.972 3.3-1.208.927-2.728 1.407-4.249 1.34zm-1.021-7.821a1.31 1.31 0 0 1 1.307-1.307 1.31 1.31 0 0 1 1.307 1.307 1.31 1.31 0 0 1-1.301 1.307 1.31 1.31 0 0 1-1.312-1.307zm1.307-5.201c3.593 0 6.515 2.922 6.515 6.514 0 1.287-.383 2.534-1.08 3.589-.563-1.321-1.596-2.39-2.879-3.01.393-.529.626-1.184.626-1.893 0-1.755-1.428-3.182-3.182-3.182s-3.182 1.427-3.182 3.182c0 .708.233 1.363.626 1.892-1.283.62-2.315 1.69-2.878 3.011a6.52 6.52 0 0 1-1.08-3.589c0-3.592 2.922-6.514 6.514-6.514zm25.504 21.598l-1.285-1.285a.94.94 0 0 0-1.326 0 .94.94 0 0 0 0 1.326l1.948 1.948a.94.94 0 0 0 1.326 0l4.368-4.367a.94.94 0 0 0 0-1.326.94.94 0 0 0-1.326 0l-3.704 3.705z">
+                            </path>
+                        </svg>
+                        <h3 class="h5 pt-3 pt-md-4 mb-2">Timely Devlivery.</h3>
+                        <p class="mb-0">
+                            Enjoy swift services delivered just on time and toyour convenience.</p>
+                    </div>
+                </div>
+
+                <!-- Pagination (Bullets) -->
+                <div class="swiper-pagination position-static mt-3"></div>
+            </div>
+        </section>
+
+    </main>
+    {% endblock content %}
+
+ 
+

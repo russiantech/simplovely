@@ -1,0 +1,134 @@
+
+{% extends "incs/base.html" %}
+{% block title %} laundry - discover fashion that blends style and comfort with every piece. {% endblock title %}
+
+{% block content %}
+    <!-- Page content -->
+    <main class="content-wrapper">
+
+        <section class="container pt-4 pb-5 mb-xxl-3">
+            <!-- Image gallery -->
+            <div class="row g-3 g-lg-4">
+                <div class="col-md-8">
+                    <a class="hover-effect-scale hover-effect-opacity position-relative d-flex rounded overflow-hidden"
+                        href="static/img/laundry/01.jpg" data-glightbox=""
+                        data-gallery="image-gallery">
+                        <i
+                            class="fi-zoom-in hover-effect-target fs-3 text-white position-absolute top-50 start-50 translate-middle opacity-0 z-2"></i>
+                        <span
+                            class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 bg-black bg-opacity-25 opacity-0 z-1"></span>
+                        <div class="ratio hover-effect-target bg-body-tertiary rounded"
+                            style="--fn-aspect-ratio: calc(450 / 856 * 100%)">
+                            <img src="static/img/laundry/01.jpg" alt="Image">
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4 vstack gap-3 gap-lg-4">
+                    <a class="hover-effect-scale hover-effect-opacity position-relative d-flex rounded overflow-hidden"
+                        href="static/img/laundry/02.jpg" data-glightbox=""
+                        data-gallery="image-gallery">
+                        <i
+                            class="fi-zoom-in hover-effect-target fs-3 text-white position-absolute top-50 start-50 translate-middle opacity-0 z-2"></i>
+                        <span
+                            class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 bg-black bg-opacity-25 opacity-0 z-1"></span>
+                        <div class="ratio hover-effect-target bg-body-tertiary rounded"
+                            style="--fn-aspect-ratio: calc(213 / 416 * 100%)">
+                            <img src="static/img/laundry/02.jpg" alt="Image">
+                        </div>
+                    </a>
+                    <a class="hover-effect-scale hover-effect-opacity position-relative d-flex rounded overflow-hidden"
+                        href="static/img/laundry/03.jpg" data-glightbox=""
+                        data-gallery="image-gallery">
+                        <i
+                            class="fi-zoom-in hover-effect-target fs-3 text-white position-absolute top-50 start-50 translate-middle opacity-0 z-2"></i>
+                        <span
+                            class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 bg-black bg-opacity-25 opacity-0 z-1"></span>
+                        <div class="ratio hover-effect-target bg-body-tertiary rounded"
+                            style="--fn-aspect-ratio: calc(213 / 416 * 100%)">
+                            <img src="static/img/laundry/03.jpg" alt="Image">
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+        </section>
+
+        <!---->
+        <section class="container py-5 my-2 my-sm-3 mb-md-2 mt-lg-4 my-xl-5">
+            <div class="overflow-x-auto pt-xxl-3 simplebar-scrollable-x" data-simplebar="init" data-simplebar-auto-hide="false">
+                <div class="simplebar-wrapper" style="margin: 0px;">
+                    <div class="simplebar-mask">
+                        <div class="simplebar-offset" style="right: 0px; bottom: 0px;">
+                            <div class="simplebar-content-wrapper" tabindex="0" role="region" aria-label="scrollable content"
+                                style="height: auto; overflow: scroll hidden;">
+                                <div class="simplebar-content" style="padding: 0px;">
+                                    <div class="row flex-nowrap flex-md-wrap justify-content-md-center g-0 gap-4 gap-md-0">
+        
+                                        {% for service in laundry_services %}
+                                        <!-- Category -->
+                                        <div class="col col-md-4 col-lg-3 col-xl-2 mb-4">
+                                            <div class="category-card w-100 text-center px-1 px-lg-2 px-xxl-3 mx-auto"
+                                                style="min-width: 165px">
+                                                <div class="category-card-body">
+                                                    <a class="d-block text-decoration-none" href="!#">
+                                                        <div class="bg-body-tertiary rounded-pill mb-3 mx-auto"
+                                                            style="max-width: 164px">
+                                                            <div class="ratio ratio-1x1">
+                                                                <img src="{{service.image}}"
+                                                                    class="rounded-pill" alt="Image">
+                                                            </div>
+                                                        </div>
+                                                        <h3 class="category-card-title h6 text-truncate">{{service.name}}</h3>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+        
+                                    </div>
+                                </div>
+        
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="container pt-2 pt-sm-3 pt-md-4 pt-lg-5 pb-5 my-xxl-3">
+            <div class="row mb-4">
+                <div class="col-md-5 order-md-2 mb-4 mb-md-0">
+                    <div class="position-relative h-100 bg-body-tertiary rounded-5 overflow-hidden">
+                        <div class="d-none d-md-block" style="height: 440px"></div>
+                        <div class="d-none d-sm-block d-md-none" style="height: 350px"></div>
+                        <div class="d-sm-none" style="height: 250px"></div>
+                        <img src="static/img/laundry/basket_towels.jpg"
+                            class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" alt="Image">
+                    </div>
+                </div>
+
+                <div class="col-md-7 order-md-1">
+                    <div class="d-flex align-items-center h-100 bg-body-tertiary rounded-5 p-4 p-xl-5">
+                        <div class="p-sm-3 p-xxl-2">
+                            <h2 class="mb-lg-4">Service at your Convenience.</h2>
+                            <p class="fs-lg pb-sm-2 pb-lg-3">
+                                SimplyLovely laundry gently weaves freshness, softness and warmth into every fold,
+                                enveloping the senses.
+                            </p>
+                            <div class="d-flex flex-column flex-sm-row gap-2 gap-lg-3">
+                                <div class="d-flex align-items-center text-body-emphasis bg-body rounded-pill shadow px-3"
+                                    style="padding: 10px 0">
+                                    <i class="fi-package me-2"></i>
+                                    <a href="" class="text-decoration-none text-dark-emphasis">
+                                        <div class="fs-sm fw-medium">Request A Service.</div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    {% endblock content %}

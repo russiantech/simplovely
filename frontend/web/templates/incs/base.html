@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light" data-pwa="true">
+<head>
+    
+    {% include "incs/metas.html" %}
+    <!-- SEO Meta Tags -->
+    <title>
+      {% block title %} SimplyLovely - Laundry And Fashion {% endblock title %}
+    </title>
+
+</head>
+<body>
+    {% include "incs/topnav.html" %}
+    
+    {% block content %}
+    <!-- Page content -->
+
+    {% endblock content %}
+
+    {% include "incs/footer.html" %}
+    {% include "incs/modals/response_modal.html" %}
+    {% include "incs/modals/usage_modal.html" %}
+    {% include "incs/modals/service_requests_modal.html" %}
+    {% include "incs/bottom_js.html" %}
+
+</body>
+</html>
+

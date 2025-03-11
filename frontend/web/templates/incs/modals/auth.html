@@ -1,0 +1,92 @@
+<!-- Custom modal markup with tabs, forms and cover image -->
+<div class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content row row-cols-1 row-cols-lg-2 flex-row g-0 overflow-hidden">
+  
+        <!-- Cover image -->
+        <div class="col order-lg-2">
+          <div class="position-relative d-flex align-items-end h-100 bg-info-subtle pt-4 px-4 px-sm-5 px-lg-0">
+            <button type="button" class="btn-close position-absolute top-0 end-0 mt-3 me-3" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="ratio" style="--fn-aspect-ratio: calc(1030 / 1032 * 100%)">
+              <img src="assets/img/account/account-cover.png" alt="Girl">
+            </div>
+          </div>
+        </div>
+  
+        <div class="col d-flex flex-column order-lg-1">
+  
+          <!-- Modal header: Nav tabs -->
+          <div class="modal-header d-block border-0 pt-sm-5 px-sm-5 pb-2">
+            <ul class="nav nav-tabs mt-sm-n2" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link text-nowrap active" data-bs-toggle="tab" data-bs-target="#signin" role="tab" aria-controls="signin" aria-selected="true">
+                  <i class="fi-log-in fs-base opacity-75 ms-n1 me-2"></i>
+                  Sign in
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#signup" role="tab" aria-controls="signup" aria-selected="false">
+                  <i class="fi-user fs-base opacity-75 ms-n1 me-2"></i>
+                  Sign up
+                </button>
+              </li>
+            </ul>
+          </div>
+  
+          <!-- Modal body -->
+          <div class="modal-body tab-content px-sm-5 pb-sm-5">
+  
+            <!-- Tab with sign in form -->
+            <div class="tab-pane fade show active" id="signin" role="tabpanel">
+              <h2 class="h5 mb-4">Welcome back</h2>
+              <form>
+                <div class="position-relative mb-4">
+                  <input type="email" class="form-control" placeholder="Email" required>
+                </div>
+                <div class="mb-4">
+                  <div class="password-toggle">
+                    <input type="password" class="form-control" placeholder="Password" required>
+                    <label class="password-toggle-button fs-lg" aria-label="Show/hide password">
+                      <input type="checkbox" class="btn-check">
+                    </label>
+                  </div>
+                </div>
+                <div class="form-check mb-4">
+                  <input type="checkbox" class="form-check-input" id="remember-30">
+                  <label for="remember-30" class="form-check-label">Remember for 30 days</label>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Sign In</button>
+              </form>
+            </div>
+  
+            <!-- Tab with sign up form -->
+            <div class="tab-pane fade" id="signup" role="tabpanel">
+              <h2 class="h5">Create an account</h2>
+              <form>
+                <div class="position-relative mb-3">
+                  <label for="register-email" class="form-label">Email</label>
+                  <input type="email" class="form-control" id="register-email" required>
+                </div>
+                <div class="mb-4">
+                  <label for="register-password" class="form-label">Password</label>
+                  <div class="password-toggle">
+                    <input type="password" class="form-control" id="register-password" minlength="8" placeholder="Minimum 8 characters" required>
+                    <label class="password-toggle-button fs-lg" aria-label="Show/hide password">
+                      <input type="checkbox" class="btn-check">
+                    </label>
+                  </div>
+                </div>
+                <div class="d-flex flex-column gap-2 mb-4">
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="save-pass">
+                    <label for="save-pass" class="form-check-label">Save the password</label>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Create an account</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
