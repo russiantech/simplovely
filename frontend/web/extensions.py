@@ -1,5 +1,4 @@
 
-from authlib.integrations.flask_client import OAuth
 from flask_wtf.csrf import CSRFProtect
 from web.apis.utils.services import *
 
@@ -9,7 +8,6 @@ load_dotenv()
 from os import getenv
 
 # Initialize extensions
-oauth = OAuth()
 csrf = CSRFProtect()
 
 def config_app(app, config_name):
@@ -19,7 +17,6 @@ def config_app(app, config_name):
 
 def init_ext(app):
     """Initialize all extensions."""
-    oauth.init_app(app)
     csrf.init_app(app)
 
 def make_available():
