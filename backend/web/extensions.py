@@ -27,9 +27,21 @@ bcrypt = Bcrypt()
 from flask_cors import CORS
 cors = CORS()
 
+from dotenv import load_dotenv
+# Load environment variables from .env file
+load_dotenv()
+
 from redis import Redis
 # Initialize Redis client
-redis = Redis.from_url(getenv('REDIS_URI', 'redis://localhost:6379/0'))
+redis = Redis.from_url(getenv('REDIS_URI'))
+# import redis
+# redis = redis.Redis(
+#     host=getenv('REDIS_HOST'),
+#     port=getenv('REDIS_PORT'),
+#     decode_responses=True,
+#     username=getenv('REDIS_USERNAME'),
+#     password=getenv('REDIS_PASSWORD'),
+# )
 
 # Initialize Flask-Limiter with IP-based rate limiting
 from flask_limiter import Limiter
