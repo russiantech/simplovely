@@ -29,7 +29,7 @@ cors = CORS()
 
 from redis import Redis
 # Initialize Redis client
-redis = Redis.from_url(getenv('REDIS_URI', 'redis://localhost:6379/0-x'))
+redis = Redis.from_url(getenv('REDIS_URI', 'redis://localhost:6379/0'))
 
 # Initialize Flask-Limiter with IP-based rate limiting
 from flask_limiter import Limiter
@@ -38,7 +38,7 @@ limiter = Limiter(
     key_func=get_remote_address,
     # default_limits=["200 per day", "50 per hour"]
     default_limits=["1 per second", "5 per minute"],  # Allow up to 1 request per second or a burst of 5 in a minute
-    storage_uri=getenv('REDIS_URL', 'redis://localhost:6379/0')  # Ensure the Redis URL is correct
+    storage_uri=getenv('REDIS_URI', 'redis://localhost:6379/0')  # Ensure the Redis URL is correct
 )
 
 from flask_jwt_extended import JWTManager #, create_access_token, jwt_required, get_jwt_identity
