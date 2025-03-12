@@ -7,7 +7,16 @@
 
 <script>
     // Set apiurl and plan_url on the window object
-    window.apiUrl = `http://localhost:5000/api`;
+    // Function to determine the API URL based on the environment
+    function getApiUrl() {
+        if (window.location.hostname === 'simplylovely.ng') {
+            return 'https://api.simplylovely.ng/api'; // Production URL
+        } else {
+            return 'http://localhost:5000/api'; // Development URL
+        }
+    }
+
+    window.apiUrl = getApiUrl();
     window.planUrl = `${window.apiurl}/plans`;
 
     response_modal = (message) => {
