@@ -35,8 +35,9 @@ class Config:
     IMAGES_LOCATION = path.join(path.abspath(path.dirname(__file__)), 'static', 'images')
     
     # Database & Storages
-    REDIS_URL = "redis://localhost:6379/0"
-    SQLALCHEMY_DATABASE_URI = getenv('DATABASE_URI') # or 'sqlite:///'
+    # REDIS_URL = "redis://localhost:6379/0"
+    REDIS_URI = getenv('REDIS_URI')
+    SQLALCHEMY_DATABASE_URI = getenv('SQLALCHEMY_DATABASE_URI') # or 'sqlite:///'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_POOL_SIZE = 50
     SQLALCHEMY_POOL_TIMEOUT = 30

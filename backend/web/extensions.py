@@ -29,7 +29,7 @@ cors = CORS()
 
 from redis import Redis
 # Initialize Redis client
-redis = Redis.from_url(getenv('REDIS_URL', 'redis://localhost:6379/0'))
+redis = Redis.from_url(getenv('REDIS_URI', 'redis://localhost:6379/0-x'))
 
 # Initialize Flask-Limiter with IP-based rate limiting
 from flask_limiter import Limiter
@@ -41,15 +41,11 @@ limiter = Limiter(
     storage_uri=getenv('REDIS_URL', 'redis://localhost:6379/0')  # Ensure the Redis URL is correct
 )
 
-
 from flask_jwt_extended import JWTManager #, create_access_token, jwt_required, get_jwt_identity
 jwt = JWTManager()
 
 from faker import Faker
 fake = Faker()
-
-from flask_restful import Api
-api = Api()
 
 def config_app(app, config_name):
     """Configure app settings based on environment."""
@@ -82,7 +78,6 @@ def init_ext(app):
     oauth.init_app(app)
     # socketio.init_app(app)
     csrf.init_app(app)
-    api.init_app(app)
 
 def make_available():
     """Provide application metadata."""
