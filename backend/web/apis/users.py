@@ -43,7 +43,6 @@ import redis
 # Load environment variables from .env file
 load_dotenv()
 
-app = Flask(__name__)
 
 # Get Redis URL from environment variable
 redis_url = getenv("REDIS_URI")
@@ -60,7 +59,7 @@ except redis.ConnectionError as e:
     print(f"Failed to connect to Redis: {e}")
     r = None  # Set to None if connection fails
 
-@app.route('/test_redis', methods=['GET'])
+@user_bp.route('/test_redis', methods=['GET'])
 def test_redis():
     if r is None:
         return jsonify({"error": "Redis connection not established"}), 500
