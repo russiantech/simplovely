@@ -33,6 +33,51 @@ from web.apis.utils.oauth_providers import oauth2providers
 from web.extensions import redis as redis_clients
 from web.apis import api_bp as user_bp
 
+# 
+
+from flask import Flask, jsonify
+from os import getenv
+from dotenv import load_dotenv
+import redis
+
+# Load environment variables from .env file
+load_dotenv()
+
+app = Flask(__name__)
+
+# Get Redis URL from environment variable
+redis_url = getenv("REDIS_URI")
+
+if redis_url is None:
+    raise ValueError("REDIS_URI is not set in the environment variables.")
+
+# Create a Redis connection
+try:
+    r = redis.Redis.from_url(redis_url)
+    r.ping()  # Test the connection
+    print("Connected to Redis")
+except redis.ConnectionError as e:
+    print(f"Failed to connect to Redis: {e}")
+    r = None  # Set to None if connection fails
+
+@app.route('/test_redis', methods=['GET'])
+def test_redis():
+    if r is None:
+        return jsonify({"error": "Redis connection not established"}), 500
+
+    # Set a value in Redis
+    success = r.set('foo', 'chris can code 000')
+    
+    # Get the value from Redis
+    result = r.get('foo')
+
+    return jsonify({
+        "success": success,
+        "value": result.decode('utf-8') if result else None,
+        "redis_url": redis_url
+    })
+
+
 # Requests form route
 @user_bp.route('/users/message', methods=['POST'])
 @csrf.exempt

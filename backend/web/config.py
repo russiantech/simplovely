@@ -42,6 +42,14 @@ class Config:
     SQLALCHEMY_POOL_SIZE = 50
     SQLALCHEMY_POOL_TIMEOUT = 30
     SQLALCHEMY_MAX_OVERFLOW = 20
+    # 
+    SQLALCHEMY_ENGINE_OPTIONS = {
+    'pool_size': 5,
+    'max_overflow': 10,
+    'pool_timeout': 30,
+    'pool_recycle': 1800,
+    }
+
 
     # Mail configuration
     MAIL_SERVER = getenv('MAIL_SERVER', 'localhost')
