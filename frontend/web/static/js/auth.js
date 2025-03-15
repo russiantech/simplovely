@@ -4,7 +4,7 @@
 // Function to validate the JWT token (now fetching from cookies)
 function isValidToken(token) {
     if (!token) return false;
-    
+
     const payload = JSON.parse(atob(token.split('.')[1])); // Decode the payload of the JWT
     const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
 
@@ -39,7 +39,7 @@ function authRequired(requiredRoles = []) {
         window.response_modal("Access denied: User not authenticated or token invalid.");
 
         // Add a delay before redirecting
-        setTimeout(function() {
+        setTimeout(function () {
             window.location.href = '/signin'; // Redirect to the login page if token is invalid
         }, 2000); // Delay of 2 seconds (2000 ms)
 
@@ -50,7 +50,7 @@ function authRequired(requiredRoles = []) {
         window.response_modal("Access denied: User does not have the required roles.");
 
         // Add a delay before redirecting
-        setTimeout(function() {
+        setTimeout(function () {
             window.location.href = './account'; // Redirect to account page if the user doesn't have required roles
         }, 2000); // Delay of 2 seconds (2000 ms)
 
@@ -70,11 +70,11 @@ async function refreshToken() {
     if (!refreshToken) return;
 
     try {
-        const response = await fetch(`${window.apiUrl}/users/refresh-token`,  {
+        const response = await fetch(`${window.apiUrl}/users/refresh-token`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${refreshToken}` }
         });
-        
+
         if (response.ok) {
             const data = await response.json();
             document.cookie = `access_token=${data.access_token}; path=/; HttpOnly`; // Set new access token
@@ -134,24 +134,26 @@ window.getRolesFromDecodedToken = getRolesFromDecodedToken;
 
 // Extract roles from the decoded JWT token
 const userRoles = getRolesFromDecodedToken(localStorage.getItem('access_token'));
-console.log('User Roles:', userRoles); // Output: []
+// console.log('User Roles:', userRoles); // Output: []
 
 // Check if the user has the 'admin' role
 if (!userRoles.includes('admin')) {
     // Disable the button and set the styles to show it is disabled
     const recordUsageBtn = document.getElementById('recordUsageBtn');
-    
-    // Update the background color of the span to pink and add !important to avoid CSS conflicts
-    const spanElement = recordUsageBtn.querySelector('span');
-    spanElement.style.backgroundColor = 'pink'; // Ensure this is the correct span
-    spanElement.style.setProperty('background-color', 'pink', 'important'); // Use !important if needed
 
-    // Add the disabled and grey background classes to the button
-    recordUsageBtn.classList.add('disabled', 'text-bg-grey');
-    
-    // Set the button as disabled so it's not clickable
-    recordUsageBtn.setAttribute('disabled', 'true');
-    
-    // Update the badge text to reflect no access
-    recordUsageBtn.querySelector('.badge').innerText = "Only Admin can record usage when you submit fabrics."; 
+    if (recordUsageBtn) {
+        // Update the background color of the span to pink and add !important to avoid CSS conflicts
+        const spanElement = recordUsageBtn.querySelector('span');
+        spanElement.style.backgroundColor = 'pink'; // Ensure this is the correct span
+        spanElement.style.setProperty('background-color', 'pink', 'important'); // Use !important if needed
+
+        // Add the disabled and grey background classes to the button
+        recordUsageBtn.classList.add('disabled', 'text-bg-grey');
+
+        // Set the button as disabled so it's not clickable
+        recordUsageBtn.setAttribute('disabled', 'true');
+
+        // Update the badge text to reflect no access
+        recordUsageBtn.querySelector('.badge').innerText = "Only Admin can record usage when you submit fabrics.";
+    }
 }

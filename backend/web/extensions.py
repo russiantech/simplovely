@@ -78,6 +78,7 @@ def init_ext(app):
     cors.init_app(app, resources={r"/api/*": {"origins": [
         "https://simplylovely.ng",
         "http://localhost:5000",
+        "http://localhost:5001",
         "https://flutterwave.com",
         "https://api.paystack.com",  
         "https://paystack.com"
