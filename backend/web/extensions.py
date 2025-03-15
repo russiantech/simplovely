@@ -75,6 +75,14 @@ def init_ext(app):
     # f_session.init_app(app)
     bcrypt.init_app(app)
     cors.init_app(app)
+    cors.init_app(app, resources={r"/api/*": {"origins": [
+        "https://simplylovely.ng",
+        "http://localhost:5000",
+        "https://flutterwave.com",
+        "https://api.paystack.com",  
+        "https://paystack.com"
+    ]}})
+    # cors.init_app(app, resources={r"/api/*": {"origins": "https://simplylovely.ng"}})
     # cors.init_app(app, resources={r"/*": {"origins": "*"}})  # Allow all origins; adjust as necessary
     # cors.init_app(app, resources={r"/*": {"origins": "*"}})  # Allow all origins; adjust as necessary
     # cors.init_app(app, resources={r"/socket.io/*": {"origins": "*"}})
