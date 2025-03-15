@@ -43,40 +43,6 @@ import redis
 # Load environment variables from .env file
 load_dotenv()
 
-
-# Get Redis URL from environment variable
-redis_url = getenv("REDIS_URI")
-
-if redis_url is None:
-    raise ValueError("REDIS_URI is not set in the environment variables.")
-
-# Create a Redis connection
-try:
-    r = redis.Redis.from_url(redis_url)
-    r.ping()  # Test the connection
-    print("Connected to Redis")
-except redis.ConnectionError as e:
-    print(f"Failed to connect to Redis: {e}")
-    r = None  # Set to None if connection fails
-
-@user_bp.route('/test_redis', methods=['GET'])
-def test_redis():
-    if r is None:
-        return jsonify({"error": "Redis connection not established"}), 500
-
-    # Set a value in Redis
-    success = r.set('foo', 'chris can code 000')
-    
-    # Get the value from Redis
-    result = r.get('foo')
-
-    return jsonify({
-        "success": success,
-        "value": result.decode('utf-8') if result else None,
-        "redis_url": redis_url
-    })
-
-
 # Requests form route
 @user_bp.route('/users/message', methods=['POST'])
 @csrf.exempt
@@ -145,8 +111,8 @@ def send_message():
         return error_response(str(e))
 
 @user_bp.route("/users/signup", methods=['POST'])
-@csrf.exempt
-@limiter.exempt
+# @csrf.exempt
+# @limiter.exempt
 @jwt_required(optional=True)
 def signup():
     user_identity = get_jwt_identity()
@@ -208,8 +174,8 @@ def signup():
         return error_response(str(e))
 
 @user_bp.route("/users/signin", methods=['POST'])
-@csrf.exempt
-@limiter.exempt
+# @csrf.exempt
+# @limiter.exempt
 @jwt_required(optional=True)
 def signin():
     try:
@@ -289,7 +255,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask import make_response
 
 @user_bp.route("/users/refresh-token", methods=['POST', 'GET'])
-@limiter.exempt
+# @limiter.exempt
 @jwt_required(refresh=True, optional=True)  # Ensure the user is sending a valid refresh token
 def refresh_token():
     try:
@@ -325,7 +291,7 @@ def refresh_token():
 
 @user_bp.route("/users/signout", methods=['GET', 'POST'])
 @jwt_required()
-@limiter.exempt
+# @limiter.exempt
 def signout():
     try:
         # Get the JWT token from the current request
@@ -511,139 +477,6 @@ def process_token(token: str = None):
 
 # ==========OAUTH================
 # endpoint to initialize OAuth
-
-# Initialize Redis client
-# redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
-
-# @user_bp.route('/users/authorize/<provider>')
-# @jwt_required(optional=True)
-# @limiter.exempt
-# def oauth2_authorize(provider):
-#     try:
-#         # Check if the user is already authenticated
-#         if get_jwt_identity() is not None:
-#             return success_response(f"already signed-in as {get_jwt_identity()['username']}")
-
-#         provider_data = oauth2providers.get(provider)
-#         if provider_data is None:
-#             abort(404)
-
-#         # Generate a random string for the state parameter
-#         oauth2_state = secrets.token_urlsafe(16)
-#         redis_clients.setex(f'oauth2_state:{oauth2_state}', 300, provider)  # Store state with a 5-minute expiration
-#         client_callback_url = request.headers.get('Client-Callback-Url') or url_for('apis.oauth2_callback', provider=provider, _external=True)
-#         print("redirect at init", url_for('apis.oauth2_callback', provider=provider, _external=True))
-#         # Create a query string with all the OAuth2 parameters
-#         qs = urlencode({
-#             'client_id': provider_data['client_id'],
-#             'redirect_uri': url_for('apis.oauth2_callback', provider=provider, _external=True),
-#             'response_type': 'code',
-#             'scope': ' '.join(provider_data['scopes']),
-#             'state': oauth2_state,
-#             'provider': provider,
-#         })
-
-#         data = {"redirect": provider_data['authorize_url'] + '?' + qs}
-#         print("oauth2_state is", oauth2_state)
-#         return success_response(f"redirecting for {provider} sign in", data=data)
-    
-#     except Exception as e:
-#         traceback.print_exc()
-#         return error_response(f"An error occurred: {str(e)}")
-
-# Route to handle the OAuth2 callback
-# @user_bp.route('/users/callback/<provider>')
-# @jwt_required(optional=True)
-# @limiter.exempt
-# def oauth2_callback(provider):
-#     try:
-#         # Check if the user is already authenticated
-#         if get_jwt_identity() is not None:
-#             return success_response("already authenticated", data={"redirect": "./account"})
-
-#         provider_data = oauth2providers.get(provider)
-#         if provider_data is None:
-#             abort(404)
-
-#         # Handle authentication errors
-#         if 'error' in request.args:
-#             return error_response(f"authentication errors occurred - {request.args.get('error')}")
-
-#         # Validate the state parameter
-#         state_from_request = request.args.get('state')
-#         if not redis_clients.exists(f'oauth2_state:{state_from_request}'):
-#             return error_response("Invalid or expired state parameter", status_code=401)
-
-#         # Validate the presence of the authorization code
-#         if 'code' not in request.args:
-#             return error_response("missing code in query params/requests.", status_code=401)
-
-#         client_callback_url = request.headers.get('Client-Callback-Url') or url_for('apis.oauth2_callback', provider=provider, _external=True)
-
-#         # Exchange the authorization code for an access token
-#         response = requests.post(
-#             provider_data['token_url'], 
-#             data={
-#                 'client_id': provider_data['client_id'],
-#                 'client_secret': provider_data['client_secret'],
-#                 'code': request.args['code'],
-#                 'grant_type': 'authorization_code',
-#                 'redirect_uri': client_callback_url,
-#             }, 
-#             headers={'Accept': 'application/json'}
-#         )
-        
-#         if response.status_code != 200:
-#             abort(401)
-
-#         oauth2_token = response.json().get('access_token')
-#         if not oauth2_token:
-#             abort(401)
-
-#         # Use the access token to get the user's email address
-#         response = requests.get(provider_data['userinfo']['url'], headers={
-#             'Authorization': 'Bearer ' + oauth2_token,
-#             'Accept': 'application/json',
-#         })
-        
-#         if response.status_code != 200:
-#             abort(401)
-
-#         email = provider_data['userinfo']['email'](response.json())
-
-#         # Find or create the user in the database
-#         user = db.session.scalar(db.select(User).where(User.email == email))
-#         if user is None:
-#             user = User(email=email, username=email.split('@')[0], oauth_providers=provider)
-#             user.set_password(secrets.token_urlsafe(5))
-#             db.session.add(user)
-#             db.session.commit()
-
-#         # Create JWT tokens for the user
-#         if user:
-#             access_token = user.make_token(token_type='access')
-#             refresh_token = user.make_token(token_type='refresh')
-
-#             # Create response object
-#             response = make_response(
-#                 success_response(
-#                     "Sign in successful",
-#                     data={
-#                         "access_token": access_token,
-#                         "refresh_token": refresh_token,
-#                         "redirect": "./account"
-#                     }
-#                 )
-#             )
-#             # Remove the state from Redis after successful authentication
-#             redis_client.delete(f'oauth2_state:{state_from_request}')
-#             return response
-        
-#         return error_response("Unable to sign in.", status_code=401)
-
-#     except Exception as e:
-#         traceback.print_exc()
-#         return error_response(f"An error occurred: {str(e)}")
 
 @user_bp.route('/users/authorize/<provider>')
 @jwt_required(optional=True)
