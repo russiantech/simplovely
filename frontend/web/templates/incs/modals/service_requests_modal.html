@@ -105,12 +105,14 @@
 </div>
 
 <script>
+    
     document.addEventListener("DOMContentLoaded", function() {
         // Fetch Areas
         fetch(`${window.apiUrl}/areas`) // Adjust the endpoint as needed
             .then(response => response.json())
             .then(data => {
                 const areaSelect = document.getElementById('area');
+                if (!areaSelect) return; // Exit if the element is not found
                 data.areas.forEach(area => {
                     const option = document.createElement('option');
                     option.value = area.id; // Assuming area has an 'id' property
@@ -124,6 +126,7 @@
             .then(response => response.json())
             .then(data => {
                 const serviceSelect = document.getElementById('services');
+                if (!serviceSelect) return; // Exit if the element is not found
                 data.services.forEach(service => {
                     const option = document.createElement('option');
                     option.value = service.id; // Assuming service has an 'id' property
@@ -132,4 +135,6 @@
                 });
             });
     });
+    
 </script>
+
