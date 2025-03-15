@@ -111,7 +111,7 @@ def send_message():
         return error_response(str(e))
 
 @user_bp.route("/users/signup", methods=['POST'])
-# @csrf.exempt
+@csrf.exempt
 # @limiter.exempt
 @jwt_required(optional=True)
 def signup():
@@ -174,7 +174,7 @@ def signup():
         return error_response(str(e))
 
 @user_bp.route("/users/signin", methods=['POST'])
-# @csrf.exempt
+@csrf.exempt
 # @limiter.exempt
 @jwt_required(optional=True)
 def signin():
