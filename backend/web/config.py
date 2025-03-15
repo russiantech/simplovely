@@ -39,17 +39,24 @@ class Config:
     REDIS_URI = getenv('REDIS_URI')
     SQLALCHEMY_DATABASE_URI = getenv('SQLALCHEMY_DATABASE_URI') # or 'sqlite:///'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_POOL_SIZE = 50
+    SQLALCHEMY_POOL_SIZE = 20  # Increase if needed
+    SQLALCHEMY_MAX_OVERFLOW = 30  # Allow more connections to be create
     SQLALCHEMY_POOL_TIMEOUT = 30
     SQLALCHEMY_MAX_OVERFLOW = 20
-    # 
-    SQLALCHEMY_ENGINE_OPTIONS = {
-    'pool_size': 5,
-    'max_overflow': 10,
-    'pool_timeout': 30,
-    'pool_recycle': 1800,
-    }
 
+    # SQLALCHEMY_ENGINE_OPTIONS = {
+    # 'pool_size': 5,
+    # 'max_overflow': 10,
+    # 'pool_timeout': 30,
+    # 'pool_recycle': 1800,
+    # }
+
+    SQLALCHEMY_ENGINE_OPTIONS = {
+    'pool_size': 50,
+    'max_overflow': 30,
+    'pool_timeout': 30,
+    'pool_recycle': 1800,  # Recycle connections every 30 minutes
+    }
 
     # Mail configuration
     MAIL_SERVER = getenv('MAIL_SERVER', 'localhost')
