@@ -379,7 +379,7 @@ from web.apis import api_bp as areas_bp
 
 # Get all areas
 @areas_bp.route('/areas', methods=['GET'])
-@jwt_required(optional=True)
+# @jwt_required(optional=True)
 def get_areas():
     try:
         areas = Area.query.filter_by(is_deleted=False).all()
