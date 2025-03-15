@@ -8,13 +8,13 @@
   "scope": "/",
   "icons": [
     {
-      "src": "static/app-icons/icon-144x144.png",
+      "src": "/static/img/logo_11.png",
       "sizes": "144x144",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "static/app-icons/icon-192x192.png",
+      "src": "/static/img/logo_11.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
