@@ -1,5 +1,4 @@
 
-from flask_wtf.csrf import CSRFProtect
 from web.apis.utils.services import *
 
 # Load environment variables
@@ -8,7 +7,11 @@ load_dotenv()
 from os import getenv
 
 # Initialize extensions
+from flask_wtf.csrf import CSRFProtect
 csrf = CSRFProtect()
+
+from flask_cors import CORS
+cors = CORS()
 
 def config_app(app, config_name):
     """Configure app settings based on environment."""
@@ -18,6 +21,7 @@ def config_app(app, config_name):
 def init_ext(app):
     """Initialize all extensions."""
     csrf.init_app(app)
+    cors.init_app(app)
 
 def make_available():
     """Provide application metadata."""
