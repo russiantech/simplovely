@@ -117,6 +117,7 @@ def initiate_paystack(plan_id):
 
 @transact_bp.route('/payment/callback/paystack', methods=['GET'])
 @jwt_required(optional=True)
+@limiter.exempt
 def callback_paystack():
     try:
         reference = request.args.get('reference') or request.args.get('trxref')

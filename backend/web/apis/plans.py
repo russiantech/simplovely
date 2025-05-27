@@ -16,6 +16,7 @@ from web.apis import api_bp as plans_bp
 # Get all plans
 @plans_bp.route('/plans', methods=['GET'])
 @jwt_required(optional=True)
+@limiter.exempt
 def get_plans():
     try:
         plans = Plan.query.filter_by(is_deleted=False).all()
@@ -32,6 +33,7 @@ import logging
 
 @plans_bp.route('/plans', methods=['POST'])
 @role_required('admin', 'dev')
+@limiter.exempt
 def create_plan():
     try:
         # Extracting data from the incoming request
@@ -89,6 +91,7 @@ def create_plan():
 @plans_bp.route('/plans/<int:plan_id>', methods=['PUT'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def update_plan(plan_id):
     try:
         plan = Plan.query.filter_by(id=plan_id, is_deleted=False).first()
@@ -111,6 +114,7 @@ def update_plan(plan_id):
 @plans_bp.route('/plans/<int:plan_id>', methods=['DELETE'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def delete_plan(plan_id):
     try:
         plan = Plan.query.filter_by(id=plan_id, is_deleted=False).first()
@@ -138,6 +142,7 @@ import traceback
 # Get all subscriptions
 @subscriptions_bp.route('/subscriptions', methods=['GET'])
 @jwt_required(optional=True)
+@limiter.exempt
 def get_subscriptions():
     try:
         subscriptions = Subscription.query.filter_by(is_deleted=False).all()
@@ -149,6 +154,7 @@ def get_subscriptions():
 # Get subscriptions for the current user
 @subscriptions_bp.route('/user/subscriptions', methods=['GET'])
 @jwt_required()
+@limiter.exempt
 def get_user_subscriptions():
     try:
         # Fetch subscriptions for the current user
@@ -166,6 +172,7 @@ def get_user_subscriptions():
 # Create a new subscription
 @subscriptions_bp.route('/subscriptions', methods=['POST'])
 @jwt_required()
+@limiter.exempt
 def create_subscription():
     try:
         data = request.json
@@ -191,6 +198,7 @@ def create_subscription():
 @subscriptions_bp.route('/subscriptions/<int:subscription_id>', methods=['PUT'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def update_subscription(subscription_id):
     try:
         subscription = Subscription.query.filter_by(id=subscription_id, is_deleted=False).first()
@@ -211,6 +219,7 @@ def update_subscription(subscription_id):
 @subscriptions_bp.route('/subscriptions/<int:subscription_id>', methods=['DELETE'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def delete_subscription(subscription_id):
     try:
         subscription = Subscription.query.filter_by(id=subscription_id, is_deleted=False).first()
@@ -592,6 +601,7 @@ def create_usage():
 @usage_bp.route('/usage/<int:usage_id>', methods=['PUT'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def update_usage(usage_id):
     try:
         usage = Usage.query.filter_by(id=usage_id, is_deleted=False).first()
@@ -612,6 +622,7 @@ def update_usage(usage_id):
 @usage_bp.route('/usage/<int:usage_id>', methods=['DELETE'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def delete_usage(usage_id):
     try:
         usage = Usage.query.filter_by(id=usage_id, is_deleted=False).first()

@@ -36,7 +36,7 @@ class Config:
     
     # Database & Storages
     # REDIS_URL = "redis://localhost:6379/0"
-    REDIS_URI = getenv('REDIS_URI')
+    REDIS_URI = getenv('REDIS_URI', "redis://localhost:6379/0")
     SQLALCHEMY_DATABASE_URI = getenv('SQLALCHEMY_DATABASE_URI') # or 'sqlite:///'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_POOL_SIZE = 20  # Increase if needed

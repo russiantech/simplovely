@@ -3,13 +3,14 @@ from flask_jwt_extended import jwt_required, current_user
 from sqlalchemy.exc import IntegrityError
 from web.apis.utils.decorators import access_required
 from web.apis.models.services import Area, Service, ServiceCategory, ServiceRequest
-from web.extensions import db
+from web.extensions import db, limiter
 from web.apis.utils.serializers import success_response, error_response, PageSerializer
 from web.apis import api_bp as categories_bp
 
 # Get all service categories
 @categories_bp.route('/service-categories', methods=['GET'])
 @jwt_required(optional=True)
+@limiter.exempt
 def get_service_categories():
     try:
         categories = ServiceCategory.query.filter_by(is_deleted=False).all()
@@ -22,6 +23,7 @@ def get_service_categories():
 @categories_bp.route('/service-categories', methods=['POST'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def create_service_category():
     try:
         data = request.json
@@ -45,6 +47,7 @@ def create_service_category():
 @categories_bp.route('/service-categories/<int:category_id>', methods=['PUT'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def update_service_category(category_id):
     try:
         category = ServiceCategory.query.filter_by(id=category_id, is_deleted=False).first()
@@ -64,6 +67,7 @@ def update_service_category(category_id):
 @categories_bp.route('/service-categories/<int:category_id>', methods=['DELETE'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def delete_service_category(category_id):
     try:
         category = ServiceCategory.query.filter_by(id=category_id, is_deleted=False).first()
@@ -84,6 +88,7 @@ from web.apis import api_bp as services_bp
 # Get all services
 @services_bp.route('/services', methods=['GET'])
 @jwt_required(optional=True)
+@limiter.exempt
 def get_services():
     try:
         services = Service.query.filter_by(is_deleted=False).all()
@@ -96,6 +101,7 @@ def get_services():
 @services_bp.route('/services', methods=['POST'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def create_service():
     try:
         data = request.json
@@ -126,6 +132,7 @@ def create_service():
 @services_bp.route('/services/<int:service_id>', methods=['PUT'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def update_service(service_id):
     try:
         service = Service.query.filter_by(id=service_id, is_deleted=False).first()
@@ -150,6 +157,7 @@ def update_service(service_id):
 @services_bp.route('/services/<int:service_id>', methods=['DELETE'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def delete_service(service_id):
     try:
         service = Service.query.filter_by(id=service_id, is_deleted=False).first()
@@ -167,6 +175,7 @@ def delete_service(service_id):
 @services_bp.route('/insert-services', methods=['GET'])
 # @jwt_required(optional=True)
 # @access_required('admin', 'dev')
+@limiter.exempt
 def populate_services():
     try:
         laundry_category = ServiceCategory(name='Laundry')
@@ -283,7 +292,6 @@ def populate_services():
 
         return success_response(None, "Services populated successfully")
 
-        return success_response(None, "Service category deleted successfully")
     except Exception as e:
         return error_response(str(e))
 
@@ -294,6 +302,7 @@ from web.apis import api_bp as requests_bp
 # Get all service requests
 @requests_bp.route('/service-requests', methods=['GET'])
 @jwt_required(optional=True)
+@limiter.exempt
 def get_service_requests():
     try:
         requests = ServiceRequest.query.filter_by(is_deleted=False).all()
@@ -305,6 +314,7 @@ def get_service_requests():
 # Create a new service request
 @requests_bp.route('/service-requests', methods=['POST'])
 @jwt_required()
+@limiter.exempt
 def create_service_request():
     try:
         data = request.json
@@ -335,6 +345,7 @@ def create_service_request():
 # Update a service request
 @requests_bp.route('/service-requests/<int:request_id>', methods=['PUT'])
 @jwt_required()
+@limiter.exempt
 def update_service_request(request_id):
     try:
         request = ServiceRequest.query.filter_by(id=request_id, is_deleted=False).first()
@@ -360,6 +371,7 @@ def update_service_request(request_id):
 # Delete a service request (soft delete)
 @requests_bp.route('/service-requests/<int:request_id>', methods=['DELETE'])
 @jwt_required()
+@limiter.exempt
 def delete_service_request(request_id):
     try:
         request = ServiceRequest.query.filter_by(id=request_id, is_deleted=False).first()
@@ -380,6 +392,7 @@ from web.apis import api_bp as areas_bp
 # Get all areas
 @areas_bp.route('/areas', methods=['GET'])
 # @jwt_required(optional=True)
+@limiter.exempt
 def get_areas():
     try:
         areas = Area.query.filter_by(is_deleted=False).all()
@@ -392,6 +405,7 @@ def get_areas():
 @areas_bp.route('/areas', methods=['POST'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def create_area():
     try:
         data = request.json
@@ -418,6 +432,7 @@ def create_area():
 @areas_bp.route('/areas/<int:area_id>', methods=['PUT'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def update_area(area_id):
     try:
         area = Area.query.filter_by(id=area_id, is_deleted=False).first()
@@ -438,6 +453,7 @@ def update_area(area_id):
 @areas_bp.route('/areas/<int:area_id>', methods=['DELETE'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def delete_area(area_id):
     try:
         area = Area.query.filter_by(id=area_id, is_deleted=False).first()
@@ -470,6 +486,7 @@ AREAS_WITH_PRICES = {
 # Endpoint to save areas with their prices
 @areas_bp.route('/insert-areas', methods=['POST', 'GET'])
 # @jwt_required()
+@limiter.exempt
 def save_areas():
     try:
         # data = request.json

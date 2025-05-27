@@ -5,7 +5,7 @@ from jsonschema import ValidationError, validate
 from sqlalchemy import desc
 from web.apis.models.addresses import Address
 from web.apis.utils.decorators import access_required
-from web.extensions import db, fake
+from web.extensions import db, fake, limiter
 from web.apis.models.orders import Order, OrderItem
 from web.apis.schemas.order import order_schema
 from web.apis.utils.serializers import PageSerializer
@@ -17,6 +17,7 @@ from web.apis import api_bp as order_bp
 @order_bp.route('/orders', methods=['GET'])
 @jwt_required()
 @access_required('dev', 'admin')
+@limiter.exempt
 def orders():
     try:
         # Check permissions
@@ -34,6 +35,7 @@ def orders():
 
 @order_bp.route('/orders/<int:user_id>/user', methods=['GET'])
 @jwt_required()
+@limiter.exempt
 def my_orders(user_id):
     try:
         # Check permissions
@@ -60,6 +62,7 @@ def my_orders(user_id):
 @order_bp.route('/orders/<order_id>', methods=['GET'])
 @jwt_required()
 @access_required('dev', 'admin')
+@limiter.exempt
 def order_details(order_id):
     try:
         order = Order.query.get_or_404(order_id)
@@ -180,6 +183,7 @@ def order_details(order_id):
 
 @order_bp.route('/orders', methods=['POST'])
 @jwt_required(optional=True)
+@limiter.exempt
 def create_order():
     try:
         # Determine the content type and get data accordingly
@@ -283,6 +287,7 @@ def create_address(data, user):
 
 @order_bp.route('/orders/<int:order_id>', methods=['PUT'])
 @jwt_required(optional=True)
+@limiter.exempt
 def update_order(order_id):
     try:
         # Determine content type and retrieve data accordingly
@@ -359,6 +364,7 @@ def update_order(order_id):
 
 @order_bp.route('/orders/<int:order_id>', methods=['DELETE'])
 @jwt_required(optional=True)
+@limiter.exempt
 def delete_order(order_id):
     try:
         user = current_user

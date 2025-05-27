@@ -18,6 +18,7 @@ from web.apis.schemas.categories import category_schema
 @categories_bp.route('/categories', methods=['POST'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def create_category():
     try:
         if request.content_type == 'application/json':
@@ -75,6 +76,7 @@ def create_category():
 
 @categories_bp.route('/categories', methods=['GET'])
 @categories_bp.route('/categories/<int:category_id>', methods=['GET'])
+@limiter.exempt
 def get_categories(category_id=None):
     try:
         if category_id:
@@ -98,9 +100,9 @@ def get_categories(category_id=None):
         return error_response(f"Error fetching categories: {str(e)}")
 
 @categories_bp.route('/categories/<int:category_id>', methods=['PUT'])
-
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def update_category(category_id):
     try:
         category = Category.query.get(category_id)
@@ -124,6 +126,7 @@ def update_category(category_id):
 @categories_bp.route('/categories/<int:category_id>', methods=['DELETE'])
 @jwt_required()
 @access_required('admin', 'dev')
+@limiter.exempt
 def delete_category(category_id):
     try:
         category = Category.query.get(category_id)

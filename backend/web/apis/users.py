@@ -112,8 +112,8 @@ def send_message():
 
 @user_bp.route("/users/signup", methods=['POST'])
 @csrf.exempt
-# @limiter.exempt
 @jwt_required(optional=True)
+@limiter.exempt
 def signup():
     user_identity = get_jwt_identity()
     if user_identity:
@@ -175,7 +175,7 @@ def signup():
 
 @user_bp.route("/users/signin", methods=['POST'])
 @csrf.exempt
-# @limiter.exempt
+@limiter.exempt
 @jwt_required(optional=True)
 def signin():
     try:
@@ -255,7 +255,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask import make_response
 
 @user_bp.route("/users/refresh-token", methods=['POST', 'GET'])
-# @limiter.exempt
+@limiter.exempt
 @jwt_required(refresh=True, optional=True)  # Ensure the user is sending a valid refresh token
 def refresh_token():
     try:
@@ -291,7 +291,7 @@ def refresh_token():
 
 @user_bp.route("/users/signout", methods=['GET', 'POST'])
 @jwt_required()
-# @limiter.exempt
+@limiter.exempt
 def signout():
     try:
         # Get the JWT token from the current request
@@ -326,6 +326,7 @@ def signout():
 
 @user_bp.route('/users/change-password', methods=['POST'])
 @jwt_required()
+@limiter.exempt
 def change_password():
     """Allow authenticated users to change their password."""
     try:
@@ -417,6 +418,7 @@ def reset_password():
 # # Unified route to handle all token-related actions (reset password, email verification, etc.)
 @user_bp.route("/users/process-token/<token>", methods=['GET', 'POST'])
 @jwt_required(optional=True)
+@limiter.exempt
 def process_token(token: str = None):
     try:
         # Ensure the token is provided
@@ -884,6 +886,7 @@ def update_user(user_id):
 
 @user_bp.route('/users/<user_id>', methods=['DELETE'])
 @jwt_required()
+@limiter.exempt
 @access_required('admin', 'editor', strict=False)  # Specify required roles
 def delete_user(user_id=None):
     try:

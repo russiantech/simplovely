@@ -72,6 +72,7 @@ def create_address():
 
 @address_bp.route('/addresses/<int:address_id>', methods=['PUT'])
 @jwt_required()
+@limiter.exempt
 def update_address(address_id):
     """Update an existing address for the authenticated user."""
     try:
@@ -104,6 +105,7 @@ def update_address(address_id):
 
 @address_bp.route('/addresses/<int:address_id>', methods=['DELETE'])
 @jwt_required(optional=True)
+@limiter.exempt
 def delete_address(address_id):
     """Delete an existing address for the authenticated user."""
     try:
@@ -152,6 +154,7 @@ def list_countries(country_id=None):
 
 @address_bp.route('/countries', methods=['POST'])
 @jwt_required()
+@limiter.exempt
 def create_country():
     """Create a new country."""
     try:
@@ -170,6 +173,7 @@ def create_country():
 
 @address_bp.route('/countries/<int:country_id>', methods=['PUT'])
 @jwt_required()
+@limiter.exempt
 def update_country(country_id):
     """Update an existing country."""
     try:
@@ -190,6 +194,7 @@ def update_country(country_id):
 
 @address_bp.route('/countries/<int:country_id>', methods=['DELETE'])
 @jwt_required()
+@limiter.exempt
 def delete_country(country_id):
     """Delete an existing country."""
     try:
@@ -232,6 +237,7 @@ def states_by_country(country_id):
 
 @address_bp.route('/states', methods=['GET'])
 @jwt_required()
+@limiter.exempt
 def list_states():
     """List all states."""
     try:
@@ -244,6 +250,7 @@ def list_states():
 
 @address_bp.route('/states', methods=['POST'])
 @jwt_required()
+@limiter.exempt
 def create_state():
     """Create a new state."""
     try:
@@ -262,6 +269,7 @@ def create_state():
 
 @address_bp.route('/states/<int:state_id>', methods=['PUT'])
 @jwt_required()
+@limiter.exempt
 def update_state(state_id):
     """Update an existing state."""
     try:
@@ -283,6 +291,7 @@ def update_state(state_id):
 
 @address_bp.route('/states/<int:state_id>', methods=['DELETE'])
 @jwt_required()
+@limiter.exempt
 def delete_state(state_id):
     """Delete an existing state."""
     try:
@@ -324,6 +333,7 @@ def cities_by_states(state_id):
 
 @address_bp.route('/cities', methods=['GET'])
 @jwt_required()
+@limiter.exempt
 def list_cities():
     """List all cities."""
     try:
@@ -336,6 +346,7 @@ def list_cities():
 
 @address_bp.route('/cities', methods=['POST'])
 @jwt_required()
+@limiter.exempt
 def create_city():
     """Create a new city."""
     try:
@@ -354,6 +365,7 @@ def create_city():
 
 @address_bp.route('/cities/<int:city_id>', methods=['PUT'])
 @jwt_required()
+@limiter.exempt
 def update_city(city_id):
     """Update an existing city."""
     try:
@@ -375,6 +387,7 @@ def update_city(city_id):
 
 @address_bp.route('/cities/<int:city_id>', methods=['DELETE'])
 @jwt_required()
+@limiter.exempt
 def delete_city(city_id):
     """Delete an existing city."""
     try:
@@ -556,6 +569,7 @@ def delete_city(city_id):
 
 import requests
 @address_bp.route('/fetch_data', methods=['GET'])
+@limiter.exempt
 def fetch_data():
     try:
         # Fetch countries from GeoNames
