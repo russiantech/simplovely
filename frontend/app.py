@@ -15,7 +15,7 @@ def site_map():
     return jsonify(links), 200
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=int(getenv("PORT", 5001)))
+    app.run(host='0.0.0.0', port=int(getenv("PORT", 5002)))
     
     # from web.extensions import socketio as sio
     # sio.run(app=app, host='0.0.0.0', port=int(getenv("PORT", 5000)))
