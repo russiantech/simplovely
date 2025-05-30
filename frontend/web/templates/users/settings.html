@@ -29,8 +29,8 @@
               </div>
               <div class="basic-info collapse show" id="basicInfoPreview" style="">
                 <ul class="list-unstyled fs-sm m-0">
-                  <li class="name_0">Chris James</li>
-                  <li class="username">edet</li>
+                  <li class="name_0">Dunis Dev</li>
+                  <li class="username">coding-intstructor</li>
                 </ul>
               </div>
               <div class="basic-info collapse" id="basicInfoEdit" style="">
@@ -38,7 +38,7 @@
                   <div class="col-sm-6">
                     <label for="fn" class="form-label">Username</label>
                     <div class="position-relative">
-                      <input type="text" class="form-control" name="username" id="username" placeholder="edet" required="">
+                      <input type="text" class="form-control text-warning" disabled="true" name="username" id="username" placeholder="edet" required="">
                       <div class="invalid-feedback">Please enter your user name!</div>
                     </div>
                   </div>
@@ -172,7 +172,7 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-   // 
+   /*
    async function get_user() {
     try {
         // Fetch the current user data
@@ -203,7 +203,8 @@
 
 // Fetch user data on page load
 window.onload = get_user();
-  
+  */
+
     const basic_info = document.getElementById('basic_info_update_form');
     if (basic_info) {
       basic_info.addEventListener('submit', (event) => {

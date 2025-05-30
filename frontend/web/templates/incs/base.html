@@ -23,6 +23,59 @@
     {% include "incs/modals/service_requests_modal.html" %}
     {% include "incs/bottom_js.html" %}
 
+    <script>
+      
+        
+        async function get_user_home() {
+            try {
+                // Fetch the current user data
+                const data = await window.make_request(`${window.apiUrl}/users/current`);
+
+                // Update the display for basic info
+                const nameElement = document.querySelector('.name');
+                const initialElement = document.querySelector('.initial');
+
+                // Update name and initial
+                if (nameElement) {
+                    nameElement.innerText = data.name;
+                }
+                if (initialElement) {
+                    initialElement.innerText = data.name.charAt(0).toUpperCase(); // Get the first letter
+                }
+
+                // Select the anchor element and the span within it
+                // const anchor = document.querySelector('.btn.btn-dark.rounded-pill.animate-scale');
+                const anchor = document.querySelector('#profile_link');
+                const span = anchor.querySelector('span');
+
+                // Update the href attribute and the span text
+                if (anchor && span) {
+                    anchor.setAttribute('href', './account'); // Update the href to the new URL
+                    span.textContent = data.username; // Change the span text
+                }
+
+            } catch (error) {
+                console.error('get-user-home-error', error);
+                //window.response_modal('get-user-error: ' + error.message);
+            }
+        }
+
+        // Fetch user data on page load
+        if (document.querySelector('.name') || document.querySelector('.initial')) {
+            window.onload = get_user_home();
+        }
+        
+
+        // now, get_user_home(); is being gotten from the windows object defined and attached at the incs/bottom_js.html
+        // called to update authenticated profiles globally.
+        document.addEventListener("DOMContentLoaded", () => {
+        
+          window.get_user_home();
+
+        });
+
+    </script>
+
 </body>
 </html>
 

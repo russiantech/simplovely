@@ -38,17 +38,18 @@
 
                             <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3">
                                 <div class="d-flex align-items-center gap-3 me-4">
-                                  <h1 class="h2 mb-1 mb-sm-2">Services</h1>
-                                  <a class="nav-link animate-underline fs-base px-0" href="#newPlanModal" data-bs-toggle="modal">
+                                  <h1 class="h2 mb-1 mb-sm-2">Services Plans</h1>
+                                  <!--<a class="nav-link animate-underline fs-base px-0" href="#newPlanModal" data-bs-toggle="modal">
                                     <i class="ci-plus fs-lg ms-n1 me-2"></i>
                                     <span class="animate-target badge text-bg-info rounded-pill">Add Plans</span>
-                                  </a>
+                                  </a>-->
                                 </div>
               
-                                <a class="nav-link animate-underline fs-base px-0" href="#newPlanModal" data-bs-toggle="modal">
+                                <button id="createPlanBtn" class="nav-link animate-underline fs-base px-0" href="#newPlanModal" data-bs-toggle="modal">
                                   <i class="ci-plus fs-lg ms-n1 me-2"></i>
                                   <span class="animate-target badge text-bg-info rounded-pill">Add plans</span>
-                                </a>
+                                </button>
+                                
                               </div>
 
                             <!---->
@@ -76,87 +77,58 @@
                         </div>
                     </div>
 
-                    <!---->
-                    <section id="scrollbar-horizontal" class="docs-section pb-sm-2 mb-5">
-                        <!--<h4>Horizontal</h4>-->
-                        <div class="card border-0 shadow">
-                            <span class="d-none d-block-dark position-absolute top-0 start-0 w-100 h-100 bg-dark rounded"
-                                style="opacity: .4"></span>
-                            <div class="card-body position-relative z-2">
-                                <ul class="nav nav-tabs m-n2" role="tablist" style="max-width: 240px">
-                                    <li class="nav-item" role="presentation">
-                                        <button type="button" class="nav-link active" data-bs-toggle="tab"
-                                            data-bs-target="#preview-2" role="tab" aria-controls="preview-2"
-                                            aria-selected="true">
-                                            <i class="ci-eye opacity-75 ms-n1 me-2"></i>
-                                            <h5 class="card-title">Fashion Services:</h5>
-                                        </button>
-                                    </li>
-                                </ul>
-                                <div class="tab-content">
-                                    <div id="preview-2" class="tab-pane pt-4 pb-2 mt-3 fade show active"
-                                        role="tabpanel">
-                                        <div class="overflow-x-auto pb-4 simplebar-scrollable-x" data-simplebar="init"
-                                            data-simplebar-auto-hide="false">
-                                            <div class="simplebar-wrapper" style="margin: 0px 0px -24px;">
-                                                <div class="simplebar-height-auto-observer-wrapper">
-                                                    <div class="simplebar-height-auto-observer"></div>
-                                                </div>
-                                                <div class="simplebar-mask">
-                                                    <div class="simplebar-offset" style="right: 0px; bottom: 0px;">
-                                                        <div class="simplebar-content-wrapper" tabindex="0"
-                                                            role="region" aria-label="scrollable content"
-                                                            style="height: auto; overflow: scroll hidden;">
-                                                            <div class="simplebar-content"
-                                                                style="padding: 0px 0px 24px;">
-                                                                <div class="d-flex gap-4">
-                                                                <button class="rounded">
-                                                                    <div class="card" style="min-width: 230px;">
-                                                                        <div class="card-body">
-                                                                            <h6 class="card-title">Pick Up</h6>
-                                                                            <p class="card-text fs-sm">
-                                                                                We prepare your fabrics down, so you can come take them away.
-                                                                            </p>
-                                                                        </div>
-                                                                    </div>
-                                                                </button>
-                                                                <button class="rounded">
-                                                                    <div class="card" style="min-width: 230px;">
-                                                                        <div class="card-body">
-                                                                            <h6 class="card-title">Delivery</h6>
-                                                                            <p class="card-text fs-sm">We convey your fabrics to your destination.</p>
-                                                                        </div>
-                                                                    </div>
-                                                                </button>
 
-                                                                <button class="rounded">
-                                                                    <div class="card" style="min-width: 230px;">
-                                                                        <div class="card-body">
-                                                                            <h6 class="card-title">Take Measurement</h6>
-                                                                            <p class="card-text fs-sm">
-                                                                                Our tailor comes over to measure and confirm fabrics.
-                                                                            </p>
-                                                                        </div>
-                                                                    </div>
-                                                                </button>
-
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
+             <div class="card border-0 shadow">
+    <div class="card-body">
+        <h5 class="card-title mb-4">Service Summary</h5>
+        <div class="row g-4">
+            <!-- Pick Up Service -->
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-title d-flex align-items-center">
+                            <i class="fas fa-box-open text-primary me-2"></i>
+                            Pick Up
+                        </h6>
+                        <p class="card-text text-muted fs-sm mb-0">
+                            We prepare your fabrics down, so you can come take them away.
+                        </p>
+                    </div>
                 </div>
-                </section>
-                <!---->
+            </div>
+            
+            <!-- Delivery Service -->
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-title d-flex align-items-center">
+                            <i class="fas fa-truck text-primary me-2"></i>
+                            Delivery
+                        </h6>
+                        <p class="card-text text-muted fs-sm mb-0">
+                            We convey your fabrics to your destination.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Measurement Service -->
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-title d-flex align-items-center">
+                            <i class="fas fa-ruler-combined text-primary me-2"></i>
+                            Take Measurement
+                        </h6>
+                        <p class="card-text text-muted fs-sm mb-0">
+                            Our tailor comes over to measure and confirm fabrics.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
             </div>
         </div>

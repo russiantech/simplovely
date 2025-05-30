@@ -32,7 +32,7 @@
                 return;
             }
 
-            console.log("Access granted: User is authenticated and authorized.");
+            // console.log("Access granted: User is authenticated and authorized.");
             // Continue with the page logic if authenticated and authorized
         }
 
