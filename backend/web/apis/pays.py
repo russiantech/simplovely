@@ -18,7 +18,7 @@ from web.apis.utils.helpers import generate_ref
 from web.apis import api_bp as transact_bp
 
 PAYSTACK_SK = getenv('PAYSTACK_SK')
-print('PAYSTACK_SK', PAYSTACK_SK)
+# print('PAYSTACK_SK', PAYSTACK_SK)
 
 @transact_bp.route('/payment/<int:plan_id>/paystack', methods=['POST'])
 @csrf.exempt
