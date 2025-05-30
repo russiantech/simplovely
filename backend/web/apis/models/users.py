@@ -157,7 +157,7 @@ class User(db.Model):
                 
                             # Inspect and print token contents
             decoded_token = self.check_token(token)  # Disable signature verification
-            print(f"Generated {token_type} token: {decoded_token}")
+            # print(f"Generated {token_type} token: {decoded_token}")
             # logging.info(f"Generated {token_type} token: {decoded_token}")
             # decoded_token = decode(token, options={"verify_signature": False})  # Disable signature verification
             # logging.info(f"Generated {token_type} token: {decoded_token}")
@@ -179,7 +179,7 @@ class User(db.Model):
             
             # Decode the token using the app's SECRET_KEY (from flask_jwt_extended)
             token = decode_token(token)
-            print("decoded-token - ", token)
+            # print("decoded-token - ", token)
             return token
 
         except Exception:

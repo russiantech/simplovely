@@ -66,12 +66,16 @@ def initiate_paystack(plan_id):
             }
         }
 
+        # print(payload)
+
         payment_response = requests.post(payment_url, json=payload, headers=headers)
         payment_data = payment_response.json()
+        # print(payment_data)
         payment_link = payment_data.get("data", {}).get("authorization_url")
 
         if not payment_link:
-            return error_response("Failed to retrieve payment link.")
+            error = payment_data.get('message', '')
+            return error_response(f"Failed to retrieve payment link, due to {error} .")
 
         # Create a pending transaction
         user = User.get_user(email)
@@ -83,7 +87,8 @@ def initiate_paystack(plan_id):
             db.session.commit()
 
         transaction = Transaction(
-            plan_id=plan.id,
+            # plan_id=plan.id,
+            service_id=plan.id,
             user_id=user.id,
             amount=plan.amount,
             currency='NGN',
@@ -103,6 +108,7 @@ def initiate_paystack(plan_id):
         return error_response("The request timed out. Please try again later.")
 
     except RequestException as e:
+        # print(f"RequestException: {e}")
         return error_response(f"error: {str(e)}")
 
     except IntegrityError as e:

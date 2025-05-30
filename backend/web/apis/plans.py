@@ -488,47 +488,305 @@ from flask_jwt_extended import jwt_required, current_user
 #         traceback.print_exc()
 #         return error_response(f"An unexpected error occurred: {str(e)}", status_code=500)
 
+# VERSION 01 [get_usage_statistics]
+# @usage_bp.route('/usage/statistics', methods=['GET'])
+# @jwt_required(optional=False)
+# @limiter.exempt
+# def get_usage_statistics():
+
+#     try:
+#         # Ensure the current user is authenticated
+#         if not current_user:
+#             return error_response('User is not logged in.', status_code=401)
+
+#         # Query the most recent usage record for the current user
+#         recent_usage = Usage.query.filter_by(user_id=current_user.id).order_by(Usage.created_at.desc()).first()
+
+#         if recent_usage:
+#             usage_percentage = recent_usage.calculate_usage_percentage()
+
+#             data = {
+#                 'units_used': recent_usage.units_used,
+#                 'total_units': recent_usage.total_units,
+#                 'remaining_units': recent_usage.subscriptions.total_units,
+#                 # 'available_units': recent_usage.subscriptions.total_units,
+#                 'usage_percentage': usage_percentage,
+#                 'status': recent_usage.status
+#             }
+            
+#             return success_response("Stats fetched successfully.", data=data, status_code=200)
+        
+#         else:
+#             # Return placeholders if no usage records are found
+#             data = {
+#                 'available_units': 0,
+#                 'units_used': 0,
+#                 'total_units': current_user.subscriptions[0].total_units or 0,
+#                 'remaining_units': current_user.subscriptions[0].total_units or 0,
+#                 'usage_percentage': 0,
+#                 'status': 'No usage records available'
+#             }
+            
+#             return success_response('No usage records found for the current user.', data=data, status_code=200)
+#     except Exception as e:
+#         traceback.print_exc()
+#         return error_response(str(e), status_code=500)
+# # 
+
+# VERSION 02
+# @usage_bp.route('/usage/statistics', methods=['GET'])
+# @jwt_required(optional=False)
+# @limiter.exempt
+# def get_usage_statistics():
+#     try:
+#         # Ensure the current user is authenticated
+#         if not current_user:
+#             return error_response('User is not logged in.', status_code=401)
+
+#         # Get the user's active subscription (if any)
+#         active_subscription = next(
+#             (sub for sub in current_user.subscriptions if sub.is_active), 
+#             None
+#         )
+
+#         # Query the most recent usage record
+#         recent_usage = Usage.query.filter_by(
+#             user_id=current_user.id
+#         ).order_by(Usage.created_at.desc()).first()
+
+#         if recent_usage:
+#             usage_percentage = recent_usage.calculate_usage_percentage()
+#             total_units = active_subscription.total_units if active_subscription else 0
+            
+#             data = {
+#                 'units_used': recent_usage.units_used,
+#                 'total_units': total_units,
+#                 'remaining_units': total_units - recent_usage.units_used,
+#                 'usage_percentage': usage_percentage,
+#                 'status': recent_usage.status
+#             }
+#             return success_response("Stats fetched successfully.", data=data)
+        
+#         else:
+#             # Handle case with no usage records
+#             total_units = active_subscription.total_units if active_subscription else 0
+#             data = {
+#                 'units_used': 0,
+#                 'total_units': total_units,
+#                 'remaining_units': total_units,
+#                 'usage_percentage': 0,
+#                 'status': 'No usage records available'
+#             }
+#             return success_response('No usage records found.', data=data)
+
+#     except Exception as e:
+#         return error_response(f"Failed to fetch usage statistics: {str(e)}", status_code=500)
+
+# VERSION 03
+# @usage_bp.route('/usage/statistics', methods=['GET'])
+# @jwt_required(optional=False)
+# @limiter.exempt
+# def get_usage_statistics():
+#     try:
+#         if not current_user:
+#             return error_response('User is not logged in.', status_code=401)
+
+#         # Get the first subscription (modify this if you have active/inactive logic)
+#         subscription = current_user.subscriptions[0] if current_user.subscriptions else None
+
+#         # Get most recent usage
+#         recent_usage = Usage.query.filter_by(
+#             user_id=current_user.id
+#         ).order_by(Usage.created_at.desc()).first()
+
+#         if recent_usage:
+#             usage_percentage = recent_usage.calculate_usage_percentage()
+#             total_units = subscription.total_units if subscription else 0
+            
+#             data = {
+#                 'units_used': recent_usage.units_used,
+#                 'total_units': total_units,
+#                 'remaining_units': max(total_units - recent_usage.units_used, 0),
+#                 'usage_percentage': usage_percentage,
+#                 'status': recent_usage.status
+#             }
+#             return success_response("Stats fetched successfully.", data=data)
+        
+#         else:
+#             # No usage records case
+#             total_units = subscription.total_units if subscription else 0
+#             data = {
+#                 'units_used': 0,
+#                 'total_units': total_units,
+#                 'remaining_units': total_units,
+#                 'usage_percentage': 0,
+#                 'status': 'No usage records available'
+#             }
+#             return success_response('No usage records found.', data=data)
+
+#     except IndexError:
+#         # Handle case where subscriptions exists but is empty
+#         data = {
+#             'units_used': 0,
+#             'total_units': 0,
+#             'remaining_units': 0,
+#             'usage_percentage': 0,
+#             'status': 'No subscription available'
+#         }
+#         return success_response('No subscription found.', data=data)
+        
+#     except Exception as e:
+#         return error_response(f"Failed to fetch usage statistics: {str(e)}", status_code=500)
+
+# VERSION 04
 @usage_bp.route('/usage/statistics', methods=['GET'])
 @jwt_required(optional=False)
 @limiter.exempt
 def get_usage_statistics():
     try:
-        # Ensure the current user is authenticated
+        # Authentication check
         if not current_user:
-            return error_response('User is not logged in.', status_code=401)
+            return error_response('Authentication required', status_code=401)
 
-        # Query the most recent usage record for the current user
-        recent_usage = Usage.query.filter_by(user_id=current_user.id).order_by(Usage.created_at.desc()).first()
+        # Get first active subscription safely
+        subscription = None
+        if hasattr(current_user, 'subscriptions') and current_user.subscriptions:
+            # Assuming subscriptions is a list, get the first one
+            subscription = current_user.subscriptions[0] if len(current_user.subscriptions) > 0 else None
 
+        # Get most recent usage record
+        recent_usage = Usage.query.filter_by(
+            user_id=current_user.id
+        ).order_by(Usage.created_at.desc()).first()
+
+        # Prepare base response data
+        base_data = {
+            'units_used': 0,
+            'total_units': getattr(subscription, 'total_units', 0),
+            'remaining_units': getattr(subscription, 'total_units', 0),
+            'usage_percentage': 0,
+            'status': 'No usage data available'
+        }
+
+        # If we have usage data
         if recent_usage:
-            usage_percentage = recent_usage.calculate_usage_percentage()
+            # Calculate usage percentage safely
+            try:
+                usage_percentage = recent_usage.calculate_usage_percentage()
+            except Exception as e:
+                usage_percentage = 0
+                current_app.logger.error(f"Error calculating usage percentage: {str(e)}")
 
-            data = {
-                'units_used': recent_usage.units_used,
-                'total_units': recent_usage.total_units,
-                'remaining_units': recent_usage.subscriptions.total_units,
-                # 'available_units': recent_usage.subscriptions.total_units,
+            # Update response data
+            base_data.update({
+                'units_used': getattr(recent_usage, 'units_used', 0),
+                'total_units': getattr(recent_usage, 'total_units', getattr(subscription, 'total_units', 0)), # get total_units in recent usage or from subscription
+                # remaining_units is still same/gotten directly cos each usage is deducting directly.
+                # 'remaining_units': max(
+                #     getattr(subscription, 'total_units', 0) - getattr(recent_usage, 'units_used', 0), 
+                #     0
+                # ),
+                # 'remaining_units': total_units, 
                 'usage_percentage': usage_percentage,
-                'status': recent_usage.status
-            }
-            
-            return success_response("Stats fetched successfully.", data=data, status_code=200)
-        
-        else:
-            # Return placeholders if no usage records are found
-            data = {
-                'available_units': 0,
-                'units_used': 0,
-                'total_units': current_user.subscriptions[0].total_units or 0,
-                'remaining_units': current_user.subscriptions[0].total_units or 0,
-                'usage_percentage': 0,
-                'status': 'No usage records available'
-            }
-            
-            return success_response('No usage records found for the current user.', data=data, status_code=200)
-    except Exception as e:
-        return error_response(str(e), status_code=500)
+                'status': getattr(recent_usage, 'status', 'active')
+            })
 
+            return success_response(
+                "Usage statistics retrieved successfully",
+                data=base_data
+            )
+
+        # No usage records case
+        return success_response(
+            "No usage records found",
+            data=base_data
+        )
+
+    except Exception as e:
+        current_app.logger.error(f"Error in get_usage_statistics: {str(e)}")
+        traceback.print_exc()
+        return error_response(
+            "An error occurred while fetching usage statistics",
+            status_code=500
+        )
+
+# VERSION 05
+# @usage_bp.route('/usage/statistics', methods=['GET'])
+# @jwt_required(optional=False)
+# @limiter.exempt
+# def get_usage_statistics():
+#     try:
+#         # Authentication check
+#         if not current_user:
+#             return error_response('Authentication required', status_code=401)
+
+#         # Get most recent usage record
+#         recent_usage = Usage.query.filter_by(
+#             user_id=current_user.id
+#         ).order_by(Usage.created_at.desc()).first()
+
+#         # Initialize default response data
+#         response_data = {
+#             'units_used': 0,
+#             'total_units': 0,
+#             'remaining_units': 0,
+#             'usage_percentage': 0,
+#             'status': 'No usage data available'
+#         }
+
+#         if recent_usage:
+#             # Safely get subscription data from recent_usage
+#             subscription = getattr(recent_usage, 'subscriptions', None)
+            
+#             # Calculate values with fallbacks
+#             total_units = getattr(subscription, 'total_units', 0) if subscription else 0
+#             units_used = getattr(recent_usage, 'units_used', 0)
+            
+#             try:
+#                 usage_percentage = recent_usage.calculate_usage_percentage()
+#             except Exception as e:
+#                 current_app.logger.error(f"Usage calculation error: {str(e)}")
+#                 usage_percentage = 0
+
+#             response_data.update({
+#                 'units_used': units_used,
+#                 'total_units': total_units,
+#                 'remaining_units': total_units,  # Directly from subscription as requested
+#                 'usage_percentage': usage_percentage,
+#                 'status': getattr(recent_usage, 'status', 'active')
+#             })
+
+#             return success_response(
+#                 "Usage statistics retrieved successfully",
+#                 data=response_data
+#             )
+#         else:
+#             # Handle case when no usage records exist
+#             # Try to get subscription data from user as fallback
+#             user_subscription = None
+#             if hasattr(current_user, 'subscriptions') and current_user.subscriptions:
+#                 user_subscription = current_user.subscriptions[0] if len(current_user.subscriptions) > 0 else None
+            
+#             total_units = getattr(user_subscription, 'total_units', 0) if user_subscription else 0
+
+#             response_data.update({
+#                 'total_units': total_units,
+#                 'remaining_units': total_units
+#             })
+
+#             return success_response(
+#                 "No usage records found",
+#                 data=response_data
+#             )
+
+#     except Exception as e:
+#         current_app.logger.error(f"Error in get_usage_statistics: {str(e)}")
+#         traceback.print_exc()
+#         return error_response(
+#             "An error occurred while fetching usage statistics",
+#             status_code=500
+#         )
+        
 @usage_bp.route('/usage', methods=['POST'])
 @jwt_required(optional=True)
 @limiter.exempt
@@ -557,13 +815,13 @@ def create_usage():
             # subscription = user.subscriptions if user.subscriptions else None
             
             if subscription is None:
-                return error_response(f"Hey, return those fabrics right now. No active subscriptions found for this {user.username}", status_code=404)
+                return error_response(f"Hey, no active subscriptions found for {user.username}", status_code=404)
 
             total_units = subscription.total_units
             
             # Validate sufficient units for usage
             if total_units < units_used:
-                return error_response(f"Your volume [{total_units}] is not sufficient for this usage", status_code=400)
+                return error_response(f"Current volume level [{total_units}] is not sufficient for this usage", status_code=400)
 
             # Deduct units from the user's subscription
             subscription.total_units -= units_used
