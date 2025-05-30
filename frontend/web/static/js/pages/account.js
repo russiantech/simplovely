@@ -1300,9 +1300,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const response = await fetch(`${window.apiUrl}/payment/callback/paystack?reference=${queryParams.reference}`);
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                // if (!response.ok) {
+                //     // throw new Error(`HTTP error! status: ${response.status}`);
+                //     throw new Error(`HTTP error! status: ${response.status}`);
+                // }
 
                 const result = await response.json();
                 console.log('Payment verification result:', result);
@@ -1319,7 +1320,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             } catch (error) {
                 console.error('Payment callback error:', error);
-                const errorMessage = `Error: ${error.message || "Unknown error occurred."}`;
+                const errorMessage = `Error: ${error.error || error.error || "Unknown error occurred."}`;
                 if (window.response_modal) {
                     window.response_modal(errorMessage);
                 }
