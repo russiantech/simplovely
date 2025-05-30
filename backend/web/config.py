@@ -24,6 +24,7 @@ class Config:
     # Payment
     RAVE_LIVE_SECRET_KEY = getenv('RAVE_LIVE_SECRET_KEY')
     RAVE_TEST_SECRET_KEY = getenv('RAVE_TEST_SECRET_KEY')
+    PAYSTACK_SK = getenv('PAYSTACK_SK')
     
     """Base configuration."""
     # TESTING = getenv('TESTING') == True # This would'nt allow flask-mail send actual email in real time.
@@ -116,7 +117,7 @@ class ProductionConfig(Config):
     TESTING = False
     DEBUG = True
     FLASK_ENV = 'production'
-    
+    PAYSTACK_SK = getenv('PAYSTACK_SK')
     # Mail configuration
     MAIL_DEBUG = False
     MAIL_DEFAULT_SENDER = ('Techa', getenv('DEFAULT_MAIL_SENDER', getenv('MAIL_USERNAME', 'hi@techa.tech')) )

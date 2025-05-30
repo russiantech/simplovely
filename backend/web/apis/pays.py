@@ -17,7 +17,7 @@ from web.apis.utils.helpers import generate_ref
 # from web.apis.transactions import save_transaction, transact_bp
 from web.apis import api_bp as transact_bp
 
-PAYSTACK_SK = getenv('PAYSTACK_TEST_SK')
+PAYSTACK_SK = getenv('PAYSTACK_SK')
 
 @transact_bp.route('/payment/<int:plan_id>/paystack', methods=['POST'])
 @csrf.exempt
