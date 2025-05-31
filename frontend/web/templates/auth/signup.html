@@ -229,5 +229,61 @@
     {% include "incs/modals/response_modal.html" %}
     {% include "incs/bottom_js.html" %}
 
+      
+  <script>
+
+document.addEventListener('DOMContentLoaded', () => {
+    const signinForm = document.getElementById('signup_form');
+    if (signinForm) {
+        signinForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitButton = signinForm.querySelector('button[type="submit"]');
+            window.toggleButton(submitButton, true);
+
+            try {
+                // Clear any existing tokens before new login attempt
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                document.cookie = 'refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
+                const formData = new FormData(signinForm);
+                const data = Object.fromEntries(formData.entries());
+                
+                const result = await window.make_request(`${window.apiUrl}/users/signup`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        username: data.username,
+                        email: data.email,
+                        phone: data.phone,
+                        password: data.password
+                    })
+                });
+
+                if (result.success) {
+                    // Only store tokens if they exist and are valid
+                    if (result.access_token) {
+                        localStorage.setItem('access_token', result.access_token);
+                    }
+                    if (result.refresh_token) {
+                        localStorage.setItem('refresh_token', result.refresh_token);
+                    }
+                    
+                    window.response_modal(`${result.message || 'Signup successful!' }`);
+                    if (result.redirect) {
+                        window.location.href = result.redirect;
+                    }
+                } else {
+                    window.response_modal(result.error || 'Login failed. Please check your credentials.');
+                }
+            } catch (error) {
+                window.response_modal(error.message || 'An error occurred during login');
+            } finally {
+                window.toggleButton(submitButton, false);
+            }
+        });
+    }
+});
+  </script>
+
 </body>
 </html>

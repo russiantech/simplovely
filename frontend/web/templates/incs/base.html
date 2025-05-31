@@ -15,6 +15,8 @@
     {% block content %}
     <!-- Page content -->
 
+    <div class="user-data-error" style="display: none;"></div>
+
     {% endblock content %}
 
     {% include "incs/footer.html" %}
@@ -25,7 +27,7 @@
 
     <script>
       
-        
+        /*
         async function get_user_home() {
             try {
                 // Fetch the current user data
@@ -73,7 +75,76 @@
           window.get_user_home();
 
         });
+*/
 
+
+        /**
+        * Fetches and displays current user information
+        * Uses either name or username depending on availability
+        */
+        async function get_user_home() {
+            try {
+                // Fetch current user data with error handling
+                const userData = await window.make_request(`${window.apiUrl}/users/current`);
+                
+                if (!userData) {
+                    throw new Error('No user data received');
+                }
+
+                // Determine display name (fallback to username if name not available)
+                const displayName = userData.name || userData.username || 'User';
+                const displayInitial = displayName.charAt(0).toUpperCase();
+
+                // Update name display elements
+                const updateElementText = (selector, text) => {
+                    const element = document.querySelector(selector);
+                    if (element) element.textContent = text;
+                };
+
+                updateElementText('.name', displayName);
+                updateElementText('.initial', displayInitial);
+
+                // Update profile link if available
+                const profileAnchor = document.querySelector('.btn.btn-dark.rounded-pill.animate-scale');
+                if (profileAnchor) {
+                    profileAnchor.setAttribute('href', './account');
+                    
+                    const profileSpan = profileAnchor.querySelector('span');
+                    if (profileSpan) {
+                        // Prefer username for profile link, fallback to name
+                        profileSpan.textContent = userData.username || displayName;
+                    }
+                }
+
+            } catch (error) {
+                console.error('Failed to load user data:', error);
+                
+                // Optional: Show a subtle error to user without being intrusive
+                const errorElement = document.querySelector('.user-data-error');
+                if (errorElement) {
+                    errorElement.textContent = 'Could not load profile data';
+                    errorElement.style.display = 'block';
+                }
+            }
+        }
+
+        /**
+        * Initialize user data loading when page loads
+        * Only runs if required elements exist on page
+        */
+        function initUserDataLoading() {
+            const shouldLoadUserData = document.querySelector('.name, .initial, .btn.btn-dark.rounded-pill.animate-scale');
+            if (shouldLoadUserData) {
+                // Use DOMContentLoaded instead of window.onload to avoid conflicts
+                document.addEventListener('DOMContentLoaded', get_user_home);
+                
+                // Alternatively, if you need to ensure all resources are loaded:
+                //window.addEventListener('load', get_user_home);
+            }
+        }
+
+        // Initialize the user data loading
+       initUserDataLoading();
     </script>
 
 </body>
