@@ -324,42 +324,235 @@ def signout():
     except Exception as e:
         return error_response(f'Error signing out: {str(e)}')
 
+# @user_bp.route('/users/change-password', methods=['POST'])
+# @jwt_required()
+# @limiter.exempt
+# def change_password():
+#     """Allow authenticated users to change their password."""
+#     try:
+#         if not get_jwt_identity():
+#             return error_response("You are not authenticated. sign-in first", data={"redirect": url_for('apis.signin')})
+
+#         if request.content_type != 'application/json' or not request.json and not request.form:
+#             return error_response("Content-Type must be application/json & JSON payload expected.")
+
+#         data = request.json or request.form
+#         print(f'data to be changed ->, {data}')
+        
+#         try:
+#             validate(instance=data, schema=change_password_schema)
+#         except ValidationError as e:
+#             return error_response(f"Validation error: {e.message}")
+        
+#         current_password = data.get('current_password')
+#         new_password = data.get('new_password')
+#         confirm_password = data.get('confirm_password')
+
+#         if not all([current_password, new_password, confirm_password]):
+#             return error_response("All fields are required.", status_code=400)
+
+#         if new_password != confirm_password:
+#             return error_response("New password and confirmation do not match.", status_code=400)
+
+#         if not current_user.check_password(current_password):
+#             return error_response("Current password is incorrect.", status_code=403)
+
+#         current_user.set_password(new_password)
+#         db.session.commit()
+
+#         return success_response("Password changed successfully.")
+
+#     except Exception as e:
+#         traceback.print_exception(e)
+#         return error_response(f"Unexpected error: {str(e)}", status_code=500)
+
+# VERSION 02
+# @user_bp.route('/users/change-password', methods=['POST'])
+# @jwt_required()
+# @limiter.exempt
+# def change_password():
+#     """Allow authenticated users to change their password."""
+#     try:
+#         # Authentication check
+#         if not get_jwt_identity():
+#             return error_response("You are not authenticated. Please sign in first", 
+#                                 data={"redirect": url_for('apis.signin')})
+
+#         # Initialize data variable
+#         data = None
+        
+#         # Handle both JSON and form data
+#         if request.is_json:
+#             data = request.get_json()
+#         elif request.form:
+#             data = request.form.to_dict()
+#         else:
+#             return error_response("Request must contain JSON or form data", status_code=400)
+
+#         # Debug print
+#         print(f'Password change data received: {data}')
+        
+#         # Validate data
+#         try:
+#             validate(instance=data, schema=change_password_schema)
+#         except ValidationError as e:
+#             return error_response(f"Validation error: {e.message}", status_code=400)
+        
+#         # Extract fields
+#         current_password = data.get('current_password')
+#         new_password = data.get('new_password')
+#         confirm_password = data.get('confirm_password')
+
+#         # Validate required fields
+#         if not all([current_password, new_password, confirm_password]):
+#             return error_response("All fields are required: current_password, new_password, confirm_password", 
+#                                 status_code=400)
+
+#         # Password confirmation check
+#         if new_password != confirm_password:
+#             return error_response("New password and confirmation do not match", status_code=400)
+
+#         # Current password verification
+#         if not current_user.check_password(current_password):
+#             return error_response("Current password is incorrect", status_code=403)
+
+#         # Update password
+#         current_user.set_password(new_password)
+#         db.session.commit()
+
+#         return success_response("Password changed successfully")
+
+#     except Exception as e:
+#         traceback.print_exception(e)
+#         current_app.logger.error(f"Password change error: {str(e)}")
+#         return error_response("An error occurred while changing password", status_code=500)
+
+# VERSION 03
+# @user_bp.route('/users/change-password', methods=['POST'])
+# @jwt_required()
+# @limiter.exempt
+# def change_password():
+#     """Allow authenticated users to change their password."""
+#     try:
+#         # Verify authentication first
+#         current_user = get_jwt_identity()
+#         if not current_user:
+#             return error_response("Authentication required", status_code=401)
+
+#         # Initialize data variable
+#         data = None
+        
+#         # Handle different content types more robustly
+#         if request.content_type == 'application/json':
+#             try:
+#                 data = request.get_json()
+#                 if data is None:  # Empty JSON body case
+#                     return error_response("JSON payload expected", status_code=400)
+#             except Exception as e:
+#                 current_app.logger.error(f"JSON parsing error: {str(e)}")
+#                 return error_response("Invalid JSON format", status_code=400)
+#         elif request.content_type in ['application/x-www-form-urlencoded', 'multipart/form-data']:
+#             data = request.form.to_dict()
+#         else:
+#             return error_response(
+#                 "Unsupported Content-Type. Use application/json or form data",
+#                 status_code=400
+#             )
+
+#         current_app.logger.debug(f"Password change request data: {data}")
+
+#         # Validate data structure
+#         required_fields = ['current_password', 'new_password', 'confirm_password']
+#         if not all(field in data for field in required_fields):
+#             return error_response(
+#                 f"Missing required fields: {', '.join(required_fields)}",
+#                 status_code=400
+#             )
+
+#         # Get field values
+#         current_password = data['current_password']
+#         new_password = data['new_password']
+#         confirm_password = data['confirm_password']
+
+#         # Validate password match
+#         if new_password != confirm_password:
+#             return error_response(
+#                 "New password and confirmation do not match",
+#                 status_code=400
+#             )
+
+#         # Verify current password
+#         user = User.query.get(current_user['id'])
+#         if not user or not user.check_password(current_password):
+#             return error_response("Current password is incorrect", status_code=403)
+
+#         # Update password
+#         user.set_password(new_password)
+#         db.session.commit()
+
+#         return success_response("Password changed successfully")
+
+#     except Exception as e:
+#         current_app.logger.error(f"Password change error: {str(e)}", exc_info=True)
+#         return error_response(
+#             "An error occurred while processing your request",
+#             status_code=500
+#         )
+
+# VERSION 04 - just current password & new password
 @user_bp.route('/users/change-password', methods=['POST'])
 @jwt_required()
 @limiter.exempt
 def change_password():
     """Allow authenticated users to change their password."""
     try:
-        if not get_jwt_identity():
-            return error_response("You are not authenticated. sign-in first", data={"redirect": url_for('apis.signin')})
+        # Verify authentication
+        current_user_id = get_jwt_identity()
+        if not current_user_id:
+            return error_response("Authentication required", status_code=401)
 
-        data = request.json
-        
+        # Get request data
         try:
-            validate(instance=data, schema=change_password_schema)
-        except ValidationError as e:
-            return error_response(f"Validation error: {e.message}")
-        
-        current_password = data.get('current_password')
-        new_password = data.get('new_password')
-        confirm_password = data.get('confirm_password')
+            if request.is_json:
+                data = request.get_json()
+            else:
+                data = request.form.to_dict()
+        except Exception as e:
+            current_app.logger.error(f"Data parsing error: {str(e)}")
+            return error_response("Invalid request data", status_code=400)
 
-        if not all([current_password, new_password, confirm_password]):
-            return error_response("All fields are required.", status_code=400)
+        # Validate required fields
+        required_fields = ['current_password', 'new_password']
+        if not all(field in data for field in required_fields):
+            return error_response(
+                "Both current_password and new_password are required",
+                status_code=400
+            )
 
-        if new_password != confirm_password:
-            return error_response("New password and confirmation do not match.", status_code=400)
+        current_password = data['current_password']
+        new_password = data['new_password']
 
-        if not current_user.check_password(current_password):
-            return error_response("Current password is incorrect.", status_code=403)
+        # Get user from database
+        # user = User.query.get(current_user_id)
+        user = User.get_user(current_user_id)
+        if not user:
+            return error_response(f"User not found {current_user_id}", status_code=404)
 
-        current_user.set_password(new_password)
+        # Verify current password
+        if not user.check_password(current_password):
+            return error_response("Current password is incorrect", status_code=403)
+
+        # Update password
+        user.set_password(new_password)
         db.session.commit()
 
-        return success_response("Password changed successfully.")
+        current_app.logger.info(f"Password changed for user {user.id}")
+        return success_response("Password changed successfully")
 
     except Exception as e:
-        return error_response(f"Unexpected error: {str(e)}", status_code=500)
+        current_app.logger.error(f"Password change error: {str(e)}", exc_info=True)
+        return error_response("An error occurred while changing password", status_code=500)
+
 
 from flask_expects_json import expects_json
 @user_bp.route("users/reset-password", methods=['POST'])
@@ -823,66 +1016,147 @@ def get_current_user():
     except Exception as e:
         return error_response(f"An error occurred: {str(e)}", status_code=500)
 
-@user_bp.route('/users/<user_id>', methods=['PUT', 'POST'])
-@jwt_required()
-# @expects_json(signup_schema)
-@limiter.exempt
-def update_user(user_id):
-    try:
-        user = None
+# @user_bp.route('/users/<user_id>', methods=['PUT', 'POST'])
+# @jwt_required()
+# # @expects_json(signup_schema)
+# @limiter.exempt
+# def update_user(user_id):
+#     try:
+#         user = None
         
-        if user_id is not None:
+#         if user_id is not None:
 
-            user = User.get_user(username=user_id)
-            if not user:
-                return error_response("User not found.", status_code=404)
+#             user = User.get_user(username=user_id)
+#             if not user:
+#                 return error_response("User not found.", status_code=404)
 
-        data = request.json
+#         data = request.json
 
-        # Validation -> this is because incoming data may not contain same data/schemas as signup_schema
-        # try:
-        #     validate(instance=data, schema=signup_schema)
-        # except ValidationError as e:
-        #     return error_response(f"Validation error: {e.message}")
+#         # Validation -> this is because incoming data may not contain same data/schemas as signup_schema
+#         # try:
+#         #     validate(instance=data, schema=signup_schema)
+#         # except ValidationError as e:
+#         #     return error_response(f"Validation error: {e.message}")
         
-        # Perform checks on the data
-        if 'username' in data and data['username'] != user.username and \
-            db.session.scalar(sa.select(User).where(
-                User.username == data['username'])):
-            return error_response('please use a different username')
+#         # Perform checks on the data
+#         if 'username' in data and data['username'] != user.username and \
+#             db.session.scalar(sa.select(User).where(
+#                 User.username == data['username'])):
+#             return error_response('please use a different username')
 
-        if 'email' in data and data['email'] != user.email and \
-            db.session.scalar(sa.select(User).where(
-                User.email == data['email'])):
-            return error_response('please use a different email address')
+#         if 'email' in data and data['email'] != user.email and \
+#             db.session.scalar(sa.select(User).where(
+#                 User.email == data['email'])):
+#             return error_response('please use a different email address')
         
-        if 'phone' in data and data['phone'] != user.phone and \
-            db.session.scalar(sa.select(User).where(
-                User.phone == data['phone'])):
-            return error_response('please use a different phone number')
+#         if 'phone' in data and data['phone'] != user.phone and \
+#             db.session.scalar(sa.select(User).where(
+#                 User.phone == data['phone'])):
+#             return error_response('please use a different phone number')
     
-        # Update user attributes
-        user.name = data.get('name', user.name)
-        user.username = data.get('username', user.username)
-        user.phone = data.get('phone', user.phone)
-        user.email = data.get('email', user.email)
-        user.about_me = data.get('about_me', user.about_me)
+#         # Update user attributes
+#         user.name = data.get('name', user.name)
+#         user.username = data.get('username', user.username)
+#         user.phone = data.get('phone', user.phone)
+#         user.email = data.get('email', user.email)
+#         user.about_me = data.get('about_me', user.about_me)
 
-        # Update password only if provided
-        if 'password' in data and data['password'] != None:
+#         # Update password only if provided
+#         if 'password' in data and data['password'] != None:
+#             user.set_password(data['password'])
+
+#         user.avatar = data.get('avatar', user.avatar)
+#         user.updated_at = func.now()
+        
+#         db.session.commit()
+        
+#         # data=PageSerializer(items=[user], resource_name="user").get_data()
+#         data=user.get_summary()
+#         return success_response("User updated successfully.", data=data)
+    
+#     except Exception as e:
+#         return error_response(f"{str(e)}")
+
+# V02
+@user_bp.route('/users/<username>', methods=['PUT', 'POST'])
+@jwt_required()
+@limiter.exempt
+def update_user(username):
+    """Update user profile information."""
+    try:
+        # Verify the requesting user matches the target user
+        current_user_id = get_jwt_identity()
+        if not current_user_id:
+            return error_response("Authentication required", status_code=401)
+
+        # Get the user to update
+        # user = User.query.filter_by(username=username).first()
+        user = User.get_user(username=username)
+        if not user:
+            return error_response("User not found", status_code=404)
+
+        # Verify user can only update their own profile
+        if user.email != current_user_id:
+            return error_response(f"Unauthorized to update this user {username}", status_code=403)
+
+        # Get and validate request data
+        if not request.is_json:
+            return error_response("Request must be JSON", status_code=400)
+
+        data = request.get_json()
+        if not data:
+            return error_response("No data provided", status_code=400)
+
+        # Validate unique fields
+        with db.session.begin_nested():  # Use nested transaction for validation
+            if 'username' in data and data['username'] != user.username:
+                if User.query.filter_by(username=data['username']).first():
+                    return error_response("Username already in use", status_code=400)
+
+            if 'email' in data and data['email'] != user.email:
+                if User.query.filter_by(email=data['email']).first():
+                    return error_response("Email already in use", status_code=400)
+
+            if 'phone' in data and data['phone'] != user.phone:
+                if User.query.filter_by(phone=data['phone']).first():
+                    return error_response("Phone number already in use", status_code=400)
+
+        # Update user attributes safely
+        update_fields = {
+            'name': data.get('name'),
+            'username': data.get('username'),
+            'email': data.get('email'),
+            'phone': data.get('phone'),
+            'about_me': data.get('about_me'),
+            'avatar': data.get('avatar'),
+            'updated_at': func.now()
+        }
+
+        # Handle password update separately
+        if 'password' in data and data['password']:
             user.set_password(data['password'])
 
-        user.avatar = data.get('avatar', user.avatar)
-        user.updated_at = func.now()
-        
+        # Apply updates
+        for field, value in update_fields.items():
+            if value is not None:
+                setattr(user, field, value)
+
         db.session.commit()
-        
-        # data=PageSerializer(items=[user], resource_name="user").get_data()
-        data=user.get_summary()
-        return success_response("User updated successfully.", data=data)
-    
+
+        return success_response(
+            "User updated successfully",
+            data=user.get_summary()
+        )
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Database error updating user {username}: {str(e)}")
+        return error_response("Database error occurred", status_code=500)
+
     except Exception as e:
-        return error_response(f"{str(e)}")
+        current_app.logger.error(f"Error updating user {username}: {str(e)}")
+        return error_response("An unexpected error occurred", status_code=500)
+
 
 @user_bp.route('/users/<user_id>', methods=['DELETE'])
 @jwt_required()
@@ -892,19 +1166,13 @@ def delete_user(user_id=None):
     try:
         # return current_user.get_roles()
         if user_id is not None:
-            # Check if the user_id is an integer
-            if user_id.isdigit():
-                # Query by user ID
-                user = User.query.get(int(user_id))
-            else:
-                # Otherwise, treat it as a username and query by username
-                user = User.query.filter_by(username=user_id).first()
+            user = User.get_user(username=user_id).first()
                 
             if not user:
                 return error_response("User not found.", status_code=404)
             
             # Check if the current user is an admin or the user to be deleted
-            if current_user.is_admin or current_user.id == user.id:
+            if current_user.is_admin and current_user.id == user.id and not user.is_admin:
                 # Delete the user
                 db.session.delete(user)
                 db.session.commit()

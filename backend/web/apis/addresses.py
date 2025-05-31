@@ -70,38 +70,117 @@ def create_address():
     except Exception as e:
         return error_response(f"Unexpected error: {str(e)}", status_code=500)
 
+# @address_bp.route('/addresses/<int:address_id>', methods=['PUT'])
+# @jwt_required()
+# @limiter.exempt
+# def update_address(address_id):
+#     """Update an existing address for the authenticated user."""
+#     try:
+#         print(address_id)
+#         address = Address.query.get_or_404(address_id)
+
+#         if address.user_id != current_user.id:
+#             return error_response("Access forbidden: insufficient permissions.", status_code=403)
+
+#         data = request.json
+#         validate(instance=data, schema=address_schema)
+
+#         address.first_name = data.get('first_name', address.first_name)
+#         address.last_name = data.get('last_name', address.last_name)
+#         address.zip_code = data.get('zip_code', address.zip_code)
+#         address.phone_number = data.get('phone_number', address.phone_number)
+#         address.street_address = data.get('address', address.street_address)
+#         address.city_id = data.get('city', address.city_id)
+#         db.session.commit()
+
+#         return success_response("Address updated successfully.", data=address.get_summary())
+
+#     except ValidationError as e:
+#         db.session.rollback()
+#         traceback.print_exc()
+#         return error_response(f"Validation error: {e.message}", status_code=400)
+#     except Exception as e:
+#         db.session.rollback()
+#         traceback.print_exc()
+#         return error_response(f"Unexpected error: {str(e)}", status_code=500)
+
+# 
+from sqlalchemy.exc import SQLAlchemyError
+from flask import request, current_app
+from flask_jwt_extended import jwt_required, get_jwt_identity
 @address_bp.route('/addresses/<int:address_id>', methods=['PUT'])
 @jwt_required()
 @limiter.exempt
 def update_address(address_id):
     """Update an existing address for the authenticated user."""
     try:
-        address = Address.query.get_or_404(address_id)
+        # Debugging - log the address ID being requested
+        current_app.logger.debug(f"Attempting to update address ID: {address_id}")
+        
+        # First verify the current user is authenticated
+        current_user = get_jwt_identity()
+        if not current_user:
+            return error_response("Authentication required", status_code=401)
 
-        if address.user_id != current_user.id:
-            return error_response("Access forbidden: insufficient permissions.", status_code=403)
+        # Get the address with proper error handling
+        address = Address.query.get(address_id)
+        address2 = Address.query.filter(Address.id==address_id).first()
 
-        data = request.json
-        validate(instance=data, schema=address_schema)
+        if not address:
+            current_app.logger.warning(f"Address not found - ID: {address_id}")
+            return error_response(f"Address not found {address2}, {address}", status_code=404)
 
-        address.first_name = data.get('first_name', address.first_name)
-        address.last_name = data.get('last_name', address.last_name)
-        address.zip_code = data.get('zip_code', address.zip_code)
-        address.phone_number = data.get('phone_number', address.phone_number)
-        address.street_address = data.get('address', address.street_address)
-        address.city_id = data.get('city', address.city_id)
+        # Verify the address belongs to the current user
+        if address.user_id != current_user['id']:
+            current_app.logger.warning(
+                f"User {current_user['id']} attempted to update address {address_id} owned by {address.user_id}"
+            )
+            return error_response("Access forbidden: insufficient permissions", status_code=403)
+
+        # Validate request data
+        if not request.is_json:
+            return error_response("Request must be JSON", status_code=400)
+
+        data = request.get_json()
+        if not data:
+            return error_response("No data provided", status_code=400)
+
+        try:
+            validate(instance=data, schema=address_schema)
+        except ValidationError as e:
+            current_app.logger.debug(f"Validation failed: {e.message}")
+            return error_response(f"Validation error: {e.message}", status_code=400)
+
+        # Update address fields
+        update_fields = {
+            'first_name': data.get('first_name'),
+            'last_name': data.get('last_name'),
+            'zip_code': data.get('zip_code'),
+            'phone_number': data.get('phone_number'),
+            'street_address': data.get('address'),
+            'city_id': data.get('city')
+        }
+
+        # Apply updates only for provided fields
+        for field, value in update_fields.items():
+            if value is not None:
+                setattr(address, field, value)
+
+        address.updated_at = func.now()
         db.session.commit()
 
-        return success_response("Address updated successfully.", data=address.get_summary())
+        current_app.logger.info(f"Successfully updated address ID: {address_id}")
+        return success_response("Address updated successfully", data=address.get_summary())
 
-    except ValidationError as e:
+    except SQLAlchemyError as e:
         db.session.rollback()
-        traceback.print_exc()
-        return error_response(f"Validation error: {e.message}", status_code=400)
+        current_app.logger.error(f"Database error updating address {address_id}: {str(e)}")
+        return error_response("Database error occurred", status_code=500)
+
     except Exception as e:
         db.session.rollback()
-        traceback.print_exc()
-        return error_response(f"Unexpected error: {str(e)}", status_code=500)
+        current_app.logger.error(f"Unexpected error updating address {address_id}: {str(e)}")
+        return error_response("An unexpected error occurred", status_code=500)
 
 @address_bp.route('/addresses/<int:address_id>', methods=['DELETE'])
 @jwt_required(optional=True)
