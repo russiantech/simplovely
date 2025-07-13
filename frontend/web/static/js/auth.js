@@ -157,3 +157,20 @@ if (!userRoles.includes('admin')) {
         recordUsageBtn.querySelector('.badge').innerText = "Only Admin can record usage when you submit fabrics.";
     }
 }
+
+// Check admin status and modify UI
+function checkAdminStatus() {
+  const token = localStorage.getItem('access_token');
+  if (!token) return;
+  
+  const userRoles = window.getRolesFromDecodedToken(token);
+  const isAdmin = userRoles.includes('admin');
+  
+  // Show/hide admin features
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = isAdmin ? '' : 'none';
+  });
+}
+
+// Execute on page load
+window.addEventListener('DOMContentLoaded', checkAdminStatus);

@@ -1,0 +1,55 @@
+<!-- Edit Plan Modal -->
+<div class="modal fade" id="editPlanModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="editPlanModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPlanModalLabel">Edit Plan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form class="row g-3 g-lg-4 needs-validation" id="edit_plan_form" method="post" action="/api/plans/update" novalidate="">
+                    <input type="hidden" name="plan_id" id="edit_plan_id">
+                    
+                    <div class="col-lg-6">
+                        <div class="position-relative">
+                            <label for="edit_plan_name" class="form-label">Plan Name</label>
+                            <input type="text" name="name" class="form-control" id="edit_plan_name" required>
+                            <div class="invalid-feedback">Please enter the plan name!</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="position-relative">
+                            <label for="edit_plan_amount" class="form-label">Plan Amount</label>
+                            <input type="number" name="amount" class="form-control" id="edit_plan_amount" required>
+                            <div class="invalid-feedback">Please enter the plan amount!</div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="position-relative">
+                            <label for="edit_plan_volume" class="form-label">Plan Volume(Unit)</label>
+                            <input type="number" name="units" class="form-control" id="edit_plan_volume" required>
+                            <div class="invalid-feedback">Please enter the plan unit/volume!</div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="position-relative">
+                            <label for="edit_plan_description" class="form-label">Plan Description</label>
+                            <textarea class="form-control" name="description" id="edit_plan_description" 
+                                      placeholder="Type your description here..." rows="5"></textarea>
+                            <div class="invalid-feedback">Please enter the plan description!</div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">    
+                        <div class="d-flex gap-3 pt-2 pt-sm-0">
+                            <button type="submit" class="btn btn-primary">Update Plan</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

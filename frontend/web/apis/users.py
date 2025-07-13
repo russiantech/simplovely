@@ -26,8 +26,21 @@ def signin():
 @users_bp.route('/account')
 def account():
     try:
-        context= {}
-        return render_template('users/account.html', **context)
+        context= {
+            'user': {}
+        }
+        return render_template('users/account_1.html', **context)
+    except Exception as e:
+        traceback.format_exc()
+        return error_response(str(e))
+    
+@users_bp.route('/users')
+def users():
+    try:
+        context= {
+            'user': {}
+        }
+        return render_template('users/users.html', **context)
     except Exception as e:
         traceback.format_exc()
         return error_response(str(e))

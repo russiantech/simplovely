@@ -1,0 +1,605 @@
+{% extends "incs/base.html" %}
+{% block title %} User Management - Laundry And Fashion {% endblock title %}
+
+{% block content %}
+{#
+    {% include 'incs/modals/add_user_modal.html' %}
+    {% include 'incs/modals/edit_user_modal.html' %}
+    {% include 'incs/modals/assign_plan_modal.html' %}
+#}
+    <!-- Page content -->
+    <main class="content-wrapper">
+        <div class="container pt-4 pt-lg-5 pb-5">
+            <div class="row pt-sm-2 pt-md-3 pt-lg-0 pb-2 pb-sm-3 pb-md-4 pb-lg-5">
+                <!-- Sidebar navigation -->
+                {% include 'incs/user_pages/sidebar.html' %}
+
+                <!-- User Management content -->
+                <div class="col-lg-9 pt-2 pt-xl-3">
+                    <!-- Header -->
+                    <div class="d-flex align-items-center justify-content-between gap-3 pb-3 mb-2 mb-md-3">
+                        <h1 class="h2 mb-0">User Management</h1>
+                        <button id="createUserBtn" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                            <i class="ci-plus fs-lg me-2"></i>Add User
+                        </button>
+                    </div>
+
+                    <!-- User Table -->
+                    <div class="border rounded-4 py-4 px-3 px-sm-4 mb-4">
+                        <div class="table-responsive">
+                            <table class="table align-middle fs-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Subscription/units Status</th>
+                                        <th>Plan</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-container">
+                                    <!-- Users will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Pagination -->
+                        <nav id="users-pagination" class="d-flex justify-content-center mt-4">
+                            <!-- Pagination will be injected here -->
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- modals-->
+     <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add New User</h5>
+        <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addUserForm">
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input class="form-control" type="text" id="userName" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input class="form-control" type="email" id="userEmail" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Phone</label>
+            <input class="form-control" type="tel" id="userPhone" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input class="form-control" type="password" id="userPassword" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Role</label>
+            <select class="form-select" id="userRole">
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <button class="btn btn-primary d-block w-100" type="submit">Create User</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+    <!-- -->
+    <!-- EDIT MODAL -->
+     <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit User</h5>
+        <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editUserForm">
+          <input type="hidden" id="editUserId">
+          <div class="mb-3">
+            <label class="form-label">Full Name</label>
+            <input class="form-control" type="text" id="editUserName" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input class="form-control" type="email" id="editUserEmail" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Phone</label>
+            <input class="form-control" type="tel" id="editUserPhone" required>
+          </div>
+          <button class="btn btn-primary d-block w-100" type="submit">Update User</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+    <!-- ASSIGN PLAN MODAL-->
+
+    <div class="modal fade" id="assignPlanModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Assign Plan to User</h5>
+        <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="assignPlanForm">
+          <input type="hidden" id="assignPlanUserId">
+          <div class="mb-3">
+            <label class="form-label">Select Plan</label>
+            <select class="form-select" id="assignPlanSelect" required>
+              <!-- Plans will be populated dynamically -->
+            </select>
+          </div>
+          <button class="btn btn-primary d-block w-100" type="submit">Assign Plan</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+    <!--<script src="./static/js/pages/users.js"></script>-->
+    <script>
+        // users.js - Professional User Management with CRUD
+document.addEventListener("DOMContentLoaded", () => {
+    const CONFIG = {
+        API_BASE_URL: window.apiUrl,
+        ITEMS_PER_PAGE: 10,
+        SELECTORS: {
+            usersContainer: '#users-container',
+            paginationContainer: '#users-pagination'
+        },
+        STATUS_COLORS: {
+            active: 'success',
+            inactive: 'secondary',
+            pending: 'warning',
+            expired: 'danger'
+        }
+    };
+
+    let currentPage = 1;
+    let totalPages = 1;
+
+    const UserManager = {
+        init() {
+            this.checkAdminStatus();
+            this.loadUsers(currentPage);
+            this.initModals();
+        },
+
+        checkAdminStatus() {
+            const token = localStorage.getItem('access_token');
+            if (!token) return;
+            
+            const userRoles = window.getRolesFromDecodedToken(token);
+            if (!userRoles.includes('admin')) {
+                window.location.href = '/account';
+            }
+        },
+
+        async loadUsers(page) {
+            try {
+                const token = localStorage.getItem('access_token');
+                const url = `${CONFIG.API_BASE_URL}/users?page=${page}&page_size=${CONFIG.ITEMS_PER_PAGE}`;
+                
+                const response = await fetch(url, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const data = await response.json();
+                if (!data.success) throw new Error(data.message || 'Failed to fetch users');
+                
+                currentPage = page;
+                totalPages = data.page_meta.total_pages_count;
+                this.renderUsers(data.users);
+                this.renderPagination(data.page_meta);
+
+            } catch (error) {
+                console.error('Error loading users:', error);
+                window.response_modal(`Error: ${error.message}`);
+            }
+        },
+
+        renderUsers(users) {
+            const container = document.querySelector(CONFIG.SELECTORS.usersContainer);
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            if (!users || users.length === 0) {
+                container.innerHTML = '<tr><td colspan="6" class="text-center py-4">No users found</td></tr>';
+                return;
+            }
+
+            users.forEach(user => {
+                const row = this.createUserRow(user);
+                container.insertAdjacentHTML('beforeend', row);
+            });
+
+            this.attachEventListeners();
+        },
+
+        createUserRow(user) {
+            console.log(user)
+            // Extract user data with safe defaults
+            const name = user.name || 'N/A';
+            const email = user.email || 'N/A';
+            const phone = user.phone || 'N/A';
+            
+            // Extract subscription info
+            const subscription = user.subscriptions[0] || {};
+            const status = subscription.status || 'inactive';
+            const total_units = subscription.total_units || 0;
+            const planName = subscription.name || 'No plan';
+            const created_at = subscription.created_at 
+                ? new Date(subscription.created_at).toLocaleDateString() 
+                : 'N/A';
+            /*const expires = subscription.expires_at 
+                ? new Date(subscription.expires_at).toLocaleDateString() 
+                : 'N/A';*/
+            
+            // Get status color
+            const statusColor = CONFIG.STATUS_COLORS[status] || 'secondary';
+            
+            return `
+                <tr data-user-id="${user.id}">
+                    <td>${this.escapeHtml(name)}</td>
+                    <td>${this.escapeHtml(email)}</td>
+                    <td>${this.escapeHtml(phone)}</td>
+                    <td>
+                        <span class="badge bg-${statusColor}">
+                            ${this.capitalize(status)}/${total_units}
+                        </span>
+                        ${created_at !== 'N/A' ? `<div class="fs-xs text-muted">Date: ${created_at}</div>` : ''}
+                    </td>
+                    <td>${this.escapeHtml(planName)}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-info edit-user-btn" data-user-id="${user.id}">
+                                <i class="fi-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-user-btn" data-user-id="${user.id}">
+                                <i class="fi-trash"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary assign-plan-btn" data-user-id="${user.id}">
+                                <i class="fi-shopping-bag"></i> Plan
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        },
+
+        renderPagination(meta) {
+            const container = document.querySelector(CONFIG.SELECTORS.paginationContainer);
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            let paginationHTML = '<ul class="pagination">';
+
+            // Previous button
+            paginationHTML += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+            </li>`;
+
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>`;
+            }
+
+            // Next button
+            paginationHTML += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+            </li>`;
+
+            paginationHTML += '</ul>';
+
+            container.innerHTML = paginationHTML;
+
+            // Attach pagination event listeners
+            container.querySelectorAll('.page-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = parseInt(link.dataset.page);
+                    if (page !== currentPage) {
+                        this.loadUsers(page);
+                    }
+                });
+            });
+        },
+
+        initModals() {
+            // Add user modal
+            document.getElementById('addUserForm')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.createUser();
+            });
+
+            // Edit user modal
+            document.getElementById('editUserForm')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.updateUser();
+            });
+
+            // Assign plan modal
+            document.getElementById('assignPlanForm')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.assignPlan();
+            });
+        },
+
+        attachEventListeners() {
+            // Edit user
+            document.querySelectorAll('.edit-user-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const userId = btn.dataset.userId;
+                    this.openEditModal(userId);
+                });
+            });
+
+            // Delete user
+            document.querySelectorAll('.delete-user-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const userId = btn.dataset.userId;
+                    this.confirmDeleteUser(userId);
+                });
+            });
+
+            // Assign plan
+            document.querySelectorAll('.assign-plan-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const userId = btn.dataset.userId;
+                    this.openAssignPlanModal(userId);
+                });
+            });
+        },
+
+        async openEditModal(userId) {
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch(`${CONFIG.API_BASE_URL}/users/${userId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to fetch user details');
+                
+                const user = await response.json();
+                
+                // Populate form
+                document.getElementById('editUserId').value = user.id;
+                document.getElementById('editUserName').value = user.name || '';
+                document.getElementById('editUserEmail').value = user.email || '';
+                document.getElementById('editUserPhone').value = user.phone || '';
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+                modal.show();
+
+            } catch (error) {
+                console.error('Error opening edit modal:', error);
+                window.response_modal(`Error: ${error.message}`);
+            }
+        },
+
+        async createUser() {
+            try {
+                const formData = {
+                    username: document.getElementById('userName').value,
+                    email: document.getElementById('userEmail').value,
+                    phone: document.getElementById('userPhone').value,
+                    password: document.getElementById('userPassword').value,
+                    role: document.getElementById('userRole').value
+                };
+
+                const token = localStorage.getItem('access_token');
+                const response = await fetch(`${CONFIG.API_BASE_URL}/users/signup`, {
+                //const response = await fetch(`${CONFIG.API_BASE_URL}/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to create user');
+                }
+
+                // Close modal and refresh
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
+                modal.hide();
+                this.loadUsers(currentPage);
+                window.response_modal('User created successfully!');
+
+            } catch (error) {
+                console.error('Error creating user:', error);
+                window.response_modal(`Error: ${error.message}`);
+            }
+        },
+
+        async updateUser() {
+            try {
+                const userId = document.getElementById('editUserId').value;
+                const formData = {
+                    name: document.getElementById('editUserName').value,
+                    email: document.getElementById('editUserEmail').value,
+                    phone: document.getElementById('editUserPhone').value
+                };
+
+                const token = localStorage.getItem('access_token');
+                const response = await fetch(`${CONFIG.API_BASE_URL}/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to update user');
+                }
+
+                // Close modal and refresh
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+                modal.hide();
+                this.loadUsers(currentPage);
+                window.response_modal('User updated successfully!');
+
+            } catch (error) {
+                console.error('Error updating user:', error);
+                window.response_modal(`Error: ${error.message}`);
+            }
+        },
+
+        confirmDeleteUser(userId) {
+            if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+            this.deleteUser(userId);
+        },
+
+        async deleteUser(userId) {
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch(`${CONFIG.API_BASE_URL}/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to delete user');
+                }
+
+                // Remove from UI
+                const userRow = document.querySelector(`tr[data-user-id="${userId}"]`);
+                if (userRow) userRow.remove();
+                
+                window.response_modal('User deleted successfully!');
+                this.loadUsers(currentPage);
+
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                window.response_modal(`Error: ${error.message}`);
+            }
+        },
+
+        async openAssignPlanModal(userId) {
+            try {
+                // Fetch available plans
+                const token = localStorage.getItem('access_token');
+                const plansResponse = await fetch(`${CONFIG.API_BASE_URL}/plans`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                
+                if (!plansResponse.ok) throw new Error('Failed to fetch plans');
+                const plansData = await plansResponse.json();
+                
+                // Populate plans dropdown
+                const planSelect = document.getElementById('assignPlanSelect');
+                planSelect.innerHTML = '<option value="">Select a plan</option>';
+                
+                plansData.plans.forEach(plan => {
+                    const option = document.createElement('option');
+                    option.value = plan.id;
+                    option.textContent = `${plan.name} - ${Utils.formatCurrency(plan.amount)}`;
+                    planSelect.appendChild(option);
+                });
+                
+                // Store user ID
+                document.getElementById('assignPlanUserId').value = userId;
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('assignPlanModal'));
+                modal.show();
+
+            } catch (error) {
+                console.error('Error opening assign plan modal:', error);
+                window.response_modal(`Error: ${error.message}`);
+            }
+        },
+
+        async assignPlan() {
+            try {
+                const userId = document.getElementById('assignPlanUserId').value;
+                const planId = document.getElementById('assignPlanSelect').value;
+                
+                if (!planId) throw new Error('Please select a plan');
+                
+                const token = localStorage.getItem('access_token');
+                //const response = await fetch(`${CONFIG.API_BASE_URL}/users/${userId}/subscription`, {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/subscription/${userId}`, {
+                //const response = await fetch(`${CONFIG.API_BASE_URL}/usage/${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ plan_id: planId })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to assign plan');
+                }
+
+                // Close modal and refresh
+                const modal = bootstrap.Modal.getInstance(document.getElementById('assignPlanModal'));
+                modal.hide();
+                this.loadUsers(currentPage);
+                window.response_modal('Plan assigned successfully!');
+
+            } catch (error) {
+                console.error('Error assigning plan:', error);
+                window.response_modal(`Error: ${error.message}`);
+            }
+        },
+
+        escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        },
+
+        capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+    };
+
+    // Utility functions
+    const Utils = {
+        formatCurrency(amount) {
+            return new Intl.NumberFormat('en-NG', {
+                style: 'currency',
+                currency: 'NGN',
+                minimumFractionDigits: 2
+            }).format(amount);
+        }
+    };
+
+    // Initialize the UserManager
+    UserManager.init();
+});
+    </script>
+{% endblock content %}

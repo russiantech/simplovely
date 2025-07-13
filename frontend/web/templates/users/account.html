@@ -3,6 +3,7 @@
 
 {% block content %}
 {% include 'incs/modals/add_plan_modal.html' %}
+{% include 'incs/modals/edit_plan_modal.html' %}
     <!-- Page content -->
     <main class="content-wrapper">
         <div class="container pt-4 pt-lg-5 pb-5">
@@ -17,42 +18,66 @@
                     <div class="d-flex align-items-center justify-content-between gap-3 pb-3 mb-2 mb-md-3">
                         <h1 class="h2 mb-0">Dashboard</h1>
                     </div>
+                    
                     <!-- Stats -->
                     <div class="row g-3 g-xl-4 pb-3 mb-2 mb-sm-3">
-                        
                         <div class="col-md-12 col-sm-12" id="usage-stats">
                             <div class="h-100 bg-warning-subtle rounded-4 text-center p-4">
                                 <h2 class="fs-sm pb-2 mb-1">Volume & Usage</h2>
                                 <div class="h2 pb-1 mb-2" id="units-used">Loading...</div>
+                                <!-- Added date display -->
+                                <div class="fs-xs text-muted mb-2">As of: <span id="usage-date"></span></div>
                                 <div class="progress mb-3" role="progressbar" aria-valuemin="0" aria-valuemax="100">
                                     <div class="progress-bar bg-dark fw-medium rounded-pill" id="usage-progress" style="width: 0%">0%</div>
                                 </div>
                                 <button id="units-left" class="badge border-0 fs-xs text-info bg-info-subtle rounded-pill">Track-usage</button>
                             </div>
                         </div>
-                        <!---->
                     </div>
 
+                    <!-- User Management Section (Requirement 3) -->
+                    {% if user.role == 'admin' %}
+                    <div class="border rounded-4 py-4 px-3 px-sm-4 mb-4">
+                        <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3">
+                            <h1 class="h2 mb-0">User Management</h1>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table align-middle fs-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Subscription Status</th>
+                                        <th>Plan</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-container">
+                                    <!-- Users will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Plans Management Section -->
                     <div class="border rounded-4 py-4 px-3 px-sm-4">
                         <div>
-
                             <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3">
                                 <div class="d-flex align-items-center gap-3 me-4">
                                   <h1 class="h2 mb-1 mb-sm-2">Services Plans</h1>
-                                  <!--<a class="nav-link animate-underline fs-base px-0" href="#newPlanModal" data-bs-toggle="modal">
-                                    <i class="ci-plus fs-lg ms-n1 me-2"></i>
-                                    <span class="animate-target badge text-bg-info rounded-pill">Add Plans</span>
-                                  </a>-->
                                 </div>
-              
+                                
+                                <!-- Conditionally show Add Plan button -->
+                                {% if user.role == 'admin' %}
                                 <button id="createPlanBtn" class="nav-link animate-underline fs-base px-0" href="#newPlanModal" data-bs-toggle="modal">
                                   <i class="ci-plus fs-lg ms-n1 me-2"></i>
                                   <span class="animate-target badge text-bg-info rounded-pill">Add plans</span>
                                 </button>
-                                
-                              </div>
+                                {% endif %}
+                            </div>
 
-                            <!---->
                             <table class="table align-middle fs-sm mb-0 table-hover">
                                 <thead>
                                     <tr>
@@ -77,65 +102,62 @@
                         </div>
                     </div>
 
-
-             <div class="card border-0 shadow">
-    <div class="card-body">
-        <h5 class="card-title mb-4">Service Summary</h5>
-        <div class="row g-4">
-            <!-- Pick Up Service -->
-            <div class="col-12 col-md-6 col-lg-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body">
-                        <h6 class="card-title d-flex align-items-center">
-                            <i class="fas fa-box-open text-primary me-2"></i>
-                            Pick Up
-                        </h6>
-                        <p class="card-text text-muted fs-sm mb-0">
-                            We prepare your fabrics down, so you can come take them away.
-                        </p>
+                    <!-- Service Summary -->
+                    <div class="card border-0 shadow mt-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">Service Summary</h5>
+                            <div class="row g-4">
+                                <!-- Pick Up Service -->
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card h-100 border-0 shadow-sm">
+                                        <div class="card-body">
+                                            <h6 class="card-title d-flex align-items-center">
+                                                <i class="fas fa-box-open text-primary me-2"></i>
+                                                Pick Up
+                                            </h6>
+                                            <p class="card-text text-muted fs-sm mb-0">
+                                                We prepare your fabrics down, so you can come take them away.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Delivery Service -->
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card h-100 border-0 shadow-sm">
+                                        <div class="card-body">
+                                            <h6 class="card-title d-flex align-items-center">
+                                                <i class="fas fa-truck text-primary me-2"></i>
+                                                Delivery
+                                            </h6>
+                                            <p class="card-text text-muted fs-sm mb-0">
+                                                We convey your fabrics to your destination.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Measurement Service -->
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card h-100 border-0 shadow-sm">
+                                        <div class="card-body">
+                                            <h6 class="card-title d-flex align-items-center">
+                                                <i class="fas fa-ruler-combined text-primary me-2"></i>
+                                                Take Measurement
+                                            </h6>
+                                            <p class="card-text text-muted fs-sm mb-0">
+                                                Our tailor comes over to measure and confirm fabrics.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Delivery Service -->
-            <div class="col-12 col-md-6 col-lg-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body">
-                        <h6 class="card-title d-flex align-items-center">
-                            <i class="fas fa-truck text-primary me-2"></i>
-                            Delivery
-                        </h6>
-                        <p class="card-text text-muted fs-sm mb-0">
-                            We convey your fabrics to your destination.
-                        </p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Measurement Service -->
-            <div class="col-12 col-md-6 col-lg-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body">
-                        <h6 class="card-title d-flex align-items-center">
-                            <i class="fas fa-ruler-combined text-primary me-2"></i>
-                            Take Measurement
-                        </h6>
-                        <p class="card-text text-muted fs-sm mb-0">
-                            Our tailor comes over to measure and confirm fabrics.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-            </div>
-        </div>
         </div>
     </main>
-
     
     <script src="./static/js/pages/account.js"></script>
-
 {% endblock content %}
