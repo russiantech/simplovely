@@ -156,6 +156,12 @@ if (!userRoles.includes('admin')) {
         // Update the badge text to reflect no access
         recordUsageBtn.querySelector('.badge').innerText = "Only Admin can record usage when you submit fabrics.";
     }
+
+    const admin_only = document.getElementById('admin-only');
+    if(admin_only){
+        admin_only.style.display = 'none';
+        alert(admin_only.style.display);
+    }
 }
 
 // Check admin status and modify UI
