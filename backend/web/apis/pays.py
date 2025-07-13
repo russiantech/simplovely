@@ -36,7 +36,8 @@ def initiate_paystack(plan_id):
         client_callback_url = request.headers.get('Client-Callback-Url')
 
         plan_id = plan_id or data['plan_id']
-        plan = Plan.get_plan(plan_id)
+        # plan = Plan.get_plan(plan_id)
+        plan = Plan.query.get(plan_id)
         if not plan:
             return error_response(f"Plan <{plan_id}> not found!")
 
