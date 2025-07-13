@@ -98,6 +98,8 @@ class DevelopmentConfig(Config):
     MAIL_PORT = getenv('mailtrap_port')
     MAIL_USERNAME = getenv('mailtrap_username')
     MAIL_PASSWORD = getenv('mailtrap_password')
+    
+    PAYSTACK_SK = getenv('PAYSTACK_TEST_SK')
 
 class TestingConfig(Config):
     """Testing-specific configuration."""
@@ -112,6 +114,8 @@ class TestingConfig(Config):
     MAIL_SERVER = getenv('MAIL_SERVER')
     MAIL_USERNAME = getenv('MAIL_USERNAME')
     MAIL_PASSWORD = getenv('MAIL_PASSWORD')
+    
+    PAYSTACK_SK = getenv('PAYSTACK_TEST_SK')
 
 class ProductionConfig(Config):
     TESTING = False

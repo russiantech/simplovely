@@ -17,7 +17,7 @@ from web.apis.utils.helpers import generate_ref
 # from web.apis.transactions import save_transaction, transact_bp
 from web.apis import api_bp as transact_bp
 
-PAYSTACK_SK = getenv('PAYSTACK_SK')
+# PAYSTACK_SK = getenv('PAYSTACK_SK')
 # print('PAYSTACK_SK', PAYSTACK_SK)
 
 @transact_bp.route('/payment/<int:plan_id>/paystack', methods=['POST'])
@@ -46,8 +46,8 @@ def initiate_paystack(plan_id):
 
         headers = {
             "accept": "application/json",
-            # "Authorization": f"Bearer {current_app.config['PAYSTACK_SK']}",
-            "Authorization": f"Bearer {PAYSTACK_SK}",
+            "Authorization": f"Bearer {current_app.config['PAYSTACK_SK']}",
+            # "Authorization": f"Bearer {PAYSTACK_SK}",
             "Content-Type": "application/json"
         }
 
@@ -87,7 +87,7 @@ def initiate_paystack(plan_id):
             db.session.add(user)
             db.session.commit()
 
-        transaction = Transaction(
+        transaction = Transaction( 
             # plan_id=plan.id,
             service_id=plan.id,
             user_id=user.id,
@@ -138,7 +138,8 @@ def callback_paystack():
         
         headers = {
             "accept": "application/json",
-            "Authorization": f"Bearer {PAYSTACK_SK}",
+            "Authorization": f"Bearer {current_app.config['PAYSTACK_SK']}",
+            # "Authorization": f"Bearer {PAYSTACK_SK}",
             "Content-Type": "application/json"
         }
 

@@ -46,10 +46,13 @@ class User(db.Model):
         cascade='all, delete-orphan',  # SQLAlchemy cascades
         passive_deletes=True           # Enable database-level ON DELETE CASCADE
     )
+    
     roles = db.relationship('Role', secondary=users_roles, back_populates='users')
     
-    subscriptions = db.relationship('Subscription', back_populates='user', lazy=True)
-    usage = db.relationship('Usage', back_populates='user', lazy=True)
+    # subscriptions = db.relationship('Subscription', back_populates='user', lazy=True)
+    subscriptions = db.relationship('Subscription', back_populates='user', lazy=True, cascade="all, delete-orphan")
+    usage = db.relationship('Usage', back_populates='user', lazy=True, cascade="all, delete-orphan")
+    # usage = db.relationship('Usage', back_populates='user', lazy=True)
     
     favorites = db.relationship('Favorite', back_populates='users')
     baskets = db.relationship('Basket', back_populates='users')
@@ -204,6 +207,17 @@ class User(db.Model):
             'updated_at': self.updated_at,
         }
       
+        # if include_pages:
+        # data['subscriptions'] = [ sub.get_summary() for sub in self.subscriptions ]
+        data['subscriptions'] = [ 
+                {
+                    'id': sub.id,
+                    'status': sub.status,
+                    'total_units': sub.total_units,
+                    'name': sub.plan.name if sub.plan else None,
+                    'created_at': sub.created_at,
+                }  for sub in self.subscriptions ]
+            
         if include_pages:
             data['pages'] = [ page.get_summary() for page in self.pages ]
             

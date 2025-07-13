@@ -1,6 +1,6 @@
 
-import traceback
-from flask import request
+import traceback, logging
+from flask import current_app, request
 from flask_jwt_extended import jwt_required, current_user
 from jsonschema import validate
 from sqlalchemy import desc
@@ -24,13 +24,20 @@ def get_plans():
         return success_response("Plans fetched successfully", data=plans)
     except Exception as e:
         return error_response(str(e))
+    
+# Get 1 plan
+@plans_bp.route('/plans/<int:plan_id>', methods=['GET'])
+@jwt_required(optional=True)
+@limiter.exempt
+def get_1_plan(plan_id):
+    try:
+        plan = Plan.query.filter_by(id=plan_id, is_deleted=False).first()
+        # plan = PageSerializer(items=plan, resource_name="plans").get_data()
+        return success_response("Plans fetched successfully", data=plan.get_summary())
+    except Exception as e:
+        return error_response(str(e))
 
 # Create a new plan
-from flask import request
-from sqlalchemy.exc import IntegrityError
-import traceback
-import logging
-
 @plans_bp.route('/plans', methods=['POST'])
 @role_required('admin', 'dev')
 @limiter.exempt
@@ -73,13 +80,13 @@ def create_plan():
         
         # Return success response
         return success_response("Plan created successfully", data=new_plan.get_summary(), status_code=201)
-    
+
     except IntegrityError as e:
         # Rollback the session on integrity error and return a more specific error
         db.session.rollback()
         logging.error(f"Integrity error while creating plan: {str(e)}")
         return error_response("Plan already exists, duplicates are not allowed.")
-    
+        
     except Exception as e:
         # Rollback the session on any other exception
         db.session.rollback()
@@ -123,8 +130,10 @@ def delete_plan(plan_id):
 
         db.session.delete(plan)
         db.session.commit()
-        return success_response(None, "Plan deleted successfully")
+        return success_response("Plan deleted successfully")
     except Exception as e:
+        db.session.rollback()
+        traceback.print_exception(e)
         return error_response(str(e))
 
 # ====================================== /// SUBSCRIPTION RESOURCE /// ===========================
@@ -170,23 +179,63 @@ def get_user_subscriptions():
         return error_response(str(e))
     
 # Create a new subscription
+# @subscriptions_bp.route('/subscriptions', methods=['POST'])
+# @jwt_required()
+# @limiter.exempt
+# def create_subscription():
+#     try:
+#         data = request.json
+#         new_subscription = Subscription(
+#             user_id=current_user.id,
+#             plan_id=data['plan_id'],
+#             total_units=data['total_units']
+#         )
+#         db.session.add(new_subscription)
+#         db.session.commit()
+#         return success_response("Subscription created successfully", data=new_subscription.get_summary(), status_code=201)
+    
+#     except IntegrityError:
+#         db.session.rollback()  # Rollback the session on error
+#         return error_response("Subscription already exists and cannot be duplicates")
+    
+#     except Exception as e:
+#         db.session.rollback()
+#         traceback.print_exc()
+#         return error_response(str(e))
+
 @subscriptions_bp.route('/subscriptions', methods=['POST'])
+@subscriptions_bp.route('/subscription/<int:user_id>', methods=['POST'])
 @jwt_required()
 @limiter.exempt
-def create_subscription():
+def create_subscription(user_id=None):
     try:
         data = request.json
+        
+        # Get the user_id: from URL param or from JWT
+        uid = user_id or current_user.id
+        
+        # Validate plan exists
+        plan = Plan.query.get(data['plan_id'])
+        if not plan:
+            return error_response(f"Plan with id {data['plan_id']} does not exist", status_code=404)
+        
+        # Use provided total_units or default to plan.units
+        total_units = data.get('total_units', plan.units)
+        
+        # Create subscription
         new_subscription = Subscription(
-            user_id=current_user.id,
-            plan_id=data['plan_id'],
-            total_units=data['total_units']
+            user_id=uid,
+            plan_id=plan.id,
+            total_units=total_units
         )
+        
         db.session.add(new_subscription)
         db.session.commit()
+        
         return success_response("Subscription created successfully", data=new_subscription.get_summary(), status_code=201)
     
     except IntegrityError:
-        db.session.rollback()  # Rollback the session on error
+        db.session.rollback()
         return error_response("Subscription already exists and cannot be duplicates")
     
     except Exception as e:
@@ -243,402 +292,6 @@ from web.apis.models.plans import Usage
 from web.apis import api_bp as usage_bp
 import traceback
 
-# # Get all usage records
-# @usage_bp.route('/usage', methods=['GET'])
-# @jwt_required(optional=True)
-# def get_usage():
-#     try:
-#         usage_records = Usage.query.filter_by(is_deleted=False).all()
-#         usage_records = PageSerializer(items=usage_records, resource_name="usage").get_data()
-#         return success_response("Usage records fetched successfully", data=usage_records)
-#     except Exception as e:
-#         return error_response(str(e))
-
-# Get all usage records
-# @usage_bp.route('/user/usage', methods=['GET'])
-# @usage_bp.route('/usage', methods=['GET'])
-# @jwt_required(optional=True)
-# @limiter.exempt
-# def get_usage():
-#     try:
-#         # Get pagination parameters from query string
-#         page = request.args.get('page', default=1, type=int)
-#         per_page = request.args.get('per_page', default=10, type=int)
-        
-#         # Check if a specific user ID is provided for filtering
-#         user_id = request.args.get('user_id', type=int)
-        
-#         # Build the query
-#         query = Usage.query.filter_by(is_deleted=False)
-        
-#         if user_id is not None:
-#             query = query.filter_by(user_id=user_id)
-        
-#         # Paginate the results and order by latest first
-#         paginated_usage = query.order_by(Usage.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
-        
-#         # Serialize the paginated data
-#         usage_records = PageSerializer(items=paginated_usage.items, resource_name="usage").get_data()
-
-#         return success_response("Usage records fetched successfully", data=usage_records)
-    
-#     except Exception as e:
-#         return error_response(str(e))
-
-@usage_bp.route('/user/<int:user_id>/usage', methods=['GET'])
-@usage_bp.route('/usage', methods=['GET'])
-@jwt_required(optional=True)
-@limiter.exempt
-def get_usage(user_id=None):
-    try:
-        # Get pagination parameters from query string
-        page = request.args.get('page', default=1, type=int)
-        page_size = request.args.get('per_size', default=10, type=int)
-
-        if not user_id and current_user:
-            user_id = current_user.id
-
-        user = User.get_user(user_id)
-        # Build the query
-        query = Usage.query.filter_by(is_deleted=False)
-
-        if user_id is not None and user.is_admin():
-            query = query.filter_by(user_id=user_id)
-        else:
-            query = query.filter_by(user_id=user_id)
-            
-        # Paginate the results and order by latest first
-        paginated_usage = query.order_by(Usage.created_at.desc()).paginate(page=page, per_page=page_size, error_out=False)
-
-        # Serialize the paginated data
-        usage_records = PageSerializer(items=paginated_usage.items, resource_name="usage").get_data()
-
-        # if not usage_records:
-        #     # Return placeholders if no usage records are found
-        #     usage_records = [{
-        #         'units_used': 0,
-        #         'total_units': 0,
-        #         'remaining_units': 0,
-        #         'usage_percentage': 0,
-        #         'status': 'No usage records available'
-        #     }]
-        
-        return success_response("Usage records fetched successfully", data=usage_records)
-
-    except Exception as e:
-        return error_response(str(e), status_code=500)
-
-
-# Create a new usage entry
-from flask_jwt_extended import jwt_required, current_user
-
-# @usage_bp.route('/usage', methods=['POST'])
-# @jwt_required(optional=True)
-# @limiter.exempt
-# def create_usage():
-#     try:
-#         data = request.json
-        
-#         # Check if current_user is None
-#         if current_user is None and data.get('user_id') is None:
-#             return error_response("User ID must be provided if not authenticated", status_code=400)
-
-#         # Get units used from the request data
-#         units_used = data['units_used']
-
-#         # If current_user is authenticated, check their balance
-#         if current_user:
-#             total_units = current_user.subscriptions.total_units
-#             if units_used > total_units:
-#                 return error_response("Insufficient units available", status_code=400)
-
-#         # Create new usage entry
-#         new_usage = Usage(
-#             subscription_id=data.get('subscription_id'),
-#             user_id=data.get('user_id', current_user.id if current_user else None),
-#             units_used=units_used
-#         )
-        
-#         db.session.add(new_usage)
-#         db.session.commit()
-#         return success_response("Usage recorded successfully", data=new_usage.get_summary(), status_code=201)
-    
-#     except IntegrityError as e:
-#         db.session.rollback()  # Rollback the session on error
-#         traceback.print_exc()
-#         return error_response(f"{e}, {request.json}")
-    
-#     except Exception as e:
-#         db.session.rollback()
-#         traceback.print_exc()
-#         return error_response(str(e))
-
-# @usage_bp.route('/usage', methods=['POST'])
-# @jwt_required(optional=True)
-# @limiter.exempt
-# def create_usage():
-#     try:
-#         data = request.json
-        
-#         # Check if current_user is None
-#         if current_user is None and data.get('user_id') is None:
-#             return error_response("User ID must be provided if not authenticated", status_code=400)
-
-#         # Get units used from the request data
-#         units_used = data['units_used']
-
-#         user = current_user or User.get_user(data.get('user_id'))
-#         # If current_user is authenticated, check their balance
-#         if user:
-            
-#             subscription = user.subscriptions  # Assuming a single subscription for simplicity
-#             total_units = subscription.total_units
-            
-#             if total_units < units_used:
-#                 return error_response(f"Your volume [{total_units}] is not sufficient for this usage", status_code=400)
-
-#             # Deduct units from the user's subscription
-#             subscription.total_units -= units_used
-
-#             # Update subscription status if necessary
-#             if total_units <= 0:
-#                 subscription.update_status()
-
-#             # Create new usage entry
-#             new_usage = Usage(
-#                 user_id=data.get('user_id', current_user.id if current_user else None),
-#                 subscription_id=subscription.id,
-#                 units_used=units_used,
-#                 total_units=total_units,
-#                 remaining_units=subscription.total_units,
-#             )
-        
-#         db.session.add(new_usage)
-#         db.session.commit()
-#         return success_response("Usage recorded successfully", data=new_usage.get_summary(), status_code=201)
-    
-#     except IntegrityError as e:
-#         db.session.rollback()  # Rollback the session on error
-#         traceback.print_exc()
-#         return error_response(f"{e}, {request.json}")
-    
-#     except Exception as e:
-#         db.session.rollback()
-#         traceback.print_exc()
-#         return error_response(str(e))
-
-# @usage_bp.route('/usage', methods=['POST'])
-# @jwt_required(optional=True)
-# @limiter.exempt
-# def create_usage():
-#     try:
-#         data = request.json
-        
-#         # Validate the presence of user ID
-#         if current_user is None and data.get('user_id') is None:
-#             return error_response("User ID must be provided if not authenticated", status_code=400)
-
-#         # Extract units used from the request data
-#         units_used = int(data.get('units_used'))
-#         if units_used is None or units_used <= 0:
-#             return error_response("Invalid units used specified", status_code=400)
-
-#         # Determine the user context
-#         user = current_user or User.get_user(data.get('user_id'))
-        
-#         if user:
-#             # subscription = user.subscriptions  # Assuming a single subscription for simplicity
-#             subscription = user.subscriptions[0] if user.subscriptions else None
-            
-#             total_units = subscription.total_units
-            
-#             # Validate sufficient units for usage
-#             if total_units < units_used:
-#                 return error_response(f"Your volume [{total_units}] is not sufficient for this usage", status_code=400)
-
-#             # Deduct units from the user's subscription
-#             subscription.total_units -= units_used
-            
-#             # Update subscription status if necessary
-#             if subscription.total_units <= 0:
-#                 subscription.update_status()
-
-#             # Create new usage entry
-#             new_usage = Usage(
-#                 user_id=user.id,
-#                 subscription_id=subscription.id,
-#                 units_used=units_used,
-#                 total_units=total_units,  # Record total before deduction
-#                 remaining_units=subscription.total_units,
-#             )
-        
-#             db.session.add(new_usage)
-#             db.session.commit()
-#             return success_response("Usage recorded successfully", data=new_usage.get_summary(), status_code=201)
-
-#         return error_response("User not found", status_code=404)
-
-#     except IntegrityError as e:
-#         db.session.rollback()  # Rollback the session on error
-#         traceback.print_exc()
-#         return error_response(f"Database integrity error: {str(e)}", status_code=500)
-    
-#     except Exception as e:
-#         db.session.rollback()
-#         traceback.print_exc()
-#         return error_response(f"An unexpected error occurred: {str(e)}", status_code=500)
-
-# VERSION 01 [get_usage_statistics]
-# @usage_bp.route('/usage/statistics', methods=['GET'])
-# @jwt_required(optional=False)
-# @limiter.exempt
-# def get_usage_statistics():
-
-#     try:
-#         # Ensure the current user is authenticated
-#         if not current_user:
-#             return error_response('User is not logged in.', status_code=401)
-
-#         # Query the most recent usage record for the current user
-#         recent_usage = Usage.query.filter_by(user_id=current_user.id).order_by(Usage.created_at.desc()).first()
-
-#         if recent_usage:
-#             usage_percentage = recent_usage.calculate_usage_percentage()
-
-#             data = {
-#                 'units_used': recent_usage.units_used,
-#                 'total_units': recent_usage.total_units,
-#                 'remaining_units': recent_usage.subscriptions.total_units,
-#                 # 'available_units': recent_usage.subscriptions.total_units,
-#                 'usage_percentage': usage_percentage,
-#                 'status': recent_usage.status
-#             }
-            
-#             return success_response("Stats fetched successfully.", data=data, status_code=200)
-        
-#         else:
-#             # Return placeholders if no usage records are found
-#             data = {
-#                 'available_units': 0,
-#                 'units_used': 0,
-#                 'total_units': current_user.subscriptions[0].total_units or 0,
-#                 'remaining_units': current_user.subscriptions[0].total_units or 0,
-#                 'usage_percentage': 0,
-#                 'status': 'No usage records available'
-#             }
-            
-#             return success_response('No usage records found for the current user.', data=data, status_code=200)
-#     except Exception as e:
-#         traceback.print_exc()
-#         return error_response(str(e), status_code=500)
-# # 
-
-# VERSION 02
-# @usage_bp.route('/usage/statistics', methods=['GET'])
-# @jwt_required(optional=False)
-# @limiter.exempt
-# def get_usage_statistics():
-#     try:
-#         # Ensure the current user is authenticated
-#         if not current_user:
-#             return error_response('User is not logged in.', status_code=401)
-
-#         # Get the user's active subscription (if any)
-#         active_subscription = next(
-#             (sub for sub in current_user.subscriptions if sub.is_active), 
-#             None
-#         )
-
-#         # Query the most recent usage record
-#         recent_usage = Usage.query.filter_by(
-#             user_id=current_user.id
-#         ).order_by(Usage.created_at.desc()).first()
-
-#         if recent_usage:
-#             usage_percentage = recent_usage.calculate_usage_percentage()
-#             total_units = active_subscription.total_units if active_subscription else 0
-            
-#             data = {
-#                 'units_used': recent_usage.units_used,
-#                 'total_units': total_units,
-#                 'remaining_units': total_units - recent_usage.units_used,
-#                 'usage_percentage': usage_percentage,
-#                 'status': recent_usage.status
-#             }
-#             return success_response("Stats fetched successfully.", data=data)
-        
-#         else:
-#             # Handle case with no usage records
-#             total_units = active_subscription.total_units if active_subscription else 0
-#             data = {
-#                 'units_used': 0,
-#                 'total_units': total_units,
-#                 'remaining_units': total_units,
-#                 'usage_percentage': 0,
-#                 'status': 'No usage records available'
-#             }
-#             return success_response('No usage records found.', data=data)
-
-#     except Exception as e:
-#         return error_response(f"Failed to fetch usage statistics: {str(e)}", status_code=500)
-
-# VERSION 03
-# @usage_bp.route('/usage/statistics', methods=['GET'])
-# @jwt_required(optional=False)
-# @limiter.exempt
-# def get_usage_statistics():
-#     try:
-#         if not current_user:
-#             return error_response('User is not logged in.', status_code=401)
-
-#         # Get the first subscription (modify this if you have active/inactive logic)
-#         subscription = current_user.subscriptions[0] if current_user.subscriptions else None
-
-#         # Get most recent usage
-#         recent_usage = Usage.query.filter_by(
-#             user_id=current_user.id
-#         ).order_by(Usage.created_at.desc()).first()
-
-#         if recent_usage:
-#             usage_percentage = recent_usage.calculate_usage_percentage()
-#             total_units = subscription.total_units if subscription else 0
-            
-#             data = {
-#                 'units_used': recent_usage.units_used,
-#                 'total_units': total_units,
-#                 'remaining_units': max(total_units - recent_usage.units_used, 0),
-#                 'usage_percentage': usage_percentage,
-#                 'status': recent_usage.status
-#             }
-#             return success_response("Stats fetched successfully.", data=data)
-        
-#         else:
-#             # No usage records case
-#             total_units = subscription.total_units if subscription else 0
-#             data = {
-#                 'units_used': 0,
-#                 'total_units': total_units,
-#                 'remaining_units': total_units,
-#                 'usage_percentage': 0,
-#                 'status': 'No usage records available'
-#             }
-#             return success_response('No usage records found.', data=data)
-
-#     except IndexError:
-#         # Handle case where subscriptions exists but is empty
-#         data = {
-#             'units_used': 0,
-#             'total_units': 0,
-#             'remaining_units': 0,
-#             'usage_percentage': 0,
-#             'status': 'No subscription available'
-#         }
-#         return success_response('No subscription found.', data=data)
-        
-#     except Exception as e:
-#         return error_response(f"Failed to fetch usage statistics: {str(e)}", status_code=500)
-
-# VERSION 04
 @usage_bp.route('/usage/statistics', methods=['GET'])
 @jwt_required(optional=False)
 @limiter.exempt
@@ -710,83 +363,49 @@ def get_usage_statistics():
             status_code=500
         )
 
-# VERSION 05
-# @usage_bp.route('/usage/statistics', methods=['GET'])
-# @jwt_required(optional=False)
-# @limiter.exempt
-# def get_usage_statistics():
-#     try:
-#         # Authentication check
-#         if not current_user:
-#             return error_response('Authentication required', status_code=401)
+@usage_bp.route('/user/<int:user_id>/usage', methods=['GET'])
+@usage_bp.route('/usage', methods=['GET'])
+@jwt_required(optional=True)
+@limiter.exempt
+def get_usage(user_id=None):
+    try:
+        # Get pagination parameters from query string
+        page = request.args.get('page', default=1, type=int)
+        page_size = request.args.get('per_size', default=10, type=int)
 
-#         # Get most recent usage record
-#         recent_usage = Usage.query.filter_by(
-#             user_id=current_user.id
-#         ).order_by(Usage.created_at.desc()).first()
+        if not user_id and current_user:
+            user_id = current_user.id
 
-#         # Initialize default response data
-#         response_data = {
-#             'units_used': 0,
-#             'total_units': 0,
-#             'remaining_units': 0,
-#             'usage_percentage': 0,
-#             'status': 'No usage data available'
-#         }
+        user = User.get_user(user_id)
+        # Build the query
+        query = Usage.query.filter_by(is_deleted=False)
 
-#         if recent_usage:
-#             # Safely get subscription data from recent_usage
-#             subscription = getattr(recent_usage, 'subscriptions', None)
+        if user_id is not None and user.is_admin():
+            query = query.filter_by(user_id=user_id)
+        else:
+            query = query.filter_by(user_id=user_id)
             
-#             # Calculate values with fallbacks
-#             total_units = getattr(subscription, 'total_units', 0) if subscription else 0
-#             units_used = getattr(recent_usage, 'units_used', 0)
-            
-#             try:
-#                 usage_percentage = recent_usage.calculate_usage_percentage()
-#             except Exception as e:
-#                 current_app.logger.error(f"Usage calculation error: {str(e)}")
-#                 usage_percentage = 0
+        # Paginate the results and order by latest first
+        paginated_usage = query.order_by(Usage.created_at.desc()).paginate(page=page, per_page=page_size, error_out=False)
 
-#             response_data.update({
-#                 'units_used': units_used,
-#                 'total_units': total_units,
-#                 'remaining_units': total_units,  # Directly from subscription as requested
-#                 'usage_percentage': usage_percentage,
-#                 'status': getattr(recent_usage, 'status', 'active')
-#             })
+        # Serialize the paginated data
+        usage_records = PageSerializer(items=paginated_usage.items, resource_name="usage").get_data()
 
-#             return success_response(
-#                 "Usage statistics retrieved successfully",
-#                 data=response_data
-#             )
-#         else:
-#             # Handle case when no usage records exist
-#             # Try to get subscription data from user as fallback
-#             user_subscription = None
-#             if hasattr(current_user, 'subscriptions') and current_user.subscriptions:
-#                 user_subscription = current_user.subscriptions[0] if len(current_user.subscriptions) > 0 else None
-            
-#             total_units = getattr(user_subscription, 'total_units', 0) if user_subscription else 0
-
-#             response_data.update({
-#                 'total_units': total_units,
-#                 'remaining_units': total_units
-#             })
-
-#             return success_response(
-#                 "No usage records found",
-#                 data=response_data
-#             )
-
-#     except Exception as e:
-#         current_app.logger.error(f"Error in get_usage_statistics: {str(e)}")
-#         traceback.print_exc()
-#         return error_response(
-#             "An error occurred while fetching usage statistics",
-#             status_code=500
-#         )
+        # if not usage_records:
+        #     # Return placeholders if no usage records are found
+        #     usage_records = [{
+        #         'units_used': 0,
+        #         'total_units': 0,
+        #         'remaining_units': 0,
+        #         'usage_percentage': 0,
+        #         'status': 'No usage records available'
+        #     }]
         
+        return success_response("Usage records fetched successfully", data=usage_records)
+
+    except Exception as e:
+        return error_response(str(e), status_code=500)
+
 @usage_bp.route('/usage', methods=['POST'])
 @jwt_required(optional=True)
 @limiter.exempt

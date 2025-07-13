@@ -108,16 +108,16 @@ class Address(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     
-    first_name = db.Column(db.String(140), nullable=False)
+    first_name = db.Column(db.String(140))
     last_name = db.Column(db.String(140))
-    street_address = db.Column(db.String(140), nullable=False)
+    street_address = db.Column(db.String(140))
     zip_code = db.Column(db.String(20))
     phone_number = db.Column(db.String(20), nullable=True)
     
     city_id = db.Column(db.Integer, db.ForeignKey('cities.id'), nullable=False)
     city = db.relationship('City', backref='addresses')
 
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     user = db.relationship('User', backref='addresses')
 
     is_primary = db.Column(db.Boolean(), nullable=False, default=False)

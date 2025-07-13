@@ -1,6 +1,5 @@
 
 from datetime import timedelta
-from dotenv import load_dotenv
 import secrets, requests, sqlalchemy as sa, traceback
 # from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from requests.exceptions import ConnectionError, Timeout, RequestException
@@ -9,7 +8,7 @@ from urllib.parse import urlencode
 from flask_jwt_extended import get_jwt, jwt_required, get_jwt_identity, current_user  # Instead of get_jwt_claims
 from jsonschema import validate, ValidationError
 from flask import (
-    current_app, make_response, redirect, session, render_template, 
+    abort, current_app, make_response, redirect, session, render_template, 
     url_for, request
 )
 
@@ -26,7 +25,7 @@ from web.apis.utils.serializers import (
 
 from web.apis.schemas.user import (
     signin_schema, signup_schema, request_schema, reset_password_email_schema, 
-    validTokenSchema
+    validTokenSchema, change_password_schema
 )
 
 from web.apis.utils import email as emailer
@@ -34,9 +33,14 @@ from web.apis.utils.oauth_providers import oauth2providers
 from web.extensions import redis as redis_clients
 from web.apis import api_bp as user_bp
 
+# 
+
 from flask import Flask, jsonify
 from os import getenv
+from dotenv import load_dotenv
+import redis
 
+# Load environment variables from .env file
 load_dotenv()
 
 # Requests form route
@@ -112,7 +116,7 @@ def send_message():
 @limiter.exempt
 def signup():
     user_identity = get_jwt_identity()
-    if user_identity and not current_user.is_admin():
+    if user_identity:
         return error_response("You're already signed in currently. Logout first to create new accounts.")
 
     if request.content_type != 'application/json':
@@ -179,6 +183,15 @@ def signin():
         if request.content_type != 'application/json' or not request.json:
             return error_response("Content-Type must be application/json & JSON payload expected.")
         
+        # return error_response(f"pls check -> {request.json, request.headers}")
+        # # Check if the user is already authenticated (using JWT token)
+        # user_identity = get_jwt_identity()  # Attempt to get the current user's identity from the JWT token
+        # if user_identity:
+        #     claims = get_jwt()  # Get all claims
+        #     return success_response(
+        #         f"signed in already as {claims.get('username')}",
+        #         data={"redirect": url_for('showcase.index')}
+        #     )
         if current_user:
             return success_response(
                 f"signed in already as {current_user.username}", data={"redirect": '/account'}
@@ -186,7 +199,7 @@ def signin():
 
         # Parse JSON data from the request
         data = request.get_json()
-        print(data)
+
         # Ensure that no fields are empty
         if not all(data.get(key) for key in ('username', 'password')):
             return error_response("All fields are required and must not be empty.")
@@ -310,6 +323,181 @@ def signout():
 
     except Exception as e:
         return error_response(f'Error signing out: {str(e)}')
+
+# @user_bp.route('/users/change-password', methods=['POST'])
+# @jwt_required()
+# @limiter.exempt
+# def change_password():
+#     """Allow authenticated users to change their password."""
+#     try:
+#         if not get_jwt_identity():
+#             return error_response("You are not authenticated. sign-in first", data={"redirect": url_for('apis.signin')})
+
+#         if request.content_type != 'application/json' or not request.json and not request.form:
+#             return error_response("Content-Type must be application/json & JSON payload expected.")
+
+#         data = request.json or request.form
+#         print(f'data to be changed ->, {data}')
+        
+#         try:
+#             validate(instance=data, schema=change_password_schema)
+#         except ValidationError as e:
+#             return error_response(f"Validation error: {e.message}")
+        
+#         current_password = data.get('current_password')
+#         new_password = data.get('new_password')
+#         confirm_password = data.get('confirm_password')
+
+#         if not all([current_password, new_password, confirm_password]):
+#             return error_response("All fields are required.", status_code=400)
+
+#         if new_password != confirm_password:
+#             return error_response("New password and confirmation do not match.", status_code=400)
+
+#         if not current_user.check_password(current_password):
+#             return error_response("Current password is incorrect.", status_code=403)
+
+#         current_user.set_password(new_password)
+#         db.session.commit()
+
+#         return success_response("Password changed successfully.")
+
+#     except Exception as e:
+#         traceback.print_exception(e)
+#         return error_response(f"Unexpected error: {str(e)}", status_code=500)
+
+# VERSION 02
+# @user_bp.route('/users/change-password', methods=['POST'])
+# @jwt_required()
+# @limiter.exempt
+# def change_password():
+#     """Allow authenticated users to change their password."""
+#     try:
+#         # Authentication check
+#         if not get_jwt_identity():
+#             return error_response("You are not authenticated. Please sign in first", 
+#                                 data={"redirect": url_for('apis.signin')})
+
+#         # Initialize data variable
+#         data = None
+        
+#         # Handle both JSON and form data
+#         if request.is_json:
+#             data = request.get_json()
+#         elif request.form:
+#             data = request.form.to_dict()
+#         else:
+#             return error_response("Request must contain JSON or form data", status_code=400)
+
+#         # Debug print
+#         print(f'Password change data received: {data}')
+        
+#         # Validate data
+#         try:
+#             validate(instance=data, schema=change_password_schema)
+#         except ValidationError as e:
+#             return error_response(f"Validation error: {e.message}", status_code=400)
+        
+#         # Extract fields
+#         current_password = data.get('current_password')
+#         new_password = data.get('new_password')
+#         confirm_password = data.get('confirm_password')
+
+#         # Validate required fields
+#         if not all([current_password, new_password, confirm_password]):
+#             return error_response("All fields are required: current_password, new_password, confirm_password", 
+#                                 status_code=400)
+
+#         # Password confirmation check
+#         if new_password != confirm_password:
+#             return error_response("New password and confirmation do not match", status_code=400)
+
+#         # Current password verification
+#         if not current_user.check_password(current_password):
+#             return error_response("Current password is incorrect", status_code=403)
+
+#         # Update password
+#         current_user.set_password(new_password)
+#         db.session.commit()
+
+#         return success_response("Password changed successfully")
+
+#     except Exception as e:
+#         traceback.print_exception(e)
+#         current_app.logger.error(f"Password change error: {str(e)}")
+#         return error_response("An error occurred while changing password", status_code=500)
+
+# VERSION 03
+# @user_bp.route('/users/change-password', methods=['POST'])
+# @jwt_required()
+# @limiter.exempt
+# def change_password():
+#     """Allow authenticated users to change their password."""
+#     try:
+#         # Verify authentication first
+#         current_user = get_jwt_identity()
+#         if not current_user:
+#             return error_response("Authentication required", status_code=401)
+
+#         # Initialize data variable
+#         data = None
+        
+#         # Handle different content types more robustly
+#         if request.content_type == 'application/json':
+#             try:
+#                 data = request.get_json()
+#                 if data is None:  # Empty JSON body case
+#                     return error_response("JSON payload expected", status_code=400)
+#             except Exception as e:
+#                 current_app.logger.error(f"JSON parsing error: {str(e)}")
+#                 return error_response("Invalid JSON format", status_code=400)
+#         elif request.content_type in ['application/x-www-form-urlencoded', 'multipart/form-data']:
+#             data = request.form.to_dict()
+#         else:
+#             return error_response(
+#                 "Unsupported Content-Type. Use application/json or form data",
+#                 status_code=400
+#             )
+
+#         current_app.logger.debug(f"Password change request data: {data}")
+
+#         # Validate data structure
+#         required_fields = ['current_password', 'new_password', 'confirm_password']
+#         if not all(field in data for field in required_fields):
+#             return error_response(
+#                 f"Missing required fields: {', '.join(required_fields)}",
+#                 status_code=400
+#             )
+
+#         # Get field values
+#         current_password = data['current_password']
+#         new_password = data['new_password']
+#         confirm_password = data['confirm_password']
+
+#         # Validate password match
+#         if new_password != confirm_password:
+#             return error_response(
+#                 "New password and confirmation do not match",
+#                 status_code=400
+#             )
+
+#         # Verify current password
+#         user = User.query.get(current_user['id'])
+#         if not user or not user.check_password(current_password):
+#             return error_response("Current password is incorrect", status_code=403)
+
+#         # Update password
+#         user.set_password(new_password)
+#         db.session.commit()
+
+#         return success_response("Password changed successfully")
+
+#     except Exception as e:
+#         current_app.logger.error(f"Password change error: {str(e)}", exc_info=True)
+#         return error_response(
+#             "An error occurred while processing your request",
+#             status_code=500
+#         )
 
 # VERSION 04 - just current password & new password
 @user_bp.route('/users/change-password', methods=['POST'])
@@ -526,6 +714,124 @@ def oauth2_authorize(provider):
         traceback.print_exc()
         return error_response(f"An error occurred: {str(e)}")
 
+# @user_bp.route('/users/callback/<provider>')
+# @jwt_required(optional=True)
+# @limiter.exempt
+# def oauth2_callback(provider):
+#     try:
+#         # Check if the user is already authenticated
+#         if get_jwt_identity() is not None:
+#             return success_response("already authenticated", data={"redirect": "./account"})
+
+#         provider_data = oauth2providers.get(provider)
+#         if provider_data is None:
+#             return error_response(f"provider not found.", status_code=404)
+#             # return error_response(f"Invalid state or expired callback URL", status_code=404)
+
+#         # Handle authentication errors
+#         if 'error' in request.args:
+#             return error_response(f"authentication errors occurred - {request.args.get('error')}")
+
+#         # Validate the state parameter
+#         oauth2_state_in_request = request.args.get('state')
+#         stored_provider = redis_clients.get(f'oauth2_state:{oauth2_state_in_request}')
+        
+#         # Log the state values for debugging
+#         print(f"Received state: {oauth2_state_in_request}")
+#         print(f"Stored provider: {stored_provider}")
+
+#         if not stored_provider:
+#             return error_response("Invalid or expired state parameter", status_code=401)
+
+#         # Validate the presence of the authorization code
+#         if 'code' not in request.args:
+#             return error_response("Missing authorization code", status_code=401)
+
+#         client_callback_url = request.headers.get('Client-Callback-Url') or url_for('apis.oauth2_callback', provider=provider, _external=True)
+        
+#         # Exchange the authorization code for an access token
+#         response = requests.post(
+#             provider_data['token_url'], 
+#             data={
+#                 'client_id': provider_data['client_id'],
+#                 'client_secret': provider_data['client_secret'],
+#                 'code': request.args['code'],
+#                 'grant_type': 'authorization_code',
+#                 'redirect_uri': client_callback_url,
+#             }, 
+#             headers={'Accept': 'application/json'}
+#         )
+#         # 
+#         # Log the response for debugging
+#         print("Token exchange response status:", response.status_code)
+#         print("Token exchange response body:", response.json())
+
+#         if response.status_code != 200:
+#             return error_response("Failed to obtain access token", status_code=401)
+
+#         oauth2_token = response.json().get('access_token')
+#         if not oauth2_token:
+#             return error_response(f"Failed to retrieve {provider} access token", status_code=401)
+
+#         # Use the access token to get the user's email address
+#         response = requests.get(provider_data['userinfo']['url'], headers={
+#             'Authorization': 'Bearer ' + oauth2_token,
+#             'Accept': 'application/json',
+#         })
+        
+#         if response.status_code != 200:
+#             return error_response("Failed to retrieve user info", status_code=401)
+
+#         email = provider_data['userinfo']['email'](response.json())
+
+#         # Find or create the user in the database
+#         user = db.session.scalar(db.select(User).where(User.email == email))
+#         if user is None:
+#             user = User(email=email, username=email.split('@')[0], oauth_providers=provider)
+#             user.set_password(secrets.token_urlsafe(5))
+#             db.session.add(user)
+#             db.session.commit()
+
+#         # Create JWT tokens for the user
+#         if user:
+#             access_token = user.make_token(token_type='access')
+#             refresh_token = user.make_token(token_type='refresh')
+
+#             # Create response object
+#             response = urlencode(
+#                 make_response(
+#                 success_response(
+#                     "Sign in successful",
+#                     data={
+#                         "access_token": access_token,
+#                         "refresh_token": refresh_token,
+#                         "redirect": "./account"
+#                     }
+#                 ) ) )
+            
+#             # Retrieve the callback URL from Redis using the state
+#             client_callback_url = redis_clients.get(f'callback_url:{oauth2_state_in_request}')
+            
+#             # Remove the state from Redis after successful authentication
+#             redis_clients.delete(f'oauth2_state:{oauth2_state_in_request}')
+            
+#             # return response
+#             # Construct the full client application URL with query string
+#             redirect_url = f"{client_callback_url}?{response}"
+
+#             # Delete the state and callback URL from Redis after use
+#             redis_clients.delete(f'oauth2_state:{oauth2_state_in_request}')
+#             redis_clients.delete(f'callback_url:{oauth2_state_in_request}')
+
+#             # Redirect to the client application
+#             return redirect(redirect_url, external=True)
+            
+#         return error_response("Unable to sign in.", status_code=401)
+
+#     except Exception as e:
+#         traceback.print_exc()
+#         return error_response(f"An error occurred: {str(e)}")
+
 @user_bp.route('/users/callback/<provider>')
 @jwt_required(optional=True)
 @limiter.exempt
@@ -710,6 +1016,67 @@ def get_current_user():
     except Exception as e:
         return error_response(f"An error occurred: {str(e)}", status_code=500)
 
+# @user_bp.route('/users/<user_id>', methods=['PUT', 'POST'])
+# @jwt_required()
+# # @expects_json(signup_schema)
+# @limiter.exempt
+# def update_user(user_id):
+#     try:
+#         user = None
+        
+#         if user_id is not None:
+
+#             user = User.get_user(username=user_id)
+#             if not user:
+#                 return error_response("User not found.", status_code=404)
+
+#         data = request.json
+
+#         # Validation -> this is because incoming data may not contain same data/schemas as signup_schema
+#         # try:
+#         #     validate(instance=data, schema=signup_schema)
+#         # except ValidationError as e:
+#         #     return error_response(f"Validation error: {e.message}")
+        
+#         # Perform checks on the data
+#         if 'username' in data and data['username'] != user.username and \
+#             db.session.scalar(sa.select(User).where(
+#                 User.username == data['username'])):
+#             return error_response('please use a different username')
+
+#         if 'email' in data and data['email'] != user.email and \
+#             db.session.scalar(sa.select(User).where(
+#                 User.email == data['email'])):
+#             return error_response('please use a different email address')
+        
+#         if 'phone' in data and data['phone'] != user.phone and \
+#             db.session.scalar(sa.select(User).where(
+#                 User.phone == data['phone'])):
+#             return error_response('please use a different phone number')
+    
+#         # Update user attributes
+#         user.name = data.get('name', user.name)
+#         user.username = data.get('username', user.username)
+#         user.phone = data.get('phone', user.phone)
+#         user.email = data.get('email', user.email)
+#         user.about_me = data.get('about_me', user.about_me)
+
+#         # Update password only if provided
+#         if 'password' in data and data['password'] != None:
+#             user.set_password(data['password'])
+
+#         user.avatar = data.get('avatar', user.avatar)
+#         user.updated_at = func.now()
+        
+#         db.session.commit()
+        
+#         # data=PageSerializer(items=[user], resource_name="user").get_data()
+#         data=user.get_summary()
+#         return success_response("User updated successfully.", data=data)
+    
+#     except Exception as e:
+#         return error_response(f"{str(e)}")
+
 # V02
 @user_bp.route('/users/<username>', methods=['PUT', 'POST'])
 @jwt_required()
@@ -728,9 +1095,8 @@ def update_user(username):
         if not user:
             return error_response("User not found", status_code=404)
 
-        # Verify user can only update their own profile or done by admin
-        # if user.email != current_user_id:
-        if not current_user.is_admin() and current_user.id != user.id:
+        # Verify user can only update their own profile
+        if user.email != current_user_id:
             return error_response(f"Unauthorized to update this user {username}", status_code=403)
 
         # Get and validate request data
@@ -794,24 +1160,24 @@ def update_user(username):
 @user_bp.route('/users/<user_id>', methods=['DELETE'])
 @jwt_required()
 @limiter.exempt
-# @access_required('admin', 'user', strict=False)  # Specify required roles
+@access_required('admin', 'editor', strict=False)  # Specify required roles
 def delete_user(user_id=None):
     try:
         # return current_user.get_roles()
         if user_id is not None:
-            user = User.get_user(username=user_id)
+            user = User.get_user(username=user_id).first()
                 
             if not user:
                 return error_response("User not found.", status_code=404)
             
             # Check if the current user is an admin or the user to be deleted
-            if current_user.is_admin or current_user.id == user.id:
+            if current_user.is_admin and current_user.id == user.id and not user.is_admin:
                 # Delete the user
                 db.session.delete(user)
                 db.session.commit()
                 return success_response("User deleted successfully.")
             else:
-                return error_response(f"You do not have permission to delete this user.", status_code=403)
+                return error_response("You do not have permission to delete this user.", status_code=403)
         
         return error_response(f"user cannot be none")
     

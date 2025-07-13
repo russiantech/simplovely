@@ -1,8 +1,8 @@
 from os import getenv
 from web import create_app
 
-# app = create_app('development')  # Set to 'production' if needed
-app = create_app('production')  # Set to 'production' if needed
+app = create_app('development')  # Set to 'production' if needed
+# app = create_app('production')  # Set to 'production' if needed
 
 from flask import jsonify
 @app.route("/routes")
@@ -15,7 +15,7 @@ def site_map():
     return jsonify(links), 200
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=int(getenv("PORT", 5001)))
+    app.run(host='0.0.0.0', debug=True, port=int(getenv("PORT", 5001)))
     
     # from web.extensions import socketio as sio
     # sio.run(app=app, host='0.0.0.0', port=int(getenv("PORT", 5000)))
