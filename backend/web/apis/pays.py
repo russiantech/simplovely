@@ -115,7 +115,7 @@ def initiate_paystack(plan_id):
     except IntegrityError as e:
         db.session.rollback()  # Rollback the session on error
         traceback.print_exc()
-        return error_response(f"Seems this user already exists, why not try to login first instead.", status_code=500)
+        return error_response(f"Payment integrity glitch {e}", status_code=500)
     
     except Exception as e:
         db.session.rollback()
