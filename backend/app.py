@@ -1,8 +1,8 @@
 from os import getenv
 from web import create_app
 
-app = create_app('development')  # Set to 'production' if needed
-# app = create_app('production')  # Set to 'production' if needed
+# app = create_app('development')  # Set to 'production' if needed
+app = create_app('production')  # Set to 'production' if needed
 
 from flask import jsonify
 @app.route("/routes")
