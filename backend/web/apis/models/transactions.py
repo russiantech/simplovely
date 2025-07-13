@@ -64,6 +64,9 @@ class Transaction(db.Model):
     status = db.Column(db.String(50), nullable=False, default='pending')
     description = db.Column(db.String(255), nullable=True)
 
+    plan_id = db.Column(db.Integer, db.ForeignKey('plans.id'))
+    plan = db.relationship('Plan')
+    
     service_id = db.Column(db.Integer, db.ForeignKey('services.id'))
     service = db.relationship('Service')
 
@@ -81,7 +84,8 @@ class Transaction(db.Model):
             'reference': self.reference,
             'status': self.status,
             'description': self.description,
-            'service_id': self.service_id,
+            'service_id': self.service_id if self.service_id else None,
+            'plan_id': self.plan_id if self.plan_id else None,
             'is_deleted': self.is_deleted,
             'created_at': self.created_at,
             'updated_at': self.updated_at

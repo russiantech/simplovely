@@ -89,8 +89,8 @@ def initiate_paystack(plan_id):
             db.session.commit()
 
         transaction = Transaction( 
-            # plan_id=plan.id,
-            service_id=plan.id,
+            plan_id=plan.id,
+            # service_id=plan.id,
             user_id=user.id,
             amount=plan.amount,
             currency='NGN',
