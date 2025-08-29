@@ -81,7 +81,7 @@ class Config:
     MEDIA_LOCATION = "static/images/"
     MAX_CONTENT_PATH = int(getenv('MAX_CONTENT_PATH') or 1024 * 1024)  # Default to 1MB
     # ALLOWED_EXTENSIONS = getenv('ALLOWED_EXTENSIONS', 'jpg, jpeg, png, gif, mov, mp4').split(',')
-    ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'svg', 'jpg', 'jpeg', 'gif', 'mp4',}  # Use set for O(1) lookups. put here not .env since it's not sensitive info
+    ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'svg', 'jpg', 'jpeg', 'gif', 'webp', 'mp4',}  # Use set for O(1) lookups. put here not .env since it's not sensitive info
 
     # Session
     SESSION_TYPE = 'filesystem'
