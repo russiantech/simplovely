@@ -3,7 +3,14 @@
  * Professional integration with backend API for dynamic category-based product management
  */
 
-const apiURL = window.apiURL || `http://localhost:5001/api`;
+
+// Set API base URL: use production if on production domain, else use local/dev
+const apiURL = (
+    window.location.hostname === "simplylovely.ng" ||
+    window.location.hostname.endsWith(".simplylovely.ng")
+)
+        ? "https://api.simplylovely.ng/api"
+        : (window.apiURL || "http://localhost:5001/api");
 
 class FashionProductsAPI {
     constructor(baseURL = apiURL) {
