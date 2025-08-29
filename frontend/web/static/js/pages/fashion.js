@@ -629,11 +629,6 @@ class FashionProductsAPI {
                                 Contact For Details
                             </a>
                         </div>
-                        ${!availability.available ? `
-                            <small class="text-danger mt-2">${availability.message}</small>
-                        ` : availability.lowStock ? `
-                            <small class="text-warning mt-2">Only ${availability.stock} left</small>
-                        ` : ''}
                     </div>
                 </div>
             </article>
