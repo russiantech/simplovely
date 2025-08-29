@@ -8,6 +8,7 @@ __pycache__/
 #
 # Ignore local/static test media
 /backend/web/static/images/products/*
+backend/web/static/images/products/*
 !/backend/web/static/images/offers/banners/.gitkeep   # keep the folder tracked, but not files
 !/backend/web/static/images/products/.gitkeep   # keep the folder tracked, but not files
 #
