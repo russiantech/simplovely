@@ -14,7 +14,7 @@ product_schema = {
         "created_at": {"type": "string", "format": "date-time"},
         "updated_at": {"type": "string", "format": "date-time"},
     },
-    "required": ["name", "description", "price", "stock"]
+    "required": ["name"]
 }
 
 

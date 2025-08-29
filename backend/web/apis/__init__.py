@@ -8,6 +8,7 @@ api_bp = Blueprint('apis', __name__)
 
 # web/apis/models/__init__.py
 from . import products
+from . import categories
 # from . import pages
 from . import users
 from . import addresses
@@ -20,6 +21,7 @@ __all__ = [
     
     "users",
     "products",
+    "categories",
     "basket",
     
     "addresses",

@@ -68,7 +68,7 @@ def strtobool_custom(value):
 
 def validate_file_upload(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ['png', 'jpeg', 'jpg']
+           filename.rsplit('.', 1)[1].lower() in ['png', 'jpeg', 'jpg', 'mp4']
            
 
 from flask_jwt_extended import decode_token

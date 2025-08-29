@@ -23,6 +23,24 @@ def fashion():
         traceback.format_exc()
         return error_response(str(e))
     
+@index_bp.route('/fashion-crud')
+def fashion_crud():
+    try:
+        context= {}
+        return render_template('fashion_crud.html', **context)
+    except Exception as e:
+        traceback.format_exc()
+        return error_response(str(e))
+    
+@index_bp.route('/fashion-crud-bak')
+def fashion_crud_bak():
+    try:
+        context= {}
+        return render_template('fashion_crud.bak.html', **context)
+    except Exception as e:
+        traceback.format_exc()
+        return error_response(str(e))
+    
 @index_bp.route('/laundry')
 def laundry():
     try:

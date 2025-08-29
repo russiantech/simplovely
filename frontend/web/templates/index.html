@@ -167,7 +167,7 @@
         </section>
 
         <!-- latest styles -->
-        <section class="container py-2 py-sm-3 py-md-4 py-lg-5 my-xxl-3">
+        {#<section class="container py-2 py-sm-3 py-md-4 py-lg-5 my-xxl-3">
             <div class="d-flex align-items-start justify-content-between gap-4 pb-3 mb-2 mb-sm-3 mb-lg-4">
                 <h2 class="mb-0">Latest styles</h2>
                 <div class="nav">
@@ -293,7 +293,9 @@
                     </article>
                 </div>
             </div>
-        </section>
+        </section>#}
+
+        {% include "incs/pages/fashion_with_tabs.html" %}
 
         <!-- why choose us -->
         <section class="container py-2 py-sm-3 py-md-4 py-lg-5 mb-xxl-3">
@@ -377,6 +379,9 @@
         </section>
 
     </main>
+
+    <script src="/static/js/pages/fashion.js"></script>
+
     {% endblock content %}
 
  

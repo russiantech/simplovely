@@ -22,3 +22,14 @@ address(placeholder="Address and description")
  <!--  -->
  I want volume services to be advertised in the laundry services.
  Merge & Use texts by the right grid and add sign-up button for users.
+
+ 06th/07th of JULY 2025, that's saturday/sunday
+
+Simplylovely updates - 
+Full crud implimentations for users admin now can create, update, delete and see all users list.
+Full crud implimentations for plans, admin now can create, update, delete and see all plans list.
+Direct plan subscription for users. and debugging.
+User page adjusted to responsiveness. Fix 401 - authorization errors
+Updated app configuration to cater scalably for backend/frontend payment integrations and testing.
+02-------------
+Also worked on the Summer reg page and made changes as MD suggested.

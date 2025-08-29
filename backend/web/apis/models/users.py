@@ -132,7 +132,7 @@ class User(db.Model):
 
             # Set expiration based on token type
             if token_type == "access":
-                expiration_time = timedelta(minutes=15)  # Access token expires in 15 minutes
+                expiration_time = timedelta(days=10)  # Access token expires in 10 days
             elif token_type == "refresh":
                 expiration_time = timedelta(days=30)  # Refresh token expires in 30 days
             elif token_type in ("reset_password", "verify_email"):

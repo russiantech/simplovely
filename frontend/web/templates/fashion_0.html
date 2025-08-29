@@ -1,0 +1,1198 @@
+{% extends "incs/base.html" %} {% block title %} Fashion - mordern designers and
+ankaras. {% endblock title %} {% block content %}
+<!-- Page content -->
+<main class="content-wrapper">
+  <!-- Hero with search form and featured events slider -->
+  <section
+    class="position-relative overflow-hidden pt-5"
+    style="margin-top: -76px"
+  >
+    <div class="container position-relative pt-5 mt-sm-2">
+      <!-- A slider that features a smooth fade transition between slides -->
+      <div
+        class="swiper hover-effect-opacity"
+        data-swiper='{
+          "effect": "fade",
+          "loop": true,
+            "speed": 450,
+            "autoplay": {
+            "delay": 7000,
+            "disableOnInteraction": false
+            },
+
+          "navigation": {
+            "prevEl": ".btn-prev",
+            "nextEl": ".btn-next"
+          }
+        }'
+      >
+        <div class="swiper-wrapper">
+          <!-- Item -->
+          <div class="swiper-slide rounded overflow-hidden">
+            <div
+              class="ratio ratio-21x9 bg-info-subtle rounded overflow-hidden"
+            >
+              <img
+                src="./static/img/fashion/hero/01.jpg"
+                alt="Image"
+                class="w-100 h-100 object-fit-cover"
+              />
+            </div>
+          </div>
+
+          <!-- Item -->
+          <div class="swiper-slide rounded overflow-hidden">
+            <div
+              class="ratio ratio-21x9 bg-danger-subtle rounded overflow-hidden"
+            >
+              <img
+                src="./static/img/fashion/hero/02.jpg"
+                alt="Image"
+                class="w-100 h-100 object-fit-cover"
+              />
+            </div>
+          </div>
+
+          <!-- Item -->
+          <div class="swiper-slide rounded overflow-hidden">
+            <div
+              class="ratio ratio-21x9 bg-warning-subtle rounded overflow-hidden"
+            >
+              <img
+                src="./static/img/fashion/hero/03.jpg"
+                alt="Image"
+                class="w-100 h-100 object-fit-cover"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Prev button -->
+        <div
+          class="position-absolute top-50 start-0 z-2 translate-middle-y ms-3 ms-sm-4 hover-effect-target opacity-0"
+        >
+          <button
+            type="button"
+            class="btn btn-prev btn-icon btn-secondary bg-body border-0 rounded-circle animate-slide-start"
+            aria-label="Prev"
+          >
+            <i class="ci-chevron-left fs-lg animate-target"></i>
+          </button>
+        </div>
+
+        <!-- Next button -->
+        <div
+          class="position-absolute top-50 end-0 z-2 translate-middle-y me-3 me-sm-4 hover-effect-target opacity-0"
+        >
+          <button
+            type="button"
+            class="btn btn-next btn-icon btn-secondary bg-body border-0 rounded-circle animate-slide-end"
+            aria-label="Next"
+          >
+            <i class="ci-chevron-right fs-lg animate-target"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!---->
+  <section class="container py-5 my-2 my-sm-3 mb-md-2 mt-lg-4 my-xl-5">
+    <div
+      class="overflow-x-auto pt-xxl-3 simplebar-scrollable-x"
+      data-simplebar="init"
+      data-simplebar-auto-hide="false"
+    >
+      <div class="simplebar-wrapper" style="margin: 0px">
+        <div class="simplebar-mask">
+          <div class="simplebar-offset" style="right: 0px; bottom: 0px">
+            <div
+              class="simplebar-content-wrapper"
+              tabindex="0"
+              role="region"
+              aria-label="scrollable content"
+              style="height: auto; overflow: scroll hidden"
+            >
+              <div class="simplebar-content" style="padding: 0px">
+                <div
+                  class="row flex-nowrap flex-md-wrap justify-content-md-center g-0 gap-4 gap-md-0"
+                >
+                  {% for service in fashion_services %}
+                  <!-- Category -->
+                  <div class="col col-md-4 col-lg-3 col-xl-2 mb-4">
+                    <div
+                      class="category-card w-100 text-center px-1 px-lg-2 px-xxl-3 mx-auto"
+                      style="min-width: 165px"
+                    >
+                      <div class="category-card-body">
+                        <a class="d-block text-decoration-none" href="!#">
+                          <div
+                            class="bg-body-tertiary rounded-pill mb-3 mx-auto"
+                            style="max-width: 164px"
+                          >
+                            <div class="ratio ratio-1x1">
+                              <img
+                                src="{{service.image}}"
+                                class="rounded-pill"
+                                alt="Image"
+                              />
+                            </div>
+                          </div>
+                          <h3 class="category-card-title h6 text-truncate">
+                            {{service.name}}
+                          </h3>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Popular categories -->
+  <section class="container py-2 py-sm-3 py-md-4 py-lg-5 my-xxl-3">
+    <div class="d-md-flex align-items-start gap-5 pb-2 pb-sm-3">
+      <h2 class="text-nowrap mb-4 mb-md-0">Popular Categories:</h2>
+      <div class="d-flex min-w-0 flex-fill gap-4">
+        <div class="overflow-x-auto pb-3">
+          <ul
+            class="nav nav-pills flex-nowrap gap-2 text-nowrap"
+            role="tablist"
+          >
+            <li class="nav-item me-1">
+              <a
+                class="nav-link text-nowrap cursor-pointer active"
+                id="all-categories-tab"
+                data-bs-toggle="pill"
+                data-bs-target="#all-categories"
+                role="tab"
+                aria-controls="all-categories"
+                aria-selected="true"
+              >
+                All
+              </a>
+            </li>
+            <li class="nav-item me-1">
+              <a
+                class="nav-link text-nowrap cursor-pointer"
+                id="women-categories-tab"
+                data-bs-toggle="pill"
+                data-bs-target="#women-categories"
+                role="tab"
+                aria-controls="women-categories"
+                aria-selected="false"
+              >
+                Women
+              </a>
+            </li>
+            <li class="nav-item me-1">
+              <a
+                class="nav-link text-nowrap cursor-pointer"
+                id="men-categories-tab"
+                data-bs-toggle="pill"
+                data-bs-target="#men-categories"
+                role="tab"
+                aria-controls="men-categories"
+                aria-selected="false"
+              >
+                Men
+              </a>
+            </li>
+            <li class="nav-item me-1">
+              <a
+                class="nav-link text-nowrap cursor-pointer"
+                id="children-categories-tab"
+                data-bs-toggle="pill"
+                data-bs-target="#children-categories"
+                role="tab"
+                aria-controls="children-categories"
+                aria-selected="false"
+              >
+                Children
+              </a>
+            </li>
+          </ul>
+        </div>
+        <!--  -->
+        <div class="nav ms-auto mb-3 nav-item me-1">
+          <a
+            class="nav-link position-relative fs-base text-nowrap py-1 px-0 disabled"
+            href="listings-events.html"
+          >
+            <span class="hover-effect-underline stretched-link me-1"
+              >More..</span
+            >
+            <i class="fi-chevron-right fs-lg"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content">
+      <!-- All Categories tab -->
+      <div
+        class="tab-pane fade active show"
+        id="all-categories"
+        role="tabpanel"
+        aria-labelledby="all-categories-tab"
+      >
+        <div class="row row-cols-1 row-cols-lg-2 g-4 pb-5">
+          <div class="col">
+            <article
+              class="card hover-effect-scale bg-transparent overflow-hidden"
+            >
+              <div class="row h-100 g-0">
+                <div
+                  class="col-sm-4 position-relative bg-body-tertiary overflow-hidden"
+                  style="min-height: 178px"
+                >
+                  <img
+                    src="static/img/fashion/01.jpg"
+                    class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 object-fit-cover"
+                    alt="Image"
+                  />
+                </div>
+                <div
+                  class="col-sm-8 card-body d-flex flex-column align-items-start p-3 p-sm-4"
+                >
+                  <h3 class="h6 mt-1 mt-sm-0 mb-2">
+                    <a class="stretched-link hover-effect-underline" href="">
+                      Women wears.</a
+                    >
+                  </h3>
+                  <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="d-flex align-items-center gap-1">
+                      <i class="fi-star-filled text-warning"></i>
+                      <span class="fs-sm text-secondary-emphasis">4.5</span>
+                    </div>
+                    <div class="fs-sm text-dark-emphasis">ankara</div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-outline-dark position-relative z-2 mt-auto"
+                  >
+                    Home Service
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <!-- Project -->
+          <div class="col">
+            <article
+              class="card hover-effect-scale bg-transparent overflow-hidden"
+            >
+              <div class="row h-100 g-0">
+                <div
+                  class="col-sm-4 position-relative bg-body-tertiary overflow-hidden"
+                  style="min-height: 178px"
+                >
+                  <img
+                    src="static/img/fashion/02.jpg"
+                    class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 object-fit-cover"
+                    alt="Image"
+                  />
+                </div>
+                <div
+                  class="col-sm-8 card-body d-flex flex-column align-items-start p-3 p-sm-4"
+                >
+                  <h3 class="h6 mt-1 mt-sm-0 mb-2">
+                    <a class="stretched-link hover-effect-underline" href=""
+                      >Men's wears.</a
+                    >
+                  </h3>
+                  <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="d-flex align-items-center gap-1">
+                      <i class="fi-star-filled text-warning"></i>
+                      <span class="fs-sm text-secondary-emphasis">4.3</span>
+                    </div>
+                    <div class="fs-sm text-dark-emphasis">native</div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-outline-dark position-relative z-2 mt-auto"
+                  >
+                    Home Service
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <!-- Project -->
+          <div class="col">
+            <article
+              class="card hover-effect-scale bg-transparent overflow-hidden"
+            >
+              <div class="row h-100 g-0">
+                <div
+                  class="col-sm-4 position-relative bg-body-tertiary overflow-hidden"
+                  style="min-height: 178px"
+                >
+                  <img
+                    src="static/img/fashion/03.jpg"
+                    class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 object-fit-cover"
+                    alt="Image"
+                  />
+                </div>
+                <div
+                  class="col-sm-8 card-body d-flex flex-column align-items-start p-3 p-sm-4"
+                >
+                  <h3 class="h6 mt-1 mt-sm-0 mb-2">
+                    <a class="stretched-link hover-effect-underline" href="#">
+                      Children's wears.</a
+                    >
+                  </h3>
+                  <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="d-flex align-items-center gap-1">
+                      <i class="fi-star-filled text-warning"></i>
+                      <span class="fs-sm text-secondary-emphasis">4.7</span>
+                    </div>
+                    <div class="fs-sm text-dark-emphasis">native</div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-outline-dark position-relative z-2 mt-auto"
+                  >
+                    Home Service
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <!-- Project -->
+          <div class="col">
+            <article
+              class="card hover-effect-scale bg-transparent overflow-hidden"
+            >
+              <div class="row h-100 g-0">
+                <div
+                  class="col-sm-4 position-relative bg-body-tertiary overflow-hidden"
+                  style="min-height: 178px"
+                >
+                  <img
+                    src="static/img/fashion/04.jpg"
+                    class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 object-fit-cover"
+                    alt="Image"
+                  />
+                </div>
+                <div
+                  class="col-sm-8 card-body d-flex flex-column align-items-start p-3 p-sm-4"
+                >
+                  <h3 class="h6 mt-1 mt-sm-0 mb-2">
+                    <a class="stretched-link hover-effect-underline" href=""
+                      >Aseobi - mordern styles.</a
+                    >
+                  </h3>
+                  <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="d-flex align-items-center gap-1">
+                      <i class="fi-star-filled text-warning"></i>
+                      <span class="fs-sm text-secondary-emphasis">4.9</span>
+                    </div>
+                    <div class="fs-sm text-dark-emphasis">native</div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-outline-dark position-relative z-2 mt-auto"
+                  >
+                    Home Service
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+
+      <!-- Women Categories tab -->
+      <div
+        class="tab-pane fade"
+        id="women-categories"
+        role="tabpanel"
+        aria-labelledby="women-categories-tab"
+      >
+        <!-- Content for Women Categories -->
+        <div class="row row-cols-1 row-cols-lg-2 g-4 pb-5">
+          <div class="col">
+            <article
+              class="card hover-effect-scale bg-transparent overflow-hidden"
+            >
+              <div class="row h-100 g-0">
+                <div
+                  class="col-sm-4 position-relative bg-body-tertiary overflow-hidden"
+                  style="min-height: 178px"
+                >
+                  <img
+                    src="static/img/fashion/01.jpg"
+                    class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 object-fit-cover"
+                    alt="Image"
+                  />
+                </div>
+                <div
+                  class="col-sm-8 card-body d-flex flex-column align-items-start p-3 p-sm-4"
+                >
+                  <h3 class="h6 mt-1 mt-sm-0 mb-2">
+                    <a class="stretched-link hover-effect-underline" href="">
+                      Women wears.</a
+                    >
+                  </h3>
+                  <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="d-flex align-items-center gap-1">
+                      <i class="fi-star-filled text-warning"></i>
+                      <span class="fs-sm text-secondary-emphasis">4.5</span>
+                    </div>
+                    <div class="fs-sm text-dark-emphasis">ankara</div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-outline-dark position-relative z-2 mt-auto"
+                  >
+                    Home Service
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+
+      <!-- Men Categories tab -->
+      <div
+        class="tab-pane fade"
+        id="men-categories"
+        role="tabpanel"
+        aria-labelledby="men-categories-tab"
+      >
+        <!-- Content for Men Categories -->
+        <div class="row row-cols-1 row-cols-lg-2 g-4 pb-5">
+          <div class="col">
+            <article
+              class="card hover-effect-scale bg-transparent overflow-hidden"
+            >
+              <div class="row h-100 g-0">
+                <div
+                  class="col-sm-4 position-relative bg-body-tertiary overflow-hidden"
+                  style="min-height: 178px"
+                >
+                  <img
+                    src="static/img/fashion/02.jpg"
+                    class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 object-fit-cover"
+                    alt="Image"
+                  />
+                </div>
+                <div
+                  class="col-sm-8 card-body d-flex flex-column align-items-start p-3 p-sm-4"
+                >
+                  <h3 class="h6 mt-1 mt-sm-0 mb-2">
+                    <a class="stretched-link hover-effect-underline" href=""
+                      >Men's wears.</a
+                    >
+                  </h3>
+                  <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="d-flex align-items-center gap-1">
+                      <i class="fi-star-filled text-warning"></i>
+                      <span class="fs-sm text-secondary-emphasis">4.3</span>
+                    </div>
+                    <div class="fs-sm text-dark-emphasis">native</div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-outline-dark position-relative z-2 mt-auto"
+                  >
+                    Home Service
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+
+      <!-- Children Categories tab -->
+      <div
+        class="tab-pane fade"
+        id="children-categories"
+        role="tabpanel"
+        aria-labelledby="children-categories-tab"
+      >
+        <!-- Content for Children Categories -->
+        <div class="row row-cols-1 row-cols-lg-2 g-4 pb-5">
+          <div class="col">
+            <article
+              class="card hover-effect-scale bg-transparent overflow-hidden"
+            >
+              <div class="row h-100 g-0">
+                <div
+                  class="col-sm-4 position-relative bg-body-tertiary overflow-hidden"
+                  style="min-height: 178px"
+                >
+                  <img
+                    src="static/img/fashion/03.jpg"
+                    class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 object-fit-cover"
+                    alt="Image"
+                  />
+                </div>
+                <div
+                  class="col-sm-8 card-body d-flex flex-column align-items-start p-3 p-sm-4"
+                >
+                  <h3 class="h6 mt-1 mt-sm-0 mb-2">
+                    <a class="stretched-link hover-effect-underline" href="#">
+                      Children's wears.</a
+                    >
+                  </h3>
+                  <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="d-flex align-items-center gap-1">
+                      <i class="fi-star-filled text-warning"></i>
+                      <span class="fs-sm text-secondary-emphasis">4.7</span>
+                    </div>
+                    <div class="fs-sm text-dark-emphasis">native</div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-outline-dark position-relative z-2 mt-auto"
+                  >
+                    Home Service
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <!-- Project -->
+          <div class="col">
+            <article
+              class="card hover-effect-scale bg-transparent overflow-hidden"
+            >
+              <div class="row h-100 g-0">
+                <div
+                  class="col-sm-4 position-relative bg-body-tertiary overflow-hidden"
+                  style="min-height: 178px"
+                >
+                  <img
+                    src="static/img/fashion/04.jpg"
+                    class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 object-fit-cover"
+                    alt="Image"
+                  />
+                </div>
+                <div
+                  class="col-sm-8 card-body d-flex flex-column align-items-start p-3 p-sm-4"
+                >
+                  <h3 class="h6 mt-1 mt-sm-0 mb-2">
+                    <a class="stretched-link hover-effect-underline" href=""
+                      >Aseobi - mordern styles.</a
+                    >
+                  </h3>
+                  <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="d-flex align-items-center gap-1">
+                      <i class="fi-star-filled text-warning"></i>
+                      <span class="fs-sm text-secondary-emphasis">4.9</span>
+                    </div>
+                    <div class="fs-sm text-dark-emphasis">native</div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-outline-dark position-relative z-2 mt-auto"
+                  >
+                    Home Service
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <script>
+
+
+const apiURL = window.apiURL || `http://localhost:5001/api`
+class FashionProductsAPI {
+    constructor(baseURL = apiURL) {
+        // this.baseURL = baseURL;
+        this.baseURL = baseURL;
+        this.currentCategory = 'all';
+        this.products = [];
+        this.categories = [];
+        this.loading = false;
+        alert(`Base URL: ${this.baseURL}`);
+        this.init();
+    }
+
+    /**
+     * Initialize the application
+     */
+    init() {
+        this.setupEventListeners();
+        this.loadInitialData();
+    }
+
+    /**
+     * Setup event listeners for tabs and interactions
+     */
+    setupEventListeners() {
+        // Tab switching for categories
+        document.querySelectorAll('[data-bs-toggle="pill"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', (event) => {
+                const targetId = event.target.getAttribute('data-bs-target');
+                this.handleCategorySwitch(targetId);
+            });
+        });
+
+        // Handle service card clicks
+        document.addEventListener('click', (event) => {
+            if (event.target.closest('.category-card')) {
+                event.preventDefault();
+                const serviceElement = event.target.closest('.category-card');
+                this.handleServiceClick(serviceElement);
+            }
+        });
+    }
+
+    /**
+     * Load initial data from backend
+     */
+    async loadInitialData() {
+        try {
+            await Promise.all([
+                this.loadCategories(),
+                this.loadProducts()
+            ]);
+        } catch (error) {
+            console.error('Failed to load initial data:', error);
+            this.showError('Failed to load initial data');
+        }
+    }
+
+    /**
+     * Load categories from backend
+     */
+    async loadCategories() {
+        try {
+            const response = await fetch(`${this.baseURL}/categories`);
+            const data = await response.json();
+            
+            if (data.success) {
+                this.categories = data.categories;
+                this.renderCategoryTabs();
+            } else {
+                throw new Error(data.message || 'Failed to load categories');
+            }
+        } catch (error) {
+            console.error('Error loading categories:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Load products from backend with optional category filter
+     */
+    async loadProducts(categoryFilter = null) {
+        if (this.loading) return;
+        
+        this.loading = true;
+        this.showLoadingState();
+
+        try {
+            let url = `${this.baseURL}/products?page_size=20`;
+            // alert(`${this.baseURL}, ${url}, apiURL: ${apiURL}`);
+
+            if (categoryFilter && categoryFilter !== 'all') {
+                const category = this.categories.find(cat => 
+                    cat.name.toLowerCase() === categoryFilter.toLowerCase()
+                );
+                if (category) {
+                    url += `&category_id=${category.id}`;
+                }
+            }
+
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.success) {
+                this.products = data.products || [];
+                this.renderProducts();
+            } else {
+                throw new Error(data.message || 'Failed to load products');
+            }
+        } catch (error) {
+            console.error('Error loading products:', error);
+            this.showError('Failed to load products');
+        } finally {
+            this.loading = false;
+            this.hideLoadingState();
+        }
+    }
+
+    /**
+     * Handle category tab switching
+     */
+    async handleCategorySwitch(targetId) {
+        const categoryMap = {
+            '#all-categories': 'all',
+            '#women-categories': 'women',
+            '#men-categories': 'men',
+            '#children-categories': 'children'
+        };
+
+        const category = categoryMap[targetId];
+        if (category && category !== this.currentCategory) {
+            this.currentCategory = category;
+            await this.loadProducts(category === 'all' ? null : category);
+        }
+    }
+
+    /**
+     * Handle service card clicks
+     */
+    handleServiceClick(serviceElement) {
+        const serviceName = serviceElement.querySelector('.category-card-title')?.textContent?.trim();
+        if (serviceName) {
+            // Navigate to products filtered by this service
+            this.filterProductsByService(serviceName);
+        }
+    }
+
+    /**
+     * Filter products by service category
+     */
+    async filterProductsByService(serviceName) {
+        try {
+            const response = await fetch(`${this.baseURL}/products?search=${encodeURIComponent(serviceName)}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                this.products = data.products || [];
+                this.renderProducts();
+                this.highlightActiveService(serviceName);
+            }
+        } catch (error) {
+            console.error('Error filtering products by service:', error);
+        }
+    }
+
+    /**
+     * Render category tabs dynamically
+     */
+    renderCategoryTabs() {
+        // This could be used to dynamically generate tabs based on backend categories
+        // For now, we'll work with the existing static tabs
+    }
+
+    /**
+     * Render products in the current tab
+     */
+    renderProducts() {
+        const activeTab = document.querySelector('.tab-pane.active .row');
+        if (!activeTab) return;
+
+        if (this.products.length === 0) {
+            this.renderEmptyState(activeTab);
+            return;
+        }
+
+        activeTab.innerHTML = '';
+        
+        this.products.forEach(product => {
+            const productCard = this.createProductCard(product);
+            activeTab.appendChild(productCard);
+        });
+    }
+
+    /**
+     * Create a product card element
+     */
+    createProductCard(product) {
+        const col = document.createElement('div');
+        col.className = 'col';
+
+        // Get primary image or fallback
+        const primaryImage = product.image_urls?.[0] || 'static/img/fashion/placeholder.jpg';
+        
+        // Format price
+        const price = product.price ? `$${parseFloat(product.price).toFixed(2)}` : 'Price on request';
+        
+        // Get category display
+        const categoryDisplay = product.categories?.[0]?.name || 'Fashion';
+        
+        // Calculate rating (placeholder logic - replace with actual rating system)
+        const rating = this.calculateProductRating(product);
+
+        col.innerHTML = `
+            <article class="card hover-effect-scale bg-transparent overflow-hidden">
+                <div class="row h-100 g-0">
+                    <div class="col-sm-4 position-relative bg-body-tertiary overflow-hidden" 
+                         style="min-height: 178px">
+                        <img src="${primaryImage}" 
+                             class="hover-effect-target position-absolute top-0 start-0 w-100 h-100 object-fit-cover" 
+                             alt="${product.name}"
+                             onerror="this.src='static/img/fashion/placeholder.jpg'">
+                    </div>
+                    <div class="col-sm-8 card-body d-flex flex-column align-items-start p-3 p-sm-4">
+                        <h3 class="h6 mt-1 mt-sm-0 mb-2">
+                            <a class="stretched-link hover-effect-underline" 
+                               href="/products/${product.id}" 
+                               data-product-id="${product.id}">
+                                ${this.sanitizeHTML(product.name)}
+                            </a>
+                        </h3>
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <div class="d-flex align-items-center gap-1">
+                                <i class="fi-star-filled text-warning"></i>
+                                <span class="fs-sm text-secondary-emphasis">${rating}</span>
+                            </div>
+                            <div class="fs-sm text-dark-emphasis">${categoryDisplay}</div>
+                            <div class="fs-sm fw-semibold text-primary">${price}</div>
+                        </div>
+                        <div class="d-flex gap-2 mt-auto">
+                            <button type="button" 
+                                    class="btn btn-outline-dark position-relative z-2"
+                                    onclick="fashionAPI.viewProduct(${product.id})">
+                                View Details
+                            </button>
+                            ${product.stock > 0 ? `
+                                <button type="button" 
+                                        class="btn btn-primary position-relative z-2"
+                                        onclick="fashionAPI.addToCart(${product.id})">
+                                    Add to Cart
+                                </button>
+                            ` : `
+                                <button type="button" 
+                                        class="btn btn-outline-secondary position-relative z-2" 
+                                        disabled>
+                                    Out of Stock
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            </article>
+        `;
+
+        return col;
+    }
+
+    /**
+     * View product details
+     */
+    async viewProduct(productId) {
+        try {
+            const response = await fetch(`${this.baseURL}/products/${productId}/product`);
+            const data = await response.json();
+            
+            if (data.success) {
+                this.showProductModal(data.data);
+            } else {
+                this.showError('Failed to load product details');
+            }
+        } catch (error) {
+            console.error('Error viewing product:', error);
+            this.showError('Failed to load product details');
+        }
+    }
+
+    /**
+     * Add product to cart
+     */
+    async addToCart(productId) {
+        try {
+            const response = await fetch(`${this.baseURL}/cart/add`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.getAuthToken()}`
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    quantity: 1
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                this.showSuccess('Product added to cart');
+                this.updateCartCounter();
+            } else {
+                this.showError(data.message || 'Failed to add product to cart');
+            }
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            this.showError('Failed to add product to cart');
+        }
+    }
+
+    /**
+     * Show product modal with details
+     */
+    showProductModal(product) {
+        // Create or update product modal
+        let modal = document.getElementById('productModal');
+        if (!modal) {
+            modal = this.createProductModal();
+        }
+
+        this.populateProductModal(modal, product);
+        
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    }
+
+    /**
+     * Create product modal
+     */
+    createProductModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'productModal';
+        modal.innerHTML = `
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="productModalLabel">Product Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div id="productCarousel" class="carousel slide">
+                                    <div class="carousel-inner" id="productImages"></div>
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon"></span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon"></span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h3 id="modalProductName"></h3>
+                                <p id="modalProductDescription"></p>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h4 class="text-primary mb-0" id="modalProductPrice"></h4>
+                                    <span class="badge bg-success" id="modalProductStock"></span>
+                                </div>
+                                <div id="modalProductCategories" class="mb-3"></div>
+                                <div class="d-grid">
+                                    <button class="btn btn-primary btn-lg" id="modalAddToCart">Add to Cart</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        return modal;
+    }
+
+    /**
+     * Populate product modal with data
+     */
+    populateProductModal(modal, product) {
+        modal.querySelector('#modalProductName').textContent = product.name;
+        modal.querySelector('#modalProductDescription').textContent = product.description || 'No description available';
+        modal.querySelector('#modalProductPrice').textContent = `$${parseFloat(product.price).toFixed(2)}`;
+        modal.querySelector('#modalProductStock').textContent = `${product.stock} in stock`;
+
+        // Images carousel
+        const imagesContainer = modal.querySelector('#productImages');
+        imagesContainer.innerHTML = '';
+        
+        if (product.images && product.images.length > 0) {
+            product.images.forEach((image, index) => {
+                const item = document.createElement('div');
+                item.className = `carousel-item ${index === 0 ? 'active' : ''}`;
+                item.innerHTML = `<img src="${image.file_path}" class="d-block w-100" alt="${product.name}">`;
+                imagesContainer.appendChild(item);
+            });
+        }
+
+        // Categories
+        const categoriesContainer = modal.querySelector('#modalProductCategories');
+        categoriesContainer.innerHTML = '';
+        if (product.categories && product.categories.length > 0) {
+            product.categories.forEach(category => {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-info me-1';
+                badge.textContent = category.name;
+                categoriesContainer.appendChild(badge);
+            });
+        }
+
+        // Add to cart button
+        const addToCartBtn = modal.querySelector('#modalAddToCart');
+        addToCartBtn.onclick = () => this.addToCart(product.id);
+        addToCartBtn.disabled = product.stock <= 0;
+        if (product.stock <= 0) {
+            addToCartBtn.textContent = 'Out of Stock';
+            addToCartBtn.className = 'btn btn-secondary btn-lg';
+        }
+    }
+
+    /**
+     * Render empty state
+     */
+    renderEmptyState(container) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fi-shopping-bag display-1 text-muted mb-3"></i>
+                    <h4>No products found</h4>
+                    <p class="text-muted">Try switching to a different category or check back later.</p>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Show loading state
+     */
+    showLoadingState() {
+        const activeTab = document.querySelector('.tab-pane.active .row');
+        if (activeTab) {
+            activeTab.innerHTML = `
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary mb-3" role="status"></div>
+                        <p>Loading products...</p>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Hide loading state
+     */
+    hideLoadingState() {
+        // Loading state is replaced by actual content or empty state
+    }
+
+    /**
+     * Show error message
+     */
+    showError(message) {
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 end-0 m-3';
+        alert.style.zIndex = '9999';
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alert);
+
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 5000);
+    }
+
+    /**
+     * Show success message
+     */
+    showSuccess(message) {
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3';
+        alert.style.zIndex = '9999';
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alert);
+
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 3000);
+    }
+
+    /**
+     * Highlight active service
+     */
+    highlightActiveService(serviceName) {
+        document.querySelectorAll('.category-card').forEach(card => {
+            card.classList.remove('active');
+            const title = card.querySelector('.category-card-title')?.textContent?.trim();
+            if (title === serviceName) {
+                card.classList.add('active');
+            }
+        });
+    }
+
+    /**
+     * Calculate product rating (placeholder)
+     */
+    calculateProductRating(product) {
+        // Implement actual rating calculation based on reviews
+        return (Math.random() * 2 + 3).toFixed(1); // Random between 3.0 and 5.0
+    }
+
+    /**
+     * Update cart counter
+     */
+    async updateCartCounter() {
+        try {
+            const response = await fetch(`${this.baseURL}/cart`, {
+                headers: {
+                    'Authorization': `Bearer ${this.getAuthToken()}`
+                }
+            });
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                const counter = document.querySelector('.cart-counter');
+                if (counter) {
+                    const totalItems = data.data.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+                    counter.textContent = totalItems;
+                }
+            }
+        } catch (error) {
+            console.error('Error updating cart counter:', error);
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        return localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+    }
+
+    /**
+     * Sanitize HTML to prevent XSS
+     */
+    sanitizeHTML(str) {
+        const temp = document.createElement('div');
+        temp.textContent = str;
+        return temp.innerHTML;
+    }
+}
+
+// Initialize the Fashion Products API
+const fashionAPI = new FashionProductsAPI(apiURL);
+
+// Make it globally available
+window.fashionAPI = fashionAPI;
+
+// Expose methods globally for onclick handlers
+window.viewProduct = (id) => fashionAPI.viewProduct(id);
+window.addToCart = (id) => fashionAPI.addToCart(id);
+  </script>
+
+  
+</main>
+
+{% endblock content %}

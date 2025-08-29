@@ -186,7 +186,7 @@ def signin():
 
         # Parse JSON data from the request
         data = request.get_json()
-        print(data)
+        # print(data)
         # Ensure that no fields are empty
         if not all(data.get(key) for key in ('username', 'password')):
             return error_response("All fields are required and must not be empty.")

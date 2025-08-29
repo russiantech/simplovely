@@ -13,7 +13,7 @@ class Config:
     # Flask Jwt extended
     JWT_SECRET_KEY = SECRET_KEY
     # JWT_SECRET_KEY = getenv('JWT_SECRET_KEY', 'JWT_SUPER_SECRET')
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(10 ** 6)
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=10)
     JWT_AUTH_USERNAME_KEY = 'username'
     JWT_AUTH_HEADER_PREFIX = 'Bearer'
     JWT_TOKEN_LOCATION = ['headers', 'cookies', 'query_string', 'json']
@@ -78,8 +78,10 @@ class Config:
 
     # Uploads
     UPLOAD_FOLDER = getenv('UPLOAD_FOLDER', './uploads')
+    MEDIA_LOCATION = "static/images/"
     MAX_CONTENT_PATH = int(getenv('MAX_CONTENT_PATH') or 1024 * 1024)  # Default to 1MB
-    ALLOWED_EXTENSIONS = getenv('ALLOWED_EXTENSIONS', 'jpg, jpeg, png, gif, mov, mp4').split(',')
+    # ALLOWED_EXTENSIONS = getenv('ALLOWED_EXTENSIONS', 'jpg, jpeg, png, gif, mov, mp4').split(',')
+    ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'svg', 'jpg', 'jpeg', 'gif', 'mp4',}  # Use set for O(1) lookups. put here not .env since it's not sensitive info
 
     # Session
     SESSION_TYPE = 'filesystem'

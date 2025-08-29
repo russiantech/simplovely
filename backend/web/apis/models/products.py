@@ -15,7 +15,7 @@ class Product(db.Model):
     name = db.Column(db.String(255), nullable=False)
     # slug = db.Column(db.String, index=True, unique=True)
     slug = db.Column(db.String(255), unique=True, index=True, nullable=False)
-    description = db.Column(db.Text, nullable=False)
+    description = db.Column(db.Text, nullable=True)
 
     price = db.Column(db.Integer, nullable=False)
     stock = db.Column(db.Integer, nullable=False)
@@ -72,6 +72,11 @@ class Product(db.Model):
             'categories': [{'id': c.id, 'name': c.name} for c in self.categories],
             # 'image_urls': [i.file_path for i in self.images],
             'image_urls': [ image.file_path.replace('\\', '/') for image in self.images ] if self.images else None,
+            
+            'images': [
+                    {'id': img.id, 'url': str(img.file_path).replace('\\', '/') }
+                    for img in self.images
+                ] if hasattr(self, 'images') and self.images else [],
         }
         
         if include_user and self.users:
@@ -83,6 +88,22 @@ class Product(db.Model):
         return data
 
 
+# @event.listens_for(Product.name, 'set')
+# def receive_set(target, value, oldvalue, initiator):
+#     target.slug = slugify(str(value))
+
+
 @event.listens_for(Product.name, 'set')
-def receive_set(target, value, oldvalue, initiator):
-    target.slug = slugify(str(value))
+def generate_product_slug(target, value, oldvalue, initiator):
+    if value and (not target.slug or value != oldvalue):
+        base_slug = slugify(value)
+        unique_slug = base_slug
+        counter = 1
+        
+        # Ensure slug uniqueness
+        while Product.query.filter(Product.slug == unique_slug).first():
+            unique_slug = f"{base_slug}-{counter}"
+            counter += 1
+            
+        target.slug = unique_slug
+        
