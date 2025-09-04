@@ -4,6 +4,16 @@ import traceback
 from web.apis.utils.serializers import error_response
 from web.apis import api_bp as index_bp
 
+@index_bp.route('/fashion-bak')
+@index_bp.route('/')
+def fashion_bak():
+    try:
+        context= {}
+        return render_template('fashion.bak.html', **context)
+    except Exception as e:
+        traceback.format_exc() 
+        return error_response(str(e))
+    
 @index_bp.route('/index')
 @index_bp.route('/')
 def index():

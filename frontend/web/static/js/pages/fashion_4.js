@@ -1082,16 +1082,19 @@ createProductModalHTML(product) {
                                 <!-- Action Buttons -->
                                 <div class="d-grid gap-2 d-md-flex">
                                     ${availability.available ? `
-                                        <button class="btn btn-outline-dark" onclick="window.fashionAPI.contactForProduct(${product.id})">
-                                        <i class="fi-whatsapp me-2"></i>Whatsapp
-                                    </button>
+                                        <button class="btn btn-primary flex-fill" onclick="window.fashionAPI.addToCart(${product.id})">
+                                            <i class="fi-shopping-cart me-2"></i>Add to Cart
+                                        </button>
+                                        <button class="btn btn-outline-primary" onclick="window.fashionAPI.buyNow(${product.id})">
+                                            <i class="fi-credit-card me-2"></i>Buy Now
+                                        </button>
                                     ` : `
                                         <button class="btn btn-outline-secondary flex-fill" disabled>
                                             <i class="fi-alert-circle me-2"></i>Out of Stock
                                         </button>
                                     `}
                                     <button class="btn btn-outline-dark" onclick="window.fashionAPI.contactForProduct(${product.id})">
-                                        <i class="fi-phone me-2"></i>Call Us
+                                        <i class="fi-phone me-2"></i>Contact
                                     </button>
                                 </div>
 
@@ -1408,9 +1411,10 @@ createDetailedSpecsHTML(product) {
                 <div class="col-lg-6">
                     <h6>Shipping & Returns</h6>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><i class="fi-truck text-primary me-2"></i>Free shipping on orders over $500</li>
-                        <li class="mb-2"><i class="fi-refresh-cw text-primary me-2"></i>Quality Materials</li>
-                        <li class="mb-2"><i class="fi-clock text-primary me-2"></i>Fast Service Delivery</li>
+                        <li class="mb-2"><i class="fi-truck text-primary me-2"></i>Free shipping on orders over $50</li>
+                        <li class="mb-2"><i class="fi-refresh-cw text-primary me-2"></i>30-day return policy</li>
+                        <li class="mb-2"><i class="fi-shield-check text-primary me-2"></i>1-year warranty</li>
+                        <li class="mb-2"><i class="fi-clock text-primary me-2"></i>3-5 business days delivery</li>
                     </ul>
                     
                     <h6>Size Guide</h6>
@@ -1674,7 +1678,7 @@ async buyNow(productId) {
  */
 showSizeGuide() {
     // Implementation for size guide modal
-    this.showInfo('Connect with SimplyLovey Fashion On Whatsapp kindly for our various sizes and guides on how to choose the best.');
+    this.showInfo('Size guide will be displayed here');
 }
 
 
