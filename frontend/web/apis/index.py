@@ -5,7 +5,6 @@ from web.apis.utils.serializers import error_response
 from web.apis import api_bp as index_bp
 
 @index_bp.route('/fashion-bak')
-@index_bp.route('/')
 def fashion_bak():
     try:
         context= {}
@@ -14,8 +13,8 @@ def fashion_bak():
         traceback.format_exc() 
         return error_response(str(e))
     
-@index_bp.route('/index')
 @index_bp.route('/')
+@index_bp.route('/index')
 def index():
     try:
         context= {}

@@ -19,4 +19,3 @@ if __name__ == "__main__":
     
     # from web.extensions import socketio as sio
     # sio.run(app=app, host='0.0.0.0', port=int(getenv("PORT", 5000)))
-    
