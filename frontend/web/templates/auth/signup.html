@@ -248,15 +248,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const formData = new FormData(signinForm);
                 const data = Object.fromEntries(formData.entries());
-                
+
+                const clientCallback = window.clientCallbackUrl || window.frontendUrl || `${window.location.origin}/verify-email`;
+                const headers = { 'Content-Type': 'application/json' };
+                if (window.clientCallbackUrl) headers['Client-Callback-Url'] = window.clientCallbackUrl;
+
                 const result = await window.make_request(`${window.apiUrl}/users/signup`, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        username: data.username,
-                        email: data.email,
-                        phone: data.phone,
-                        password: data.password
-                    })
+                  method: 'POST',
+                  headers,
+                  body: JSON.stringify({
+                    username: data.username,
+                    email: data.email,
+                    phone: data.phone,
+                    password: data.password,
+                    callback_url: clientCallback
+                  })
                 });
 
                 if (result.success) {

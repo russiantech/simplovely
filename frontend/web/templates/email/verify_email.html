@@ -1,0 +1,92 @@
+{% extends "incs/base.html" %}
+{% block title %} Verify Email - Laundry And Fashion {% endblock title %}
+
+{% block content %}
+<main class="content-wrapper">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-6 col-md-8">
+                <!-- Verification Status Card -->
+                <div class="card border-0 shadow-lg rounded-4">
+                    <div class="card-body p-4 p-sm-5 text-center">
+                        <!-- Loading State -->
+                        <div id="verification-loading" class="verification-state">
+                            <div class="spinner-border text-primary mb-4" role="status" style="width: 4rem; height: 4rem;">
+                                <span class="visually-hidden">Verifying...</span>
+                            </div>
+                            <h2 class="h3 mb-3">Verifying Your Email</h2>
+                            <p class="text-muted">Please wait while we verify your email address...</p>
+                        </div>
+
+                        <!-- Success State -->
+                        <div id="verification-success" class="verification-state d-none">
+                            <div class="mb-4">
+                                <i class="ci-check-circle text-success" style="font-size: 5rem;"></i>
+                            </div>
+                            <h2 class="h3 text-success mb-3">Email Verified Successfully!</h2>
+                            <p class="text-muted mb-4">Your email has been verified. You can now sign in to your account.</p>
+                            <a href="./signin" class="btn btn-primary btn-lg rounded-pill px-5">
+                                Sign In Now
+                            </a>
+                        </div>
+
+                        <!-- Already Verified State -->
+                        <div id="verification-already" class="verification-state d-none">
+                            <div class="mb-4">
+                                <i class="ci-info-circle text-info" style="font-size: 5rem;"></i>
+                            </div>
+                            <h2 class="h3 text-info mb-3">Already Verified</h2>
+                            <p class="text-muted mb-4">This email has already been verified. You can sign in to your account.</p>
+                            <a href="./signin" class="btn btn-primary btn-lg rounded-pill px-5">
+                                Sign In
+                            </a>
+                        </div>
+
+                        <!-- Error State -->
+                        <div id="verification-error" class="verification-state d-none">
+                            <div class="mb-4">
+                                <i class="ci-close-circle text-danger" style="font-size: 5rem;"></i>
+                            </div>
+                            <h2 class="h3 text-danger mb-3">Verification Failed</h2>
+                            <p class="text-muted mb-4" id="error-message">
+                                We couldn't verify your email. The link may have expired or is invalid.
+                            </p>
+                            <button id="resend-verification" class="btn btn-outline-primary btn-lg rounded-pill px-5 mb-3">
+                                Resend Verification Email
+                            </button>
+                            <p class="small text-muted">or</p>
+                            <a href="./signin" class="btn btn-link">Go to Sign In</a>
+                        </div>
+
+                        <!-- Resend Form -->
+                        <div id="resend-form" class="d-none mt-4">
+                            <form id="resend-verification-form">
+                                <div class="mb-3">
+                                    <label for="resend-email" class="form-label">Enter your email address</label>
+                                    <input type="email" class="form-control form-control-lg" id="resend-email" 
+                                           placeholder="your@email.com" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-lg rounded-pill w-100">
+                                    Send Verification Email
+                                </button>
+                                <button type="button" class="btn btn-link mt-2" id="cancel-resend">
+                                    Cancel
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Help Text -->
+                <div class="text-center mt-4">
+                    <p class="text-muted small">
+                        Having trouble? <a href="mailto:support@laundryandfashion.com">Contact Support</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="./static/js/pages/verify_email.js"></script>
+{% endblock content %}

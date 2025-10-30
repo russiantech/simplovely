@@ -669,7 +669,7 @@ class FashionProductsAPI {
             ]);
         } catch (error) {
             console.error('Failed to load initial data:', error);
-            this.showError('Failed to load initial data');
+            // this.showError('Failed to load initial data');
         }
     }
 
@@ -726,7 +726,7 @@ class FashionProductsAPI {
             }
         } catch (error) {
             console.error('Error loading products:', error);
-            this.showError('Failed to load products');
+            // this.showError('Failed to load products');
         } finally {
             this.loading = false;
             this.hideLoadingState();

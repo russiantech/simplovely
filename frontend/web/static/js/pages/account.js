@@ -631,3 +631,158 @@ document.addEventListener("DOMContentLoaded", () => {
 //     }
 
 // });
+
+// EMAIL VERIFICATION:
+/*
+// Email Verification Handler
+const EmailVerification = {
+    showModal() {
+        const modalElement = document.getElementById('verificationModal');
+        if (!modalElement) {
+            console.warn('Verification modal not found in DOM');
+            return;
+        }
+
+        // Make modal non-dismissible
+        const modal = new bootstrap.Modal(modalElement, {
+            backdrop: 'static',
+            keyboard: false
+        });
+
+        modal.show();
+
+        // Attach resend event listener once
+        const resendBtn = document.getElementById('resendVerification');
+        if (resendBtn) {
+            resendBtn.addEventListener('click', async () => {
+                try {
+                    resendBtn.disabled = true;
+                    resendBtn.innerHTML = `
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                        Sending...
+                    `;
+
+                    const response = await fetch(`${window.apiUrl}/users/resend-verification`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+
+                    const data = await response.json();
+                    alert(data.message || 'Verification email sent successfully.');
+
+                } catch (error) {
+                    console.error('Resend error:', error);
+                    alert('Unable to resend verification email. Please try again later.');
+                } finally {
+                    resendBtn.disabled = false;
+                    resendBtn.innerHTML = 'Resend Verification Email';
+                }
+            });
+        }
+    },
+
+    async checkVerificationStatus() {
+        try {
+            // Fetch user data to determine if verified
+            const response = await fetch(`${window.apiUrl}/users/check-verification-status`);
+            const user = await response.json();
+
+            if (user && user.valid_email === false) {
+                console.log('User not verified — showing modal');
+                this.showModal();
+            } else {
+                console.log('User verified or data missing.');
+            }
+        } catch (error) {
+            console.error('Error checking verification status:', error);
+        }
+    }
+};
+
+// Initialize after main app
+App.init().then(() => {
+    EmailVerification.checkVerificationStatus();
+});
+
+// 
+document.addEventListener("DOMContentLoaded", () => {
+    if (window.user && window.user.valid_email === false) {
+        EmailVerification.showModal();
+    }
+});
+
+
+*/
+
+// 
+// emailVerification.js
+const EmailVerification = {
+  getUserFromToken() {
+    const token = localStorage.getItem('access_token');
+    if (!token || !isValidToken(token)) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload; // includes email, username, name, etc.
+    } catch (e) {
+      console.error("Invalid token payload:", e);
+      return null;
+    }
+  },
+
+  showModal(user) {
+    const modalEl = document.getElementById('verificationModal');
+    if (!modalEl) return console.error('Verification modal missing.');
+
+    // Insert name dynamically
+    document.getElementById('verifyUserName').innerText = user?.name || user?.username || 'User';
+
+    const modal = new bootstrap.Modal(modalEl, {
+      backdrop: 'static',
+      keyboard: false
+    });
+    modal.show();
+
+    const resendBtn = document.getElementById('resendVerification');
+    resendBtn.onclick = async () => {
+      resendBtn.disabled = true;
+      resendBtn.innerHTML = `
+        <span class="spinner-border spinner-border-sm" role="status"></span> Sending...
+      `;
+      try {
+        const response = await fetch(`${window.apiUrl}/users/resend-verification`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await response.json();
+        window.response_modal(data.message || "Verification email sent successfully.");
+      } catch (err) {
+        console.error(err);
+        window.response_modal("Failed to resend verification email. Try again later.");
+      } finally {
+        resendBtn.disabled = false;
+        resendBtn.innerHTML = 'Resend Verification Email';
+      }
+    };
+  },
+
+  async checkVerificationStatus() {
+    const user = this.getUserFromToken();
+    if (!user) return console.log("No valid token found.");
+
+    // Expecting `valid_email` claim in JWT payload
+    if (user.valid_email === false) {
+      console.log("Unverified user — showing modal");
+      this.showModal(user);
+    } else {
+      console.log("User already verified.");
+    }
+  }
+};
+
+// Initialize after auth check
+document.addEventListener('DOMContentLoaded', () => {
+  EmailVerification.checkVerificationStatus();
+});

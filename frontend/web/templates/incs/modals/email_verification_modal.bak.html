@@ -1,0 +1,84 @@
+<!-- incs/modals/email_verification_modal.html -->
+<div id="verificationModal" class="modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Email Verification</h5>
+      </div>
+      <div class="modal-body">
+        <p>Please verify your email to access your account. Check your inbox.</p>
+        <button id="resendVerification" class="btn btn-primary">Resend Email</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+    function showVerificationModal() {
+        const modal = document.getElementById('verificationModal');
+        // Use Bootstrap modal show
+        var bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
+
+        document.getElementById('resendVerification').addEventListener('click', () => {
+            // Call API to resend verification email
+            fetch('/api/resend-verification', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => alert(data.message));
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+  showVerificationModal();
+});
+
+/*
+    const urlParams = new URLSearchParams(window.location.search);
+    const verificationToken = urlParams.get('token');
+    
+if (verificationToken) {
+  // Send verification request
+  fetch('/api/verify-email', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ token: verificationToken })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert('Your email has been verified. You can now log in.');
+      // Optionally, clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+      alert('Verification failed: ' + data.message);
+    }
+  });
+}
+*/
+
+document.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const verificationToken = urlParams.get('token');
+  
+  if (verificationToken) {
+    fetch(`${window.apiUrl}/verify-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: verificationToken })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert('Your email has been verified. You can now log in.');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else {
+        alert('Verification failed: ' + data.message);
+      }
+    });
+  }
+});
+
+</script>

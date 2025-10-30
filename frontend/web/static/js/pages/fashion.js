@@ -451,7 +451,7 @@ class FashionProductsAPI {
             }
         } catch (error) {
             console.error('Error loading products:', error);
-            this.showError(`Failed to load ${categorySlug} products`);
+            // this.showError(`Failed to load ${categorySlug} products`);
             this.renderEmptyState(categorySlug);
         } finally {
             this.loading = false;
@@ -920,7 +920,7 @@ async viewProduct(productId) {
         
     } catch (error) {
         console.error('Error viewing product:', error);
-        this.showError('Failed to load product details');
+        // this.showError('Failed to load product details');
         this.hideProductModal();
     }
 }
@@ -1184,6 +1184,72 @@ getProductImages(product) {
     return images.filter(Boolean);
 }
 
+// /**
+//  * Create image gallery HTML
+//  * @param {Array} images - Array of image URLs
+//  * @param {string} productName - Product name for alt text
+//  * @returns {string} Image gallery HTML
+//  */
+// createImageGalleryHTML(images, productName) {
+//     const mainImage = images[0];
+    
+//     return `
+//         <div class="product-gallery">
+//             <!-- Main Image -->
+//             <div class="main-image-container mb-3">
+//                 <img id="main-product-image" 
+//                      src="${mainImage}" 
+//                      class="img-fluid rounded" 
+//                      alt="${this.sanitizeHTML(productName)}"
+//                      style="width: 100%; height: 400px; object-fit: cover;"
+//                      onerror="this.src='static/img/fashion/placeholder.jpg'">
+//             </div>
+            
+//             <!-- Thumbnail Images -->
+//             ${images.length > 1 ? `
+//                 <div class="thumbnail-container">
+//                     <div class="row g-2">
+//                         ${images.map((image, index) => `
+//                             <div class="col-3">
+//                                 <img src="${image}" 
+//                                      class="img-fluid rounded cursor-pointer thumbnail-image ${index === 0 ? 'active' : ''}"
+//                                      style="width: 100%; height: 80px; object-fit: cover; border: 2px solid ${index === 0 ? '#0d6efd' : 'transparent'};"
+//                                      onclick="window.fashionAPI.switchMainImage('${image}', this)"
+//                                      alt="Product view ${index + 1}"
+//                                      onerror="this.src='static/img/fashion/placeholder.jpg'">
+//                             </div>
+//                         `).join('')}
+//                     </div>
+//                 </div>
+//             ` : ''}
+//         </div>
+//     `;
+// }
+
+// /**
+//  * Switch main image in gallery
+//  * @param {string} imageSrc - New image source
+//  * @param {Element} thumbnailElement - Clicked thumbnail element
+//  */
+// switchMainImage(imageSrc, thumbnailElement) {
+//     const mainImage = document.getElementById('main-product-image');
+//     if (mainImage) {
+//         mainImage.src = imageSrc;
+//     }
+    
+//     // Update active thumbnail
+//     document.querySelectorAll('.thumbnail-image').forEach(thumb => {
+//         thumb.style.border = '2px solid transparent';
+//         thumb.classList.remove('active');
+//     });
+    
+//     if (thumbnailElement) {
+//         thumbnailElement.style.border = '2px solid #0d6efd';
+//         thumbnailElement.classList.add('active');
+//     }
+// }
+
+// v2
 /**
  * Create image gallery HTML
  * @param {Array} images - Array of image URLs
@@ -1192,31 +1258,34 @@ getProductImages(product) {
  */
 createImageGalleryHTML(images, productName) {
     const mainImage = images[0];
-    
+
     return `
-        <div class="product-gallery">
+        <div class="product-gallery text-center">
             <!-- Main Image -->
-            <div class="main-image-container mb-3">
+            <div class="main-image-container mb-3" 
+                 style="background-color: #f8f9fa; border-radius: 6px; overflow: hidden;">
                 <img id="main-product-image" 
                      src="${mainImage}" 
-                     class="img-fluid rounded" 
+                     class="img-fluid rounded"
                      alt="${this.sanitizeHTML(productName)}"
-                     style="width: 100%; height: 400px; object-fit: cover;"
+                     style="width: 100%; height: 400px; object-fit: contain; background-color: #fff;"
                      onerror="this.src='static/img/fashion/placeholder.jpg'">
             </div>
-            
+
             <!-- Thumbnail Images -->
             ${images.length > 1 ? `
                 <div class="thumbnail-container">
-                    <div class="row g-2">
+                    <div class="row g-2 justify-content-center">
                         ${images.map((image, index) => `
-                            <div class="col-3">
-                                <img src="${image}" 
-                                     class="img-fluid rounded cursor-pointer thumbnail-image ${index === 0 ? 'active' : ''}"
-                                     style="width: 100%; height: 80px; object-fit: cover; border: 2px solid ${index === 0 ? '#0d6efd' : 'transparent'};"
-                                     onclick="window.fashionAPI.switchMainImage('${image}', this)"
-                                     alt="Product view ${index + 1}"
-                                     onerror="this.src='static/img/fashion/placeholder.jpg'">
+                            <div class="col-3 col-sm-2 col-md-2">
+                                <div style="background-color: #f8f9fa; border-radius: 6px; overflow: hidden;">
+                                    <img src="${image}" 
+                                         class="img-fluid rounded cursor-pointer thumbnail-image ${index === 0 ? 'active' : ''}"
+                                         style="width: 100%; height: 80px; object-fit: contain; background-color: #fff; border: 2px solid ${index === 0 ? '#0d6efd' : 'transparent'};"
+                                         onclick="window.fashionAPI.switchMainImage('${image}', this)"
+                                         alt="Product view ${index + 1}"
+                                         onerror="this.src='static/img/fashion/placeholder.jpg'">
+                                </div>
                             </div>
                         `).join('')}
                     </div>
@@ -1236,18 +1305,19 @@ switchMainImage(imageSrc, thumbnailElement) {
     if (mainImage) {
         mainImage.src = imageSrc;
     }
-    
+
     // Update active thumbnail
     document.querySelectorAll('.thumbnail-image').forEach(thumb => {
         thumb.style.border = '2px solid transparent';
         thumb.classList.remove('active');
     });
-    
+
     if (thumbnailElement) {
         thumbnailElement.style.border = '2px solid #0d6efd';
         thumbnailElement.classList.add('active');
     }
 }
+
 
 /**
  * Create star rating HTML

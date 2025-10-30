@@ -19,7 +19,10 @@
 
     {% endblock content %}
 
+    {% include "incs/modals/email_verification_modal.html" %}
+    {#{% include "incs/modals/email_verification_modal.html" %}#}
     {% include "incs/footer.html" %}
+    {% include 'incs/modals/email_verification_modal.html' %}
     {% include "incs/modals/response_modal.html" %}
     {% include "incs/modals/usage_modal.html" %}
     {% include "incs/modals/service_requests_modal.html" %}
@@ -146,6 +149,8 @@
         // Initialize the user data loading
        initUserDataLoading();
     </script>
+
+    <!-- In base.html, before closing </body> tag -->
 
 </body>
 </html>
