@@ -910,7 +910,8 @@ async viewProduct(productId) {
         const product = await this.fetchProductDetails(productId);
         
         if (!product) {
-            this.showError('Product not found');
+            // this.showError('Product not found');
+            console.error(`product not found at viewProduct()]`)
             this.hideProductModal();
             return;
         }
@@ -1765,7 +1766,8 @@ async addToCart(productId, quantity = 1, options = {}) {
         const product = await this.fetchProductDetails(productId);
         
         if (!product) {
-            this.showError('Product not found');
+            // this.showError('Product not found');
+            console.log('product not found - addToCart')
             return;
         }
         

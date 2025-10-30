@@ -907,9 +907,10 @@ async viewProduct(productId) {
         const product = await this.fetchProductDetails(productId);
         
         if (!product) {
-            this.showError('Product not found');
-            this.hideProductModal();
-            return;
+            // this.showError('Product not found');
+            // this.hideProductModal();
+            // return;
+            console.log('Product not found');
         }
 
         // Show the complete product modal
@@ -917,7 +918,7 @@ async viewProduct(productId) {
         
     } catch (error) {
         console.error('Error viewing product:', error);
-        this.showError('Failed to load product details');
+        // this.showError('Failed to load product details');
         this.hideProductModal();
     }
 }
