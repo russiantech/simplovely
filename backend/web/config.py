@@ -51,6 +51,11 @@ class Config:
     # 'pool_timeout': 30,
     # 'pool_recycle': 1800,
     # }
+    
+    # Caching(simple cache for development - in-memory, not suitable for production)
+    CACHE_TYPE = "SimpleCache"
+    CACHE_DEFAULT_TIMEOUT = 300
+
 
     SQLALCHEMY_ENGINE_OPTIONS = {
     'pool_size': 50,
@@ -126,7 +131,7 @@ class ProductionConfig(Config):
     PAYSTACK_SK = getenv('PAYSTACK_SK')
     # Mail configuration
     MAIL_DEBUG = False
-    MAIL_DEFAULT_SENDER = ('Techa', getenv('DEFAULT_MAIL_SENDER', getenv('MAIL_USERNAME', 'hi@techa.tech')) )
+    MAIL_DEFAULT_SENDER = ('SimplyLovely', getenv('DEFAULT_MAIL_SENDER', getenv('MAIL_USERNAME')) )
     MAIL_SERVER = getenv('MAIL_SERVER', 'smtp.gmail.com')
     MAIL_PORT = int(getenv('MAIL_PORT', 587))
     MAIL_USE_TLS = getenv('MAIL_USE_TLS') is not None

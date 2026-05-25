@@ -27,6 +27,9 @@ bcrypt = Bcrypt()
 from flask_cors import CORS
 cors = CORS()
 
+from flask_caching import Cache
+cache = Cache()
+
 from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
@@ -74,7 +77,7 @@ def init_ext(app):
     db.init_app(app)
     # f_session.init_app(app)
     bcrypt.init_app(app)
-    cors.init_app(app)
+    cache.init_app(app)
     cors.init_app(app, resources={r"/api/*": {"origins": [
         "https://simplylovely.ng",
         "http://localhost:5000",

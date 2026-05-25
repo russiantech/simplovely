@@ -103,7 +103,8 @@ class Usage(db.Model):
     __tablename__ = 'usage'
     id = db.Column(db.Integer, primary_key=True)
     # user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    # user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), unique=False, nullable=False)
     subscription_id = db.Column(db.Integer, db.ForeignKey('subscriptions.id'))
     
     units_used = db.Column(db.Integer, nullable=False)

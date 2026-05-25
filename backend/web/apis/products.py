@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import desc, exc, func
 from werkzeug.utils import secure_filename
 from web.apis.utils.uploader import uploader
-from web.extensions import db, limiter
+from web.extensions import db, limiter, cache
 from web.apis.models.categories import Category, products_categories
 from web.apis.models.pages import Page
 from web.apis.models.tags import Tag
@@ -23,6 +23,7 @@ from web.apis import api_bp as product_bp
 
 @product_bp.route('/products', methods=['GET'])
 @jwt_required(optional=True)
+@cache.cached(timeout=300)  # Cache for 5 minutes
 @limiter.exempt
 def products():
     """
@@ -261,6 +262,7 @@ def by_page(page_id):
 
 @product_bp.route('/products/<int:category_id>/category', methods=['GET'])
 @jwt_required()
+@cache.cached(timeout=300)  # Cache for 5 minutes
 def by_category(category_id):
     """
     Fetch products associated with a specific category.

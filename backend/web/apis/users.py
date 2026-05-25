@@ -1,6 +1,7 @@
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 import secrets, requests, sqlalchemy as sa, traceback
 # from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from requests.exceptions import ConnectionError, Timeout, RequestException
@@ -8,18 +9,24 @@ from urllib.parse import urlencode
 # from flask_jwt_extended import jwt_optional, get_jwt_claims // deprecated
 from flask_jwt_extended import get_jwt, jwt_required, get_jwt_identity, current_user  # Instead of get_jwt_claims
 from jsonschema import validate, ValidationError
+from sqlalchemy import desc, func, exc
 from flask import (
     current_app, make_response, redirect, session, render_template, 
     url_for, request
 )
 
 from web.apis.utils.get_or_create import get_or_create
-from web.apis.utils.decorators import access_required
 from web.apis.utils.users import handle_reset_password, handle_verify_email
 from web.extensions import db, csrf, fake, limiter
 from web.apis.utils.helpers import user_ip
 from web.apis.models.roles import Role
 from web.apis.models.users import User
+
+from web.apis.utils import email as emailer
+from web.apis.utils.oauth_providers import oauth2providers
+from web.extensions import redis as redis_clients, cache
+from web.apis import api_bp as user_bp
+
 from web.apis.utils.serializers import (
     PageSerializer, error_response, success_response
 )
@@ -28,14 +35,6 @@ from web.apis.schemas.user import (
     signin_schema, signup_schema, request_schema, reset_password_email_schema, 
     validTokenSchema
 )
-
-from web.apis.utils import email as emailer
-from web.apis.utils.oauth_providers import oauth2providers
-from web.extensions import redis as redis_clients
-from web.apis import api_bp as user_bp
-
-from flask import Flask, jsonify
-from os import getenv
 
 load_dotenv()
 
@@ -153,7 +152,47 @@ def signup():
         db.session.flush()  # Flush to check for integrity errors
         db.session.commit()
 
+        # Send verification email
+        # Generate verify-email token and build a frontend verification link (falls back to backend endpoint)
+        token = user.make_token(token_type="verify_email")
+
+        # Prefer a client callback URL provided by the frontend (header or request payload), else use configured FRONTEND_URL
+        client_callback = (
+            request.headers.get('Client-Callback-Url')
+            or (data.get('callback_url') if isinstance(data, dict) else None)
+            or current_app.config.get('FRONTEND_URL')
+        )
+
+        if client_callback:
+            # Ensure no double slashes and append a verification path the frontend expects
+            verify_path = current_app.config.get('FRONTEND_VERIFY_PATH', '/verify-email')
+            verify_path = '/' + verify_path.lstrip('/') # ensures it starts with a single slash
+            # frontend_link = f"{client_callback.rstrip('/')}{verify_path if verify_path.startswith('/') else '/' + verify_path}"
+            # Avoid duplication if callback already includes verify path
+
+            if client_callback.rstrip('/').endswith(verify_path.strip('/')):
+                frontend_link = client_callback.rstrip('/')
+            else:
+                frontend_link = f"{client_callback.rstrip('/')}{verify_path}"
+
+            # Attach token and email as query params so the frontend can pick them up
+            verification_link = f"{frontend_link}?token={token}&email={user.email}"
+        else:
+            # Fallback to backend token processing endpoint
+            verification_link = url_for('apis.process_token', token=token, _external=True)
+
+        print("verification-link ->", verification_link, client_callback, token)
+        
+        # Save the verification link on the user (so email templates can use it) and send the email
+        user.verification_url = verification_link
         emailer.verify_email(user)
+
+        # Optionally keep a short-lived mapping in Redis for additional verification/debugging by frontend
+        try:
+            redis_clients.setex(f"verify:{token}", 3600, user.email)  # 1 hour expiry
+        except Exception:
+            # Non-fatal: ignore redis errors so signup still succeeds
+            pass
 
         data = user.get_summary()
         data.update({"redirect": './signin'})
@@ -238,8 +277,140 @@ def signin():
         traceback.print_exc()
         return error_response(f"Error signing in: {e}", status_code=400)
 
-from flask_jwt_extended import get_jwt_identity, jwt_required
-from flask import make_response
+
+# Add these routes to your user blueprint
+
+@user_bp.route("/users/verify-email/<token>", methods=['GET'])
+@limiter.exempt
+def verify_email_token(token):
+    """
+    Verify email using token from email link.
+    This endpoint is called when user clicks the verification link.
+    """
+    try:
+        # Verify the token and get user email
+        serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        email = serializer.loads(
+            token,
+            salt=current_app.config.get('SECURITY_PASSWORD_SALT', 'email-verification-salt'),
+            max_age=3600  # Token expires after 1 hour
+        )
+    except SignatureExpired:
+        return error_response("Verification link has expired. Please request a new one.", status_code=400)
+    except BadSignature:
+        return error_response("Invalid verification link.", status_code=400)
+    except Exception as e:
+        return error_response(f"Error verifying email: {str(e)}", status_code=400)
+
+    # Find user by email
+    user = db.session.scalar(sa.select(User).where(User.email == email))
+    
+    if not user:
+        return error_response("User not found.", status_code=404)
+    
+    if user.email_verified:
+        return success_response("Email already verified. You can now sign in.", data={"already_verified": True})
+    
+    # Mark email as verified
+    try:
+        user.email_verified = True
+        user.email_verified_at = datetime.utcnow()
+        db.session.commit()
+        
+        return success_response(
+            "Email verified successfully! You can now sign in to your account.",
+            data={
+                "email": user.email,
+                "verified": True,
+                "redirect": "./signin"
+            }
+        )
+    except Exception as e:
+        db.session.rollback()
+        return error_response(f"Error updating verification status: {str(e)}", status_code=500)
+
+@user_bp.route("/users/resend-verification", methods=['POST'])
+@csrf.exempt
+@limiter.limit("3 per hour")
+@jwt_required(optional=True)
+def resend_verification_email():
+    """
+    Resend verification email to a user.
+    Priority:
+    1. Use current_user if authenticated.
+    2. Otherwise, use provided email in request JSON.
+    """
+    try:
+        user = None
+
+        # 1 If user is logged in, use that account
+        if current_user and getattr(current_user, "is_authenticated", False):
+            user = current_user
+
+        # 2 Otherwise, try email from request body
+        else:
+            data = request.get_json(silent=True) or {}
+            email = data.get("email")
+
+            if not email:
+                return error_response("Email is required.", status_code=400)
+
+            user = db.session.scalar(sa.select(User).where(User.email == email))
+
+        # 3️ If user not found, return generic success (no data leak)
+        if not user:
+            return success_response("If an account exists with this email, a verification link has been sent.")
+
+        # 4️ If user already verified
+        if getattr(user, "email_verified", False):
+            return error_response("This email is already verified.", status_code=400)
+
+        # 5 Attempt to send verification email
+        emailer.verify_email(user)
+        return success_response("Verification email sent successfully. Please check your inbox.")
+
+    except Exception as e:
+        return error_response(f"Error sending verification email: {str(e)}", status_code=500)
+
+
+@user_bp.route("/users/check-verification-status", methods=['POST'])
+@csrf.exempt
+@jwt_required(optional=True)
+def check_verification_status():
+    """
+    Check if user's email is verified.
+    Can be called with JWT token or email address.
+    """
+    user_identity = get_jwt_identity()
+    
+    if user_identity:
+        # User is logged in, check their verification status
+        user = db.session.scalar(sa.select(User).where(User.email == user_identity))
+    else:
+        # Check by email from request body
+        if request.content_type != 'application/json':
+            return error_response("Content-Type must be application/json")
+        
+        data = request.get_json()
+        email = data.get('email')
+        
+        if not email:
+            return error_response("Email is required.")
+        
+        user = db.session.scalar(sa.select(User).where(User.email == email))
+    
+    if not user:
+        return error_response("User not found.", status_code=404)
+    
+    return success_response(
+        "Verification status retrieved.",
+        data={
+            "email": user.email,
+            "verified": user.email_verified,
+            "verified_at": user.email_verified_at.isoformat() if user.email_verified_at else None
+        }
+    )
+
 
 @user_bp.route("/users/refresh-token", methods=['POST', 'GET'])
 @limiter.exempt
@@ -639,13 +810,13 @@ def oauth2_callback(provider):
         traceback.print_exc()
         return error_response(f"An error occurred: {str(e)}")
 
-from sqlalchemy import desc, func, exc
 
 @user_bp.route('/users', methods=['GET'])
 @user_bp.route('/users/<user_id>', methods=['GET'])
 @jwt_required(optional=True)
 # @access_required('admin', 'editor', strict=False)  # Specify required roles
 @limiter.exempt
+@cache.cached(timeout=30, query_string=True)  # Cache responses for 30 seconds based on query string
 def get_users(user_id=None):
     try:
         # Fetch specific user record by ID/USERNAME

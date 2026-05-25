@@ -6,7 +6,7 @@ from jsonschema import validate
 from sqlalchemy import desc
 from web.apis.models.users import User
 from web.apis.utils.decorators import access_required, role_required
-from web.extensions import db, limiter
+from web.extensions import db, limiter, cache
 from web.apis.utils.serializers import PageSerializer
 from web.apis.utils.serializers import success_response, error_response
 from sqlalchemy.exc import IntegrityError
@@ -17,6 +17,7 @@ from web.apis import api_bp as plans_bp
 @plans_bp.route('/plans', methods=['GET'])
 @jwt_required(optional=True)
 @limiter.exempt
+@cache.cached(timeout=800)  # Cache for 800 seconds (13 minutes and 20 seconds)
 def get_plans():
     try:
         plans = Plan.query.filter_by(is_deleted=False).all()
@@ -29,6 +30,7 @@ def get_plans():
 @plans_bp.route('/plans/<int:plan_id>', methods=['GET'])
 @jwt_required(optional=True)
 @limiter.exempt
+@cache.cached(timeout=800, query_string=True)  # Cache for 800 seconds (13 minutes and 20 seconds)
 def get_1_plan(plan_id):
     try:
         plan = Plan.query.filter_by(id=plan_id, is_deleted=False).first()
@@ -152,6 +154,7 @@ import traceback
 @subscriptions_bp.route('/subscriptions', methods=['GET'])
 @jwt_required(optional=True)
 @limiter.exempt
+@cache.cached(timeout=800, query_string=True)  # Cache for 800 seconds (13 minutes and 20 seconds)
 def get_subscriptions():
     try:
         subscriptions = Subscription.query.filter_by(is_deleted=False).all()
@@ -164,6 +167,7 @@ def get_subscriptions():
 @subscriptions_bp.route('/user/subscriptions', methods=['GET'])
 @jwt_required()
 @limiter.exempt
+@cache.cached(timeout=800, query_string=True)  # Cache for 800 seconds (13 minutes and 20 seconds)
 def get_user_subscriptions():
     try:
         # Fetch subscriptions for the current user
@@ -295,6 +299,7 @@ import traceback
 @usage_bp.route('/usage/statistics', methods=['GET'])
 @jwt_required(optional=False)
 @limiter.exempt
+@cache.cached(timeout=800, query_string=True)  # Cache for 800 seconds (13 minutes and 20 seconds)
 def get_usage_statistics():
     try:
         # Authentication check
@@ -367,6 +372,7 @@ def get_usage_statistics():
 @usage_bp.route('/usage', methods=['GET'])
 @jwt_required(optional=True)
 @limiter.exempt
+@cache.cached(timeout=800, query_string=True)  # Cache for 800 seconds (13 minutes and 20 seconds)
 def get_usage(user_id=None):
     try:
         # Get pagination parameters from query string

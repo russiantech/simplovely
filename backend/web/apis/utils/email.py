@@ -47,7 +47,7 @@ def send_email(subject, sender=None, recipients=None, text_body='', html_body=''
 def reset_email(user):
     token = user.make_token(token_type="reset_password")
     send_email(
-        '[Techa] . Reset Your Password',
+        '[SimplyLovely] . Reset Your Password',
         # sender="no-reply@techa.tech",
         recipients=[user.email],
         text_body=render_template('email/forgot.txt', user=user, token=token),
@@ -58,7 +58,7 @@ def verify_email(user):
     token = user.make_token(token_type="verify_email")
     print("verification-token-emails ->", token)
     send_email(
-        '[Techa] . Verify Your Email Address.',
+        '[SimplyLovely] . Verify Your Email Address.',
         # sender="no-reply@techa.tech",
         recipients=[user.email],
         text_body=render_template('email/verify.txt', user=user, token=token),
@@ -68,8 +68,8 @@ def verify_email(user):
 def confirm_email(user):
     token = user.make_token(token_type="confirm_email")
     send_email(
-        '[Techa] . Confirmations',
-        sender="no-reply@techa.tech",
+        '[SimplyLovely] . Confirm Your Email Address.',
+        sender="no-reply@simplylovely.com",
         recipients=[user.email],
         text_body=render_template('email/verify.txt', user=user, token=token),
         html_body=render_template('email/verify.html', user=user, token=token)

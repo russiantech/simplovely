@@ -32,6 +32,16 @@ class User(db.Model):
     ip = db.Column(db.String(50), nullable=True)
     last_seen = db.Column(db.DateTime, nullable=True)
     is_guest = db.Column(db.Boolean, default=False)
+    
+    # email
+    # email_verified = db.Column(db.Boolean, default=False, nullable=False)
+    # email_verified_at = db.Column(db.DateTime, nullable=True)
+    # email_verified = db.Column(db.Boolean, default=False, nullable=False)
+    # email_verified_at = db.Column(db.DateTime, nullable=True)
+    # email_verification_token = db.Column(db.String(128), nullable=True, unique=True)
+    # email_verification_sent_at = db.Column(db.DateTime, nullable=True)
+    
+    
     online_status = db.Column(db.Boolean, default=False)
     is_deleted = db.Column(db.Boolean(), nullable=False, default=False)
     created_at = db.Column(db.DateTime, nullable=False, default=func.now())

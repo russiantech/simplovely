@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, current_user
 from sqlalchemy.exc import IntegrityError
 from web.apis.utils.decorators import access_required
 from web.apis.models.services import Area, Service, ServiceCategory, ServiceRequest
-from web.extensions import db, limiter
+from web.extensions import db, limiter, cache
 from web.apis.utils.serializers import success_response, error_response, PageSerializer
 from web.apis import api_bp as categories_bp
 
@@ -11,6 +11,7 @@ from web.apis import api_bp as categories_bp
 @categories_bp.route('/service-categories', methods=['GET'])
 @jwt_required(optional=True)
 @limiter.exempt
+@cache.cached(timeout=300)  # Cache for 5 minutes
 def get_service_categories():
     try:
         categories = ServiceCategory.query.filter_by(is_deleted=False).all()
@@ -89,6 +90,7 @@ from web.apis import api_bp as services_bp
 @services_bp.route('/services', methods=['GET'])
 @jwt_required(optional=True)
 @limiter.exempt
+@cache.cached(timeout=300)  # Cache for 5 minutes
 def get_services():
     try:
         services = Service.query.filter_by(is_deleted=False).all()
@@ -393,6 +395,7 @@ from web.apis import api_bp as areas_bp
 @areas_bp.route('/areas', methods=['GET'])
 # @jwt_required(optional=True)
 @limiter.exempt
+@cache.cached(timeout=300)  # Cache for 5 minutes
 def get_areas():
     try:
         areas = Area.query.filter_by(is_deleted=False).all()
