@@ -822,14 +822,15 @@ def get_users(user_id=None):
         # Fetch specific user record by ID/USERNAME
         if user_id is not None:
             
+            if not getattr(current_user, 'is_authenticated', False):
+                return error_response("Authentication required.", status_code=401)
+
             if not (
                 str(current_user.id) == user_id or
                 current_user.email == user_id or
-                current_user.username == user_id
-                # ) and not any(role in [role_y.name for role_y in current_user.roles] for role in required_roles):
-                ) and not any(role in [role_y.name for role_y in current_user.roles] for role in ["admin", "dev"]):
-                # ) and not any(role in current_user.get_roles() for role in ["admin", "dev"]):
-                # If none of the conditions are met, deny access
+                current_user.username == user_id or
+                any(role_y.name in ["admin", "dev"] for role_y in current_user.roles)
+            ):
                 return error_response("Access forbidden: insufficient permissions.", status_code=403)  # Forbidden
                 
             # Check if the user_id is an integer (assumed to be the user id)
