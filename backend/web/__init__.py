@@ -1,6 +1,5 @@
-from urllib import request
 
-from flask import Flask
+from flask import Flask, request
 from web.extensions import db, config_app, init_ext, make_available
 
 # from web.apis.models import *
