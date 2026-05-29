@@ -201,6 +201,23 @@ def init_ext(app) -> None:
     limiter.init_app(app)
 
     # CORS
+    # cors.init_app(
+    #     app,
+    #     resources={
+    #         r"/api/*": {
+    #             "origins": [
+    #                 "https://simplylovely.ng",
+    #                 "https://www.simplylovely.ng",
+    #                 "http://localhost:5000",
+    #                 "http://localhost:5001",
+    #             ]
+    #         }
+    #     },
+    #     supports_credentials=True,
+    # )
+    
+    # v2
+    # CORS
     cors.init_app(
         app,
         resources={
@@ -210,7 +227,18 @@ def init_ext(app) -> None:
                     "https://www.simplylovely.ng",
                     "http://localhost:5000",
                     "http://localhost:5001",
-                ]
+                ],
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+                "allow_headers": [
+                    "Content-Type",
+                    "Authorization",
+                    "Client-Callback-Url",
+                    "X-Requested-With",
+                    "Accept",
+                    "Origin",
+                ],
+                "expose_headers": ["Content-Type", "X-Request-ID"],
+                "max_age": 86400,
             }
         },
         supports_credentials=True,

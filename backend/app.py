@@ -5,7 +5,7 @@ from flask_cors import CORS
 # app = create_app('development')  # Set to 'production' if needed
 app = create_app('production')  # Set to 'production' if needed
 
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+# CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 from flask import jsonify
 @app.route("/routes")
