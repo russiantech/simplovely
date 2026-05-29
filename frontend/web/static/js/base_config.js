@@ -183,7 +183,13 @@ const HttpClient = {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
-        const opts = { ...options, headers };
+        // const opts = { ...options, headers };
+        const opts = { 
+            ...options, 
+            headers,
+            mode: 'cors',           // ← ADD THIS
+            credentials: 'include',  // ← ADD THIS if using cookies
+        };
 
         let res;
         try {
