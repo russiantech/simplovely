@@ -177,11 +177,80 @@ def config_app(app, config_name: str) -> None:
 # ──────────────────────────────────────────────────────────────
 
 
+# def init_ext(app) -> None:
+#     """
+#     Initialize Flask extensions.
+#     """
+
+#     # Core
+#     db.init_app(app)
+#     migrate.init_app(app, db)
+
+#     # Security/Auth
+#     bcrypt.init_app(app)
+#     jwt.init_app(app)
+#     csrf.init_app(app)
+
+#     # Utilities
+#     mail.init_app(app)
+#     moment.init_app(app)
+#     oauth.init_app(app)
+#     cache.init_app(app)
+
+#     # Rate Limiting
+#     limiter.init_app(app)
+
+#     # CORS
+#     # cors.init_app(
+#     #     app,
+#     #     resources={
+#     #         r"/api/*": {
+#     #             "origins": [
+#     #                 "https://simplylovely.ng",
+#     #                 "https://www.simplylovely.ng",
+#     #                 "http://localhost:5000",
+#     #                 "http://localhost:5001",
+#     #             ]
+#     #         }
+#     #     },
+#     #     supports_credentials=True,
+#     # )
+    
+#     # v2
+#     # CORS
+#     cors.init_app(
+#         app,
+#         resources={
+#             r"/api/*": {
+#                 "origins": [
+#                     "https://simplylovely.ng",
+#                     "https://www.simplylovely.ng",
+#                     "http://localhost:5000",
+#                     "http://localhost:5001",
+#                 ],
+#                 "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+#                 "allow_headers": [
+#                     "Content-Type",
+#                     "Authorization",
+#                     "Client-Callback-Url",
+#                     "X-Requested-With",
+#                     "Accept",
+#                     "Origin",
+#                 ],
+#                 "expose_headers": ["Content-Type", "X-Request-ID"],
+#                 "max_age": 86400,
+#             }
+#         },
+#         supports_credentials=True,
+#     )
+
+#     logger.info("Flask extensions initialized successfully.")
+
+# v2
 def init_ext(app) -> None:
     """
     Initialize Flask extensions.
     """
-
     # Core
     db.init_app(app)
     migrate.init_app(app, db)
@@ -200,25 +269,8 @@ def init_ext(app) -> None:
     # Rate Limiting
     limiter.init_app(app)
 
-    # CORS
-    # cors.init_app(
-    #     app,
-    #     resources={
-    #         r"/api/*": {
-    #             "origins": [
-    #                 "https://simplylovely.ng",
-    #                 "https://www.simplylovely.ng",
-    #                 "http://localhost:5000",
-    #                 "http://localhost:5001",
-    #             ]
-    #         }
-    #     },
-    #     supports_credentials=True,
-    # )
-    
-    # v2
-    # CORS
-    cors.init_app(
+    # CORS — MUST be initialized BEFORE blueprints that might error
+    CORS(
         app,
         resources={
             r"/api/*": {
@@ -238,10 +290,10 @@ def init_ext(app) -> None:
                     "Origin",
                 ],
                 "expose_headers": ["Content-Type", "X-Request-ID"],
+                "supports_credentials": True,
                 "max_age": 86400,
             }
         },
-        supports_credentials=True,
     )
 
     logger.info("Flask extensions initialized successfully.")
