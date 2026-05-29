@@ -2,22 +2,13 @@
 web/extensions.py
 
 Centralized Flask extensions and infrastructure services.
-
-Features:
-- Safe environment loading
-- Stable Redis initialization with graceful fallback
-- Production-safe Flask-Limiter setup
-- Clean extension lifecycle management
-- Consistent logging
-- Optional Redis support
-- Secure/default CORS configuration
 """
 
 from __future__ import annotations
 
 import logging
 from os import getenv
-from typing import Optional
+from typing import Optional, Set
 
 from dotenv import load_dotenv
 from pathlib import Path
@@ -26,13 +17,9 @@ from pathlib import Path
 # Environment
 # ──────────────────────────────────────────────────────────────
 
-# load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 ENV_PATH = BASE_DIR / ".env"
-
 load_dotenv(dotenv_path=ENV_PATH)
-
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +52,74 @@ oauth = OAuth()
 fake = Faker()
 
 # ──────────────────────────────────────────────────────────────
-# Redis Configuration
+# In-Memory Token Blocklist (Fallback when Redis unavailable)
+# ──────────────────────────────────────────────────────────────
+
+class MemoryBlocklist:
+    """
+    Thread-safe(ish) in-memory token blocklist.
+    Falls back to this when Redis is not available.
+    """
+    def __init__(self):
+        self._blacklist: Set[str] = set()
+    
+    def sadd(self, key: str, *members) -> int:
+        """Add members to a set. Returns number added."""
+        if key != "blacklist":
+            return 0
+        added = 0
+        for member in members:
+            if member not in self._blacklist:
+                self._blacklist.add(member)
+                added += 1
+        return added
+    
+    def sismember(self, key: str, member: str) -> bool:
+        """Check if member is in set."""
+        if key != "blacklist":
+            return False
+        return member in self._blacklist
+    
+    def srem(self, key: str, *members) -> int:
+        """Remove members from set."""
+        if key != "blacklist":
+            return 0
+        removed = 0
+        for member in members:
+            if member in self._blacklist:
+                self._blacklist.discard(member)
+                removed += 1
+        return removed
+    
+    def scard(self, key: str) -> int:
+        """Get set cardinality."""
+        if key != "blacklist":
+            return 0
+        return len(self._blacklist)
+    
+    def setex(self, key: str, seconds: int, value: str) -> bool:
+        """Set key with expiry (no-op for memory, just store)."""
+        # Simple storage without expiry tracking
+        setattr(self, f"_store_{key}", value)
+        return True
+    
+    def get(self, key: str) -> Optional[str]:
+        """Get value by key."""
+        return getattr(self, f"_store_{key}", None)
+    
+    def delete(self, *keys) -> int:
+        """Delete keys."""
+        deleted = 0
+        for key in keys:
+            attr = f"_store_{key}"
+            if hasattr(self, attr):
+                delattr(self, attr)
+                deleted += 1
+        return deleted
+
+
+# ──────────────────────────────────────────────────────────────
+# Redis Configuration with Graceful Fallback
 # ──────────────────────────────────────────────────────────────
 
 from redis import Redis
@@ -78,14 +132,13 @@ REDIS_URL = (
 )
 
 redis_client: Optional[Redis] = None
+memory_blocklist = MemoryBlocklist()
 
 
 def create_redis_client() -> Optional[Redis]:
     """
     Create and validate Redis connection safely.
-
-    Returns:
-        Redis instance if successful, otherwise None.
+    Falls back to in-memory blocklist if Redis is unavailable.
     """
 
     global redis_client
@@ -94,7 +147,7 @@ def create_redis_client() -> Optional[Redis]:
         return redis_client
 
     if not REDIS_URL:
-        logger.warning("Redis URL not configured. Running without Redis.")
+        logger.warning("Redis URL not configured. Using in-memory fallback.")
         return None
 
     try:
@@ -106,19 +159,15 @@ def create_redis_client() -> Optional[Redis]:
             retry_on_timeout=True,
             health_check_interval=30,
         )
-
-        # Validate connection immediately
         redis_client.ping()
-
         logger.info("Redis connected successfully.")
         return redis_client
 
     except RedisError as exc:
         logger.warning(
-            "Redis unavailable. Application will continue without Redis. Error: %s",
+            "Redis unavailable. Using in-memory fallback. Error: %s",
             exc,
         )
-
         redis_client = None
         return None
 
@@ -127,13 +176,22 @@ def create_redis_client() -> Optional[Redis]:
             "Unexpected Redis initialization error: %s",
             exc,
         )
-
         redis_client = None
         return None
 
 
 # Create Redis connection safely
-redis = create_redis_client()
+# redis = create_redis_client()
+
+# Unified interface: always returns a working client (Redis or memory fallback)
+def get_redis_or_memory():
+    """
+    Returns Redis client if available, otherwise in-memory fallback.
+    Use this for all Redis-like operations.
+    """
+    return redis_client if redis_client is not None else memory_blocklist
+
+redis = get_redis_or_memory()
 
 # ──────────────────────────────────────────────────────────────
 # Rate Limiting
@@ -142,7 +200,6 @@ redis = create_redis_client()
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-# Use Redis storage if available, fallback to memory
 limiter_storage_uri = REDIS_URL if REDIS_URL else "memory://"
 
 limiter = Limiter(
@@ -161,14 +218,8 @@ limiter = Limiter(
 
 
 def config_app(app, config_name: str) -> None:
-    """
-    Configure Flask app from config object.
-    """
-
     from web.config import app_config
-
     app.config.from_object(app_config[config_name])
-
     logger.info("Application configured using '%s' config.", config_name)
 
 
@@ -177,76 +228,6 @@ def config_app(app, config_name: str) -> None:
 # ──────────────────────────────────────────────────────────────
 
 
-# def init_ext(app) -> None:
-#     """
-#     Initialize Flask extensions.
-#     """
-
-#     # Core
-#     db.init_app(app)
-#     migrate.init_app(app, db)
-
-#     # Security/Auth
-#     bcrypt.init_app(app)
-#     jwt.init_app(app)
-#     csrf.init_app(app)
-
-#     # Utilities
-#     mail.init_app(app)
-#     moment.init_app(app)
-#     oauth.init_app(app)
-#     cache.init_app(app)
-
-#     # Rate Limiting
-#     limiter.init_app(app)
-
-#     # CORS
-#     # cors.init_app(
-#     #     app,
-#     #     resources={
-#     #         r"/api/*": {
-#     #             "origins": [
-#     #                 "https://simplylovely.ng",
-#     #                 "https://www.simplylovely.ng",
-#     #                 "http://localhost:5000",
-#     #                 "http://localhost:5001",
-#     #             ]
-#     #         }
-#     #     },
-#     #     supports_credentials=True,
-#     # )
-    
-#     # v2
-#     # CORS
-#     cors.init_app(
-#         app,
-#         resources={
-#             r"/api/*": {
-#                 "origins": [
-#                     "https://simplylovely.ng",
-#                     "https://www.simplylovely.ng",
-#                     "http://localhost:5000",
-#                     "http://localhost:5001",
-#                 ],
-#                 "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-#                 "allow_headers": [
-#                     "Content-Type",
-#                     "Authorization",
-#                     "Client-Callback-Url",
-#                     "X-Requested-With",
-#                     "Accept",
-#                     "Origin",
-#                 ],
-#                 "expose_headers": ["Content-Type", "X-Request-ID"],
-#                 "max_age": 86400,
-#             }
-#         },
-#         supports_credentials=True,
-#     )
-
-#     logger.info("Flask extensions initialized successfully.")
-
-# v2
 def init_ext(app) -> None:
     """
     Initialize Flask extensions.
@@ -269,7 +250,7 @@ def init_ext(app) -> None:
     # Rate Limiting
     limiter.init_app(app)
 
-    # CORS — MUST be initialized BEFORE blueprints that might error
+    # CORS
     CORS(
         app,
         resources={
@@ -305,10 +286,6 @@ def init_ext(app) -> None:
 
 
 def make_available() -> dict:
-    """
-    Shared frontend/application metadata.
-    """
-
     products_links = {
         "salesnet_link": "https://salesnet.techa.tech",
         "barman_link": "https://barman.techa.tech",
@@ -349,4 +326,3 @@ def make_available() -> dict:
         **app_data,
         **products_links,
     }
-

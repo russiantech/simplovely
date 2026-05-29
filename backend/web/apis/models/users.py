@@ -269,16 +269,44 @@ def user_lookup_callback(_jwt_header, jwt_data):
         or_(User.email == identity, User.id == identity)
     ).one_or_none()
 
-# Callback function to check if a JWT exists in the database blocklist
-from web.extensions import redis as r
-@jwt.token_in_blocklist_loader
-def check_if_token_revoked(jwt_header, jwt_payload: dict) -> bool:
-    jti = jwt_payload["jti"]
-    # token = db.session.query(TokenBlocklist.id).filter_by(jti=jti).scalar() // db-way-of-doing-it
-    # return token is not None  // db-way-of-doing-it
-    return r.sismember("blacklist", jti) #  // redis-way-of-doing-it
 
-# 
+# Callback function to check if a JWT exists in the database blocklist
+
+# from web.extensions import redis as r
+# @jwt.token_in_blocklist_loader
+# def check_if_token_revoked(jwt_header, jwt_payload: dict) -> bool:
+#     jti = jwt_payload["jti"]
+#     # token = db.session.query(TokenBlocklist.id).filter_by(jti=jti).scalar() // db-way-of-doing-it
+#     # return token is not None  // db-way-of-doing-it
+#     return r.sismember("blacklist", jti) #  // redis-way-of-doing-it
+
+
+# web/apis/models/users.py
+
+# Import the unified Redis/memory interface
+from web.extensions import get_redis_or_memory
+
+
+def check_if_token_revoked(jwt_header, jwt_data):
+    """
+    Check if a JWT token has been revoked/blacklisted.
+    Uses Redis if available, falls back to in-memory storage.
+    """
+    jti = jwt_data.get("jti")
+    if not jti:
+        return False
+    
+    # Use unified interface (Redis or in-memory fallback)
+    r = get_redis_or_memory()
+    
+    try:
+        return r.sismember("blacklist", jti)
+    except Exception as e:
+        import logging
+        logging.warning(f"Token revocation check failed: {e}")
+        return False  # Allow token if check fails
+
+
 # Custom error response for missing token
 @jwt.unauthorized_loader
 def unauthorized_callback(error):

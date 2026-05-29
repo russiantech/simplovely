@@ -25,6 +25,7 @@ from web.apis.models.users import User
 from web.apis.utils import email as emailer
 from web.apis.utils.oauth_providers import oauth2providers
 from web.extensions import redis as redis_clients, cache
+# from web.extensions import get_redis_or_memory as redis_clients, cache
 from web.apis import api_bp as user_bp
 
 from web.apis.utils.serializers import (
