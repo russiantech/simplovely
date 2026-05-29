@@ -1,619 +1,509 @@
+/**
+ * base_config.js — Single authoritative application bootstrap
+ *
+ * Defines:
+ *   AppConfig    — compile-time constants
+ *   Utils        — pure helpers (storage, cookie, string)
+ *   ApiConfig    — API URL detection + init
+ *   TokenManager — access/refresh token lifecycle
+ *   HttpClient   — fetch wrapper with auto-refresh + user-friendly errors
+ *   UIManager    — response_modal, toggleButton, setActiveNavigation
+ *   FormHandler  — generic form → API bridge
+ *   OAuthHandler — Google/OAuth popup flow
+ *   UserDataManager — load and render current user info
+ *   App          — top-level orchestrator
+ *
+ * All of the above are also exposed on `window.*` for backward-compatible
+ * inline scripts throughout the template tree.
+ */
 
-// Application Configuration and Constants
-const AppConfig = {
-    PRODUCTION_DOMAIN: 'simplylovely.ng',
-    PRODUCTION_API: 'https://api.simplylovely.ng/api',
-    DEVELOPMENT_API: 'http://localhost:5001/api',
-    MODAL_Z_INDEX: 1058,
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const AppConfig = Object.freeze({
+    PROD_HOSTNAME:   'simplylovely.ng',
+    PROD_API:        'https://api.simplylovely.ng/api',
+    DEV_API:         'http://localhost:5001/api',
+    MODAL_Z_INDEX:   1058,
     TOKEN_KEYS: {
-        ACCESS: 'access_token',
-        REFRESH: 'refresh_token'
+        ACCESS:  'access_token',
+        REFRESH: 'refresh_token',
     },
-    HTTP_STATUS: {
+    HTTP: {
+        OK:           200,
         UNAUTHORIZED: 401,
-        OK: 200
-    }
-};
+    },
+});
 
-// Utility Functions
+// ─── Utils ────────────────────────────────────────────────────────────────────
+
 const Utils = {
-    /**
-     * Safely get cookie value
-     */
     getCookie(name) {
         try {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) {
-                return parts.pop().split(';').shift();
-            }
-            return null;
-        } catch (error) {
-            console.warn(`Error getting cookie ${name}:`, error);
-            return null;
-        }
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        } catch (_) {}
+        return null;
     },
 
-    /**
-     * Safely access localStorage
-     */
-    getStorageItem(key) {
-        try {
-            return localStorage.getItem(key);
-        } catch (error) {
-            console.warn(`Error accessing localStorage for key ${key}:`, error);
-            return null;
-        }
+    getStorage(key) {
+        try { return localStorage.getItem(key); } catch (_) { return null; }
     },
 
-    /**
-     * Safely set localStorage
-     */
-    setStorageItem(key, value) {
+    setStorage(key, value) {
         try {
-            if (value && value.trim()) {
+            if (value && typeof value === 'string' && value.trim()) {
                 localStorage.setItem(key, value.trim());
                 return true;
             }
-            return false;
-        } catch (error) {
-            console.warn(`Error setting localStorage for key ${key}:`, error);
-            return false;
-        }
+        } catch (_) {}
+        return false;
     },
 
-    /**
-     * Get URL parameters safely
-     */
+    removeStorage(key) {
+        try { localStorage.removeItem(key); } catch (_) {}
+    },
+
     getUrlParams() {
-        try {
-            return new URLSearchParams(window.location.search);
-        } catch (error) {
-            console.warn('Error parsing URL parameters:', error);
-            return new URLSearchParams();
-        }
+        try { return new URLSearchParams(window.location.search); }
+        catch (_) { return new URLSearchParams(); }
     },
 
-    /**
-     * Clean URL from query parameters
-     */
     cleanUrl() {
         try {
-            const url = window.location.href.split('?')[0];
-            window.history.replaceState({}, document.title, url);
-        } catch (error) {
-            console.warn('Error cleaning URL:', error);
-        }
+            window.history.replaceState(
+                {}, document.title,
+                window.location.href.split('?')[0]
+            );
+        } catch (_) {}
     },
 
-    /**
-     * Validate required string
-     */
-    isValidString(str) {
-        return str && typeof str === 'string' && str.trim().length > 0;
-    }
+    isValidString(v) {
+        return typeof v === 'string' && v.trim().length > 0;
+    },
+
+    /** Human-readable error from a failed fetch/API call */
+    friendlyError(error) {
+        console.error('Error:', error);
+        if (!error) return 'An unexpected error occurred.';
+        const msg = error.message || String(error);
+        if (msg === 'Failed to fetch' || msg.includes('NetworkError') || msg.includes('network')) {
+            return 'Unable to connect to the server. Please check your internet connection and try again.';
+        }
+        if (msg.includes('401') || msg.toLowerCase().includes('unauthorized')) {
+            return 'Your session has expired. Please sign in again.';
+        }
+        return msg;
+    },
 };
 
-// API Configuration Manager
+// ─── ApiConfig ────────────────────────────────────────────────────────────────
+
 const ApiConfig = {
+    apiUrl:  null,
+    planUrl: null,
+
     init() {
-        this.apiUrl = this.determineApiUrl();
+        this.apiUrl  = this._resolveUrl();
         this.planUrl = `${this.apiUrl}/plans`;
-        
-        // Expose to window for backward compatibility
-        window.apiUrl = this.apiUrl;
+
+        // Global compat
+        window.apiUrl  = this.apiUrl;
         window.planUrl = this.planUrl;
-        
-        console.log('API Configuration initialized:', {
-            environment: this.getEnvironment(),
-            apiUrl: this.apiUrl
-        });
     },
 
-    determineApiUrl() {
-        const hostname = window.location.hostname;
-        return hostname === AppConfig.PRODUCTION_DOMAIN 
-            ? AppConfig.PRODUCTION_API 
-            : AppConfig.DEVELOPMENT_API;
+    _resolveUrl() {
+        const h = window.location.hostname;
+        if (h === AppConfig.PROD_HOSTNAME || h.endsWith('.' + AppConfig.PROD_HOSTNAME)) {
+            return AppConfig.PROD_API;
+        }
+        return AppConfig.DEV_API;
     },
 
-    getEnvironment() {
-        return window.location.hostname === AppConfig.PRODUCTION_DOMAIN 
-            ? 'production' 
-            : 'development';
-    }
+    get() {
+        return this.apiUrl || this._resolveUrl();
+    },
 };
 
-// Token Management System
+// ─── TokenManager ─────────────────────────────────────────────────────────────
+
 const TokenManager = {
-    getAccessToken() {
-        return Utils.getStorageItem(AppConfig.TOKEN_KEYS.ACCESS) || 
-               Utils.getCookie(AppConfig.TOKEN_KEYS.ACCESS);
+    getAccess() {
+        return Utils.getStorage(AppConfig.TOKEN_KEYS.ACCESS)
+            || Utils.getCookie(AppConfig.TOKEN_KEYS.ACCESS);
     },
 
-    getRefreshToken() {
-        return Utils.getStorageItem(AppConfig.TOKEN_KEYS.REFRESH);
+    getRefresh() {
+        return Utils.getStorage(AppConfig.TOKEN_KEYS.REFRESH);
     },
 
-    setTokens(accessToken, refreshToken) {
-        const results = {
-            access: false,
-            refresh: false
-        };
-
-        if (Utils.isValidString(accessToken)) {
-            results.access = Utils.setStorageItem(AppConfig.TOKEN_KEYS.ACCESS, accessToken);
-        } else {
-            console.warn('Access token not provided or invalid');
-        }
-
-        if (Utils.isValidString(refreshToken)) {
-            results.refresh = Utils.setStorageItem(AppConfig.TOKEN_KEYS.REFRESH, refreshToken);
-        } else {
-            console.warn('Refresh token not provided or invalid');
-        }
-
-        return results;
+    setTokens(access, refresh) {
+        if (Utils.isValidString(access))  Utils.setStorage(AppConfig.TOKEN_KEYS.ACCESS,  access);
+        if (Utils.isValidString(refresh)) Utils.setStorage(AppConfig.TOKEN_KEYS.REFRESH, refresh);
     },
 
-    clearTokens() {
-        try {
-            localStorage.removeItem(AppConfig.TOKEN_KEYS.ACCESS);
-            localStorage.removeItem(AppConfig.TOKEN_KEYS.REFRESH);
-        } catch (error) {
-            console.warn('Error clearing tokens:', error);
-        }
+    clear() {
+        Utils.removeStorage(AppConfig.TOKEN_KEYS.ACCESS);
+        Utils.removeStorage(AppConfig.TOKEN_KEYS.REFRESH);
     },
 
-    async refreshAccessToken() {
-        const refreshToken = this.getRefreshToken();
-        
-        if (!Utils.isValidString(refreshToken)) {
-            console.warn('No valid refresh token available');
-            return false;
-        }
+    async refresh() {
+        const rt = this.getRefresh();
+        if (!Utils.isValidString(rt)) return false;
 
         try {
-            console.log('Attempting token refresh...');
-            
-            const response = await fetch(`${ApiConfig.apiUrl}/users/refresh-token`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ refresh_token: refreshToken }),
+            const res = await fetch(`${ApiConfig.get()}/users/refresh-token`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ refresh_token: rt }),
             });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                console.error('Token refresh failed:', errorData);
-                return false;
-            }
-
-            const data = await response.json();
-            console.log('Token refresh successful');
-
-            // Update tokens
-            if (data.access_token) {
-                Utils.setStorageItem(AppConfig.TOKEN_KEYS.ACCESS, data.access_token);
-            }
-
-            if (data.refresh_token) {
-                Utils.setStorageItem(AppConfig.TOKEN_KEYS.REFRESH, data.refresh_token);
-            }
-
+            if (!res.ok) return false;
+            const data = await res.json();
+            if (data.access_token)  Utils.setStorage(AppConfig.TOKEN_KEYS.ACCESS,  data.access_token);
+            if (data.refresh_token) Utils.setStorage(AppConfig.TOKEN_KEYS.REFRESH, data.refresh_token);
             return true;
-        } catch (error) {
-            console.error('Error during token refresh:', error);
+        } catch (_) {
             return false;
         }
-    }
+    },
 };
 
-// HTTP Request Handler
-const HttpClient = {
-    async makeRequest(url, options = {}) {
-        if (!url) {
-            throw new Error('URL is required for API request');
-        }
+// ─── HttpClient ───────────────────────────────────────────────────────────────
 
-        const token = TokenManager.getAccessToken();
-        
-        // Prepare headers
+const HttpClient = {
+    async request(url, options = {}) {
+        if (!url) throw new Error('URL is required');
+
+        const token   = TokenManager.getAccess();
         const headers = {
             'Content-Type': 'application/json',
-            ...options.headers
+            ...options.headers,
         };
-
-        // Add authorization header if token exists
         if (Utils.isValidString(token)) {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
-        const requestOptions = {
-            ...options,
-            headers
-        };
+        const opts = { ...options, headers };
 
+        let res;
         try {
-            console.log(`Making request to: ${url}`, {
-                method: requestOptions.method || 'GET',
-                hasAuth: !!headers['Authorization']
-            });
-
-            const response = await fetch(url, requestOptions);
-            
-            // Handle authentication errors
-            if (response.status === AppConfig.HTTP_STATUS.UNAUTHORIZED) {
-                console.log('Received 401, attempting token refresh...');
-                
-                const refreshed = await TokenManager.refreshAccessToken();
-                if (refreshed) {
-                    // Retry original request with new token
-                    const newToken = TokenManager.getAccessToken();
-                    if (newToken) {
-                        requestOptions.headers['Authorization'] = `Bearer ${newToken}`;
-                        return this.makeRequest(url, requestOptions);
-                    }
-                }
-                
-                throw new Error('Authentication failed. Please log in again.');
-            }
-
-            // Handle other HTTP errors
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                const errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`;
-                throw new Error(errorMessage);
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error('Request failed:', {
-                url,
-                error: error.message,
-                stack: error.stack
-            });
-            throw error;
+            res = await fetch(url, opts);
+        } catch (networkErr) {
+            // Wrap the raw browser network error with a friendly message
+            const friendly = Utils.friendlyError(networkErr);
+            const err = new Error(friendly);
+            err.isNetworkError = true;
+            console.error('Network error:', url, networkErr.message);
+            throw err;
         }
-    }
+
+        // Auto-refresh on 401
+        if (res.status === AppConfig.HTTP.UNAUTHORIZED) {
+            const refreshed = await TokenManager.refresh();
+            if (refreshed) {
+                const newToken = TokenManager.getAccess();
+                if (newToken) opts.headers['Authorization'] = `Bearer ${newToken}`;
+                return this.request(url, opts);
+            }
+            throw new Error('Your session has expired. Please sign in again.');
+        }
+
+        if (!res.ok) {
+            let errMsg = `Request failed (HTTP ${res.status})`;
+            try {
+                const body = await res.json();
+                errMsg = body.error || body.message || errMsg;
+            } catch (_) {}
+            throw new Error(errMsg);
+        }
+
+        return res.json();
+    },
 };
 
-// UI Components Manager
-const UIManager = {
-    showModal(message) {
-        try {
-            const responseTextElement = document.getElementById('response_text');
-            const modalElement = document.getElementById('response_modal');
-            
-            if (!responseTextElement || !modalElement) {
-                console.warn('Modal elements not found, falling back to alert');
-                alert(message);
-                return;
-            }
+// ─── UIManager ────────────────────────────────────────────────────────────────
 
-            responseTextElement.textContent = message;
-            modalElement.style.zIndex = AppConfig.MODAL_Z_INDEX;
-            
-            const modal = new bootstrap.Modal(modalElement);
-            modal.show();
-        } catch (error) {
-            console.error('Error showing modal:', error);
-            alert(message); // Fallback
+const UIManager = {
+    showModal(message, type = 'warning') {
+        try {
+            const textEl  = document.getElementById('response_text');
+            const modalEl = document.getElementById('response_modal');
+
+            if (!textEl || !modalEl) { alert(message); return; }
+
+            textEl.textContent = message;
+            textEl.className   = `text-${type}`;
+            modalEl.style.zIndex = AppConfig.MODAL_Z_INDEX;
+
+            (new bootstrap.Modal(modalEl)).show();
+        } catch (e) {
+            console.error('UIManager.showModal failed:', e);
+            alert(message);
         }
     },
 
-    toggleButton(button, disable = true, showSpinner = true) {
-        if (!button) {
-            console.warn('Button element not provided to toggleButton');
-            return;
-        }
-
-        try {
-            button.disabled = disable;
-            
-            if (showSpinner) {
-                if (disable) {
-                    // Save original text and show spinner
-                    if (!button.dataset.originalText) {
-                        button.dataset.originalText = button.innerHTML;
-                    }
-                    button.innerHTML = `
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        Loading...
-                    `;
-                } else {
-                    // Restore original text
-                    const originalText = button.dataset.originalText;
-                    if (originalText) {
-                        button.innerHTML = originalText;
-                        delete button.dataset.originalText;
-                    }
-                }
+    toggleButton(btn, disable = true) {
+        if (!btn) return;
+        btn.disabled = disable;
+        if (disable) {
+            if (!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+            btn.innerHTML =
+                '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading…';
+        } else {
+            if (btn.dataset.originalHtml) {
+                btn.innerHTML = btn.dataset.originalHtml;
+                delete btn.dataset.originalHtml;
             }
-        } catch (error) {
-            console.error('Error toggling button:', error);
         }
     },
 
     setActiveNavigation() {
-        try {
-            const currentPage = window.location.pathname.split("/").pop();
-            const navLinks = document.querySelectorAll("nav a");
-            
-            navLinks.forEach(link => {
-                const href = link.getAttribute("href");
-                if (href === currentPage) {
-                    link.classList.add("active");
-                } else {
-                    link.classList.remove("active");
-                }
-            });
-        } catch (error) {
-            console.error('Error setting active navigation:', error);
-        }
-    }
-};
-
-// Form Handler
-const FormHandler = {
-    init() {
-        this.attachFormListeners();
-    },
-
-    attachFormListeners() {
-        const formConfigs = [
-            { id: 'signup_form', action: 'users/signup' },
-            { id: 'signin_form', action: 'users/signin' },
-            { id: 'reset_password_modal', action: 'users/reset-password' },
-            { id: 'message_form', action: 'users/send-message' },
-            { id: 'add_plan_form', action: 'plans' },
-            { id: 'add_address_form', action: 'addresses' }
-        ];
-
-        formConfigs.forEach(config => {
-            const form = document.getElementById(config.id);
-            if (form) {
-                form.addEventListener('submit', (event) => {
-                    event.preventDefault();
-                    this.handleFormSubmit(config.id, config.action);
-                });
-            }
+        const page = window.location.pathname.split('/').pop() || '';
+        document.querySelectorAll('nav a').forEach(link => {
+            const href = (link.getAttribute('href') || '').split('/').pop();
+            link.classList.toggle('active', href === page && page !== '');
         });
     },
 
-    async handleFormSubmit(formId, action) {
-        const form = document.getElementById(formId);
-        if (!form) {
-            console.error(`Form with ID ${formId} not found`);
-            return;
+    showToast(message, type = 'success') {
+        // Lightweight inline toast fallback; upgrades gracefully when toast container exists
+        const container = document.getElementById('toast-container')
+                       || document.body;
+        const id   = `toast-${Date.now()}`;
+        const html = `
+            <div id="${id}" class="toast align-items-center text-bg-${type} border-0 mb-2"
+                 role="alert" aria-live="assertive" aria-atomic="true">
+              <div class="d-flex">
+                <div class="toast-body fw-medium">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                        data-bs-dismiss="toast" aria-label="Close"></button>
+              </div>
+            </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+        const el = document.getElementById(id);
+        if (el && window.bootstrap && bootstrap.Toast) {
+            const t = new bootstrap.Toast(el, { delay: 4000 });
+            t.show();
+            el.addEventListener('hidden.bs.toast', () => el.remove());
         }
+    },
+};
 
-        const submitButton = form.querySelector('button[type="submit"]');
-        
+// ─── FormHandler ──────────────────────────────────────────────────────────────
+
+const FormHandler = {
+    init() {
+        const configs = [
+            { id: 'reset_password_modal', endpoint: 'users/reset-password' },
+            { id: 'message_form',         endpoint: 'users/send-message'   },
+            { id: 'add_plan_form',        endpoint: 'plans'                },
+            { id: 'add_address_form',     endpoint: 'addresses'            },
+            { id: 'service_form',         endpoint: 'services', onSuccess: FormHandler._onServiceSuccess },
+        ];
+        configs.forEach(cfg => this._attach(cfg.id, cfg.endpoint, cfg.onSuccess));
+    },
+
+    _attach(formId, endpoint, onSuccess) {
+        const form = document.getElementById(formId);
+        if (!form) return;
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            this.submit(formId, endpoint, onSuccess);
+        });
+    },
+
+    async submit(formId, endpoint, onSuccess) {
+        const form   = document.getElementById(formId);
+        if (!form) return;
+        const btn    = form.querySelector('button[type="submit"]');
+        const apiUrl = ApiConfig.get();
+
         try {
-            UIManager.toggleButton(submitButton, true, true);
 
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            
-            console.log(`Submitting form: ${formId}`, { action, dataKeys: Object.keys(data) });
+            UIManager.toggleButton(btn, true);
 
-            const result = await HttpClient.makeRequest(`${ApiConfig.apiUrl}/${action}`, {
-                method: form.method || 'POST',
+            const data   = Object.fromEntries(new FormData(form).entries());
+
+            // 
+            const isAuthEndpoint = endpoint.includes('signin') || endpoint.includes('signup');
+
+            // Temporarily clear tokens for auth endpoints so we don't send stale auth
+            if (isAuthEndpoint) {
+                TokenManager.clear();
+            }
+
+            const result = await HttpClient.request(`${apiUrl}/${endpoint}`, {
+                method: form.method?.toUpperCase() || 'POST',
                 body: JSON.stringify(data),
             });
 
-            if (result.success) {
-                await this.handleSuccessResponse(result, action);
-            } else {
-                UIManager.showModal(result.error || 'Operation failed.');
-            }
+            // If this was an auth endpoint but we got no token, restore previous tokens (if any)
+            // if (isAuthEndpoint && !result.access_token) {
+            //     const prevAccess  = TokenManager.getAccess();
+            //     const prevRefresh = TokenManager.getRefresh();
+            //     if (prevAccess)  Utils.setStorage(AppConfig.TOKEN_KEYS.ACCESS,  prevAccess);
+            //     if (prevRefresh) Utils.setStorage(AppConfig.TOKEN_KEYS.REFRESH, prevRefresh);
+            // }
 
-        } catch (error) {
-            console.error(`Form submission error for ${formId}:`, error);
-            UIManager.showModal(`Error: ${error.message || 'Unexpected error occurred'}`);
-        } finally {
-            UIManager.toggleButton(submitButton, false, true);
-        }
-    },
+            // const result = await HttpClient.request(`${apiUrl}/${endpoint}`, {
+            //     method: form.method?.toUpperCase() || 'POST',
+            //     body:   JSON.stringify(data),
+            // });
 
-    async handleSuccessResponse(result, action) {
-        // Handle login-specific actions
-        if (action === 'users/signin') {
-            const tokenResults = TokenManager.setTokens(result.access_token, result.refresh_token);
-            console.log('Tokens saved:', tokenResults);
-
-            if (result.redirect) {
-                window.location.href = result.redirect;
-                return;
-            }
-        }
-
-        UIManager.showModal(result.message || 'Operation successful.');
-    }
-};
-
-// User Data Manager
-const UserDataManager = {
-    async loadUserData() {
-        try {
-            const data = await HttpClient.makeRequest(`${ApiConfig.apiUrl}/users/current`);
-            this.updateUserDisplay(data);
-        } catch (error) {
-            console.error('Error loading user data:', error);
-            // Don't show error modal for user data fetch failures
-        }
-    },
-
-    updateUserDisplay(userData) {
-        try {
-            if (!userData || !userData.name) {
-                console.warn('Invalid user data received');
-                return;
-            }
-
-            // Update name display
-            const nameElement = document.querySelector('.name');
-            if (nameElement) {
-                nameElement.textContent = userData.name;
-            }
-
-            // Update initial display
-            const initialElement = document.querySelector('.initial');
-            if (initialElement) {
-                initialElement.textContent = userData.name.charAt(0).toUpperCase();
-            }
-
-            // Update account link
-            const accountLink = document.querySelector('.btn.btn-dark.rounded-pill.animate-scale');
-            if (accountLink && userData.username) {
-                accountLink.setAttribute('href', './account');
-                const span = accountLink.querySelector('span');
-                if (span) {
-                    span.textContent = userData.username;
+            if (result.success || result.id || result.message) {
+                if (typeof onSuccess === 'function') {
+                    onSuccess(result, form);
+                } else {
+                    UIManager.showModal(result.message || 'Done!', 'success');
                 }
+
+                // Handle signin-specific token storage
+                if (endpoint === 'users/signin' && result.access_token) {
+                    TokenManager.setTokens(result.access_token, result.refresh_token);
+                    if (result.redirect) window.location.href = result.redirect;
+                }
+            } else {
+                UIManager.showModal(result.error || 'Operation failed.', 'danger');
             }
 
-            console.log('User display updated successfully');
-        } catch (error) {
-            console.error('Error updating user display:', error);
+        } catch (err) {
+            UIManager.showModal(Utils.friendlyError(err), 'danger');
+        } finally {
+            UIManager.toggleButton(btn, false);
         }
-    }
+    },
+
+    _onServiceSuccess(result, form) {
+        UIManager.showModal(
+            result.message || 'Your service request has been received! We\'ll be in touch shortly.',
+            'success'
+        );
+        form.reset();
+        // Close the modal after a brief delay
+        setTimeout(() => {
+            const modalEl = form.closest('.modal');
+            if (modalEl) {
+                const bsModal = bootstrap.Modal.getInstance(modalEl);
+                if (bsModal) bsModal.hide();
+            }
+        }, 2200);
+    },
 };
 
-// OAuth Handler
+// ─── OAuthHandler ─────────────────────────────────────────────────────────────
+
 const OAuthHandler = {
     init() {
-        this.attachOAuthListeners();
-        this.handleOAuthCallback();
+        const btn = document.getElementById('google-signin-btn');
+        if (btn) btn.addEventListener('click', () => this.initiate('google'));
+        this._handleCallback();
     },
 
-    attachOAuthListeners() {
-        const googleSigninBtn = document.getElementById('google-signin-btn');
-        if (googleSigninBtn) {
-            googleSigninBtn.addEventListener('click', () => {
-                this.initiateOAuth('google');
-            });
-        }
-    },
-
-    async initiateOAuth(provider) {
+    async initiate(provider) {
         try {
-            console.log(`Initiating ${provider} OAuth...`);
-
-            const response = await fetch(`${ApiConfig.apiUrl}/users/authorize/${provider}`, {
-                method: 'GET',
+            const res  = await fetch(`${ApiConfig.get()}/users/authorize/${provider}`, {
                 headers: {
                     'Client-Callback-Url': window.location.href,
-                    'Content-Type': 'application/json'
-                }
+                    'Content-Type':        'application/json',
+                },
             });
-
-            const data = await response.json();
-
-            if (response.ok && data.redirect) {
+            const data = await res.json();
+            if (res.ok && data.redirect) {
                 window.location.href = data.redirect;
             } else {
-                console.error('OAuth authorization error:', data);
-                UIManager.showModal('Failed to initiate sign-in. Please try again.');
+                UIManager.showModal('Failed to initiate sign-in. Please try again.', 'danger');
             }
-        } catch (error) {
-            console.error('OAuth error:', error);
-            UIManager.showModal('An error occurred during sign-in. Please try again.');
+        } catch (err) {
+            UIManager.showModal(Utils.friendlyError(err), 'danger');
         }
     },
 
-    handleOAuthCallback() {
-        const urlParams = Utils.getUrlParams();
-        const success = urlParams.get('success');
-        const accessToken = urlParams.get('access_token');
-        const refreshToken = urlParams.get('refresh_token');
+    _handleCallback() {
+        const params = Utils.getUrlParams();
+        const success = params.get('success');
+        const access  = params.get('access_token');
+        const refresh = params.get('refresh_token');
 
-        if (!success && !accessToken && !refreshToken) {
-            return; // No OAuth callback to handle
-        }
+        if (!success && !access) return;
 
-        try {
-            if (success === "True") {
-                const tokenResults = TokenManager.setTokens(accessToken, refreshToken);
-                console.log('OAuth tokens saved:', tokenResults);
-
-                UIManager.showModal("Sign-in successful!");
-
-                const redirectUrl = urlParams.get("redirect");
-                if (Utils.isValidString(redirectUrl)) {
-                    setTimeout(() => {
-                        window.location.href = redirectUrl.trim();
-                    }, 1500);
-                }
-            } else {
-                UIManager.showModal(`Sign-in failed: ${success}. Please try again.`);
+        if (success === 'True') {
+            TokenManager.setTokens(access, refresh);
+            UIManager.showModal('Sign-in successful! Redirecting…', 'success');
+            const redirect = params.get('redirect');
+            if (Utils.isValidString(redirect)) {
+                setTimeout(() => { window.location.href = redirect.trim(); }, 1500);
             }
-
-            // Clean URL after handling callback
-            Utils.cleanUrl();
-        } catch (error) {
-            console.error('Error handling OAuth callback:', error);
-            UIManager.showModal('Error processing sign-in. Please try again.');
+        } else {
+            UIManager.showModal('Sign-in failed. Please try again.', 'danger');
         }
-    }
+        Utils.cleanUrl();
+    },
 };
 
-// Main Application Controller
+// ─── UserDataManager ──────────────────────────────────────────────────────────
+
+const UserDataManager = {
+    async load() {
+        try {
+            const data = await HttpClient.request(`${ApiConfig.get()}/users/current`);
+            if (data) this._render(data);
+        } catch (_) {
+            // Non-fatal — user might simply not be logged in
+        }
+    },
+
+    _render(u) {
+        const name    = u.name || u.username || '';
+        const initial = name.charAt(0).toUpperCase();
+
+        const setText = (sel, val) => {
+            const el = document.querySelector(sel);
+            if (el) el.textContent = val;
+        };
+        setText('.name',    name);
+        setText('.initial', initial);
+
+        const profileLink = document.querySelector('#profile_link, .btn.btn-dark.rounded-pill.animate-scale');
+        if (profileLink) {
+            profileLink.setAttribute('href', './settings');
+            const span = profileLink.querySelector('span');
+            if (span) span.textContent = u.username || name;
+        }
+    },
+};
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+
 const App = {
     async init() {
         try {
-            console.log('Initializing application...');
-
-            // Initialize core components
             ApiConfig.init();
-            
-            // Expose global functions for backward compatibility
-            this.exposeGlobalFunctions();
-            
-            // Initialize UI components
+            this._exposeGlobals();
             UIManager.setActiveNavigation();
             FormHandler.init();
             OAuthHandler.init();
 
-            // Load user data if user elements exist
-            if (this.shouldLoadUserData()) {
-                await UserDataManager.loadUserData();
-            }
+            const needsUser = document.querySelector('.name, .initial, #profile_link');
+            if (needsUser) await UserDataManager.load();
 
-            console.log('Application initialized successfully');
-        } catch (error) {
-            console.error('Application initialization failed:', error);
+        } catch (err) {
+            console.error('App init error:', err);
         }
     },
 
-    exposeGlobalFunctions() {
-        // Expose functions to window for backward compatibility
-        window.make_request = HttpClient.makeRequest.bind(HttpClient);
-        window.refresh_token = TokenManager.refreshAccessToken.bind(TokenManager);
-        window.response_modal = UIManager.showModal.bind(UIManager);
-        window.toggleButton = UIManager.toggleButton.bind(UIManager);
-        window.handleFormSubmit = FormHandler.handleFormSubmit.bind(FormHandler);
+    _exposeGlobals() {
+        // Backward-compat window.* bindings
+        window.make_request     = (url, opts)    => HttpClient.request(url, opts);
+        window.refresh_token    = ()             => TokenManager.refresh();
+        window.response_modal   = (msg, type)    => UIManager.showModal(msg, type);
+        window.toggleButton     = (btn, disable) => UIManager.toggleButton(btn, disable);
+        window.handleFormSubmit = (id, endpoint) => FormHandler.submit(id, endpoint);
+        window.Utils            = Utils;
+        window.TokenManager     = TokenManager;
+        window.get_user_home    = ()             => UserDataManager.load();
     },
-
-    shouldLoadUserData() {
-        return document.querySelector('.name') || 
-               document.querySelector('.initial') || 
-               document.querySelector('.btn.btn-dark.rounded-pill.animate-scale span');
-    }
 };
 
-// Initialize application when DOM is ready
-document.addEventListener("DOMContentLoaded", () => {
-    App.init();
-});
+// ─── Bootstrap ────────────────────────────────────────────────────────────────
 
-// Initialize authentication check when DOM is ready
-document.addEventListener('DOMContentLoaded', function () {
-    if (typeof window.authRequired === 'function') {
-        window.authRequired();
-    } else {
-        console.warn('window.authRequired function not found');
-    }
-});
+document.addEventListener('DOMContentLoaded', () => App.init());

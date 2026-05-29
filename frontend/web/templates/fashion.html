@@ -171,6 +171,22 @@ ankaras. {% endblock title %} {% block content %}
   </section>
 #}
 
+  <!-- Quick CTA bar — mobile-first, visible on all screens -->
+  <section class="bg-info-subtle py-3 py-md-4">
+    <div class="container">
+      <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3">
+        <div>
+          <h5 class="mb-1 fw-bold">Ready to get your fabrics worked on?</h5>
+          <p class="mb-0 text-body-secondary fs-sm">Submit your pickup request and we'll come to you.</p>
+        </div>
+        <a class="btn btn-info btn-lg rounded-pill px-4 flex-shrink-0"
+           data-bs-toggle="modal" data-bs-target="#modalServiceRequests" href="#!">
+          <i class="fi-package me-2"></i>Request Pickup
+        </a>
+      </div>
+    </div>
+  </section>
+
 {% include "incs/pages/fashion_with_tabs.html" %}
 </main>
 

@@ -25,3 +25,4 @@ def create_app(config_name=None):
     except Exception as e:
         print(f"Error initializing app: {e}")
         raise
+

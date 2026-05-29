@@ -1,0 +1,749 @@
+{% extends "incs/base.html" %}
+{% block title %} Plans & Billing — Laundry & Fashion {% endblock title %}
+
+{% block content %}
+{% include 'incs/modals/add_plan_modal.html' %}
+{% include 'incs/modals/edit_plan_modal.html' %}
+
+<style>
+/* ─── plans.css ──────────────────────────────────────────────── */
+
+/* Layout */    
+@media (max-width: 991.98px) {
+    .content-wrapper .row > .col-lg-9 { min-width: 0; overflow-x: auto; }
+}
+.content-wrapper .row { flex-wrap: wrap; }
+.content-wrapper .col-lg-9 { min-width: 0; }
+.table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Subscription cards */
+.sub-card {
+    border: 1.5px solid #e9ecef;
+    border-radius: 0.875rem;
+    padding: 1.25rem;
+    background: #fff;
+    height: 100%;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+.sub-card:hover {
+    box-shadow: 0 0.35rem 1.2rem rgba(0,0,0,.09);
+    transform: translateY(-3px);
+}
+.sub-card.sub-active { border-color: #198754; background: #f6fef9; }
+.sub-card .sub-name { font-weight: 600; font-size: 0.9375rem; color: #212529; }
+.sub-card .sub-units { font-size: 2rem; font-weight: 700; line-height: 1.1; color: var(--bs-primary, #0d6efd); }
+.sub-card .sub-meta { font-size: 0.8125rem; color: #6c757d; }
+.sub-card .status-badge {
+    position: absolute; top: 1rem; right: 1rem;
+    font-size: 0.7rem; font-weight: 600; letter-spacing: .03em;
+    padding: 0.2em 0.6em; border-radius: 100px;
+}
+
+/* Plans table */
+.plan-row td { vertical-align: middle; }
+.plan-img-thumb {
+    width: 56px; height: 56px; object-fit: cover;
+    border-radius: 0.5rem; background: #f3f4f6;
+}
+
+/* Payment overlay */
+#payment-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.65);
+    z-index: 10000;
+    display: flex; align-items: center; justify-content: center;
+}
+#payment-overlay-card {
+    background: #fff;
+    border-radius: 1rem;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    max-width: 320px;
+    width: 90%;
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.2);
+}
+#payment-overlay-card .overlay-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+#payment-overlay-card .overlay-msg  { font-size: 0.9375rem; font-weight: 500; color: #212529; }
+#payment-overlay-card .overlay-sub  { font-size: 0.8125rem; color: #6c757d; margin-top: 0.35rem; }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 3.5rem 1rem; }
+.empty-icon  { font-size: 2.5rem; color: #dee2e6; margin-bottom: 0.75rem; }
+</style>
+
+<main class="content-wrapper">
+    <div class="container pt-4 pt-lg-5 pb-5">
+        <div class="row pt-sm-2 pt-md-3 pt-lg-0 pb-2 pb-sm-3 pb-md-4 pb-lg-5">
+            {% include 'incs/user_pages/sidebar.html' %}
+
+            <!-- Plans content -->
+            <div class="col-lg-9 pt-2 pt-xl-3">
+
+                <!-- Page header -->
+                <div class="d-flex align-items-center justify-content-between gap-3 pb-3 mb-2 mb-md-3 flex-wrap">
+                    <h1 class="h2 mb-0">Plans &amp; Billing</h1>
+                    <span id="admin-badge" class="badge rounded-pill d-none"></span>
+                </div>
+
+                <!-- My Subscriptions -->
+                <div id="my-plans-section" class="border rounded-4 py-4 px-3 px-sm-4 mb-4">
+                    <div class="d-flex align-items-center justify-content-between pb-1 mb-3 flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <h2 class="h4 mb-0">My Subscriptions</h2>
+                            <span id="sub-count" class="badge bg-info rounded-pill">0</span>
+                        </div>
+                    </div>
+                    <div id="subs-container" class="row g-3">
+                        <div class="col-12 text-center py-4 text-muted">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            Loading your subscriptions…
+                        </div>
+                    </div>
+                    <nav id="subs-pagination" class="d-flex justify-content-center mt-3"></nav>
+                </div>
+
+                <!-- Available Plans / Recharge -->
+                <div id="plans-section" class="border rounded-4 py-4 px-3 px-sm-4 mb-4">
+                    <div class="d-flex align-items-center justify-content-between pb-1 mb-3 flex-wrap gap-2">
+                        <h2 class="h4 mb-0">Available Plans</h2>
+                        <button id="createPlanBtn" class="btn btn-sm btn-outline-dark rounded-pill d-none"
+                            data-bs-toggle="modal" data-bs-target="#newPlanModal">
+                            <i class="fi-plus fs-sm me-1"></i>Add Plan
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle fs-sm mb-0 table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-0"><span class="fw-normal text-body">Plan</span></th>
+                                    <th class="d-none d-md-table-cell"><span class="fw-normal text-body">Amount</span></th>
+                                    <th class="text-end d-none d-sm-table-cell"><span class="fw-normal text-body">Volume</span></th>
+                                    <th class="text-end"><span class="fw-normal text-body">Action</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="plans-container">
+                                <tr><td colspan="4" class="text-center py-4">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                    Loading plans…
+                                </td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+/* ─── plans.js — Subscriptions, Plans, Paystack Popup ───────────── */
+(function () {
+    "use strict";
+
+    /* ── Config ─────────────────────────────────────────────────── */
+    function getApiUrl() {
+        return window.location.hostname === 'simplylovely.ng'
+            ? 'https://api.simplylovely.ng/api'
+            : 'http://localhost:5001/api';
+    }
+    const API_BASE  = getApiUrl();
+    const TOKEN_KEY = 'access_token';
+
+    const CFG = {
+        CURRENCY: { style: 'currency', currency: 'NGN', minimumFractionDigits: 2 },
+        SUBS_PER_PAGE: 6,
+    };
+
+    /* ── Utils ──────────────────────────────────────────────────── */
+    const Utils = {
+        el: id  => document.getElementById(id),
+        qs: sel => document.querySelector(sel),
+        getToken: () => localStorage.getItem(TOKEN_KEY),
+        authHeaders() {
+            const t = this.getToken();
+            return t ? { Authorization: `Bearer ${t}` } : {};
+        },
+        decodeJwt(token) {
+            try {
+                if (!token) return null;
+                const p = token.split('.');
+                return p.length === 3 ? JSON.parse(atob(p[1])) : null;
+            } catch (_) { return null; }
+        },
+        isAdmin() {
+            const p = this.decodeJwt(this.getToken());
+            return Array.isArray(p?.roles) && p.roles.some(r => r === 'admin' || r === 'dev');
+        },
+        userEmail() {
+            const p = this.decodeJwt(this.getToken());
+            return p?.email || p?.sub || null;
+        },
+        currency(n) {
+            if (typeof n !== 'number' || isNaN(n)) return 'N/A';
+            return n.toLocaleString('en-NG', CFG.CURRENCY);
+        },
+        formatDate(d) {
+            if (!d) return 'N/A';
+            try { return new Date(d).toLocaleDateString('en-NG', { year:'numeric', month:'short', day:'numeric'}); }
+            catch(_) { return d; }
+        },
+        escape(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+        },
+        toast(msg, type = 'info') {
+            if (typeof window.response_modal === 'function') {
+                window.response_modal(msg, type); return;
+            }
+            let c = document.getElementById('_plans_toasts');
+            if (!c) {
+                c = document.createElement('div');
+                c.id = '_plans_toasts';
+                c.className = 'toast-container position-fixed top-0 end-0 p-3';
+                c.style.zIndex = '9999';
+                document.body.appendChild(c);
+            }
+            const bg = type === 'success' ? 'bg-success' :
+                       type === 'danger'  ? 'bg-danger'  :
+                       type === 'warning' ? 'bg-warning text-dark' : 'bg-info';
+            const id = 'pt_' + Date.now();
+            c.insertAdjacentHTML('beforeend', `
+                <div id="${id}" class="toast align-items-center ${bg} text-white border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${this.escape(msg)}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>`);
+            const el = document.getElementById(id);
+            new bootstrap.Toast(el, { delay: 6000 }).show();
+            el.addEventListener('hidden.bs.toast', () => el.remove());
+        }
+    };
+
+    /* ── Pagination ─────────────────────────────────────────────── */
+    const Pagination = {
+        render(container, cur, total, onPage) {
+            if (!container || total <= 1) { if (container) container.innerHTML = ''; return; }
+            const max = 5;
+            let s = Math.max(1, cur - Math.floor(max/2));
+            let e = Math.min(total, s + max - 1);
+            if (e - s < max - 1) s = Math.max(1, e - max + 1);
+
+            let h = '<ul class="pagination pagination-sm mb-0">';
+            h += `<li class="page-item ${cur===1?'disabled':''}"><a class="page-link" href="#" data-page="${cur-1}">‹</a></li>`;
+            if (s > 1) h += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>${s>2?'<li class="page-item disabled"><span class="page-link">…</span></li>':''}`;
+            for (let i = s; i <= e; i++) h += `<li class="page-item ${i===cur?'active':''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+            if (e < total) h += `${e<total-1?'<li class="page-item disabled"><span class="page-link">…</span></li>':''}<li class="page-item"><a class="page-link" href="#" data-page="${total}">${total}</a></li>`;
+            h += `<li class="page-item ${cur===total?'disabled':''}"><a class="page-link" href="#" data-page="${cur+1}">›</a></li></ul>`;
+            container.innerHTML = h;
+
+            container.querySelectorAll('[data-page]').forEach(a => {
+                a.addEventListener('click', e => {
+                    e.preventDefault();
+                    const p = parseInt(a.dataset.page);
+                    if (p && p !== cur && p >= 1 && p <= total) onPage(p);
+                });
+            });
+        }
+    };
+
+    /* ── Subscriptions Manager ──────────────────────────────────── */
+    const SubsManager = {
+        container:   null,
+        paginationEl: null,
+        curPage:  1,
+        perPage:  CFG.SUBS_PER_PAGE,
+        totPages: 1,
+        loading:  false,
+
+        init() {
+            this.container    = Utils.el('subs-container');
+            this.paginationEl = Utils.el('subs-pagination');
+            this.fetch(1);
+        },
+
+        async fetch(page = 1) {
+            if (this.loading) return;
+            this.loading = true;
+            this.curPage = page;
+            if (this.container) this.container.innerHTML =
+                `<div class="col-12 text-center py-4 text-muted">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>Loading…</div>`;
+            try {
+                const res = await fetch(
+                    `${API_BASE}/user/subscriptions/detailed?page=${page}&per_page=${this.perPage}`,
+                    { headers: Utils.authHeaders(), cache: 'no-store' }
+                );
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const json = await res.json();
+                const data = json.data || json;
+                console.log('Fetched subscriptions:', data);
+                const subs = data.subscriptions || [];
+                const meta = data.pagination    || {};
+                this.totPages = meta.total_pages || 1;
+
+                const countEl = Utils.el('sub-count');
+                if (countEl) countEl.textContent = meta.total || subs.length;
+
+                this.render(subs);
+                
+                Pagination.render(this.paginationEl, this.curPage, this.totPages, p => this.fetch(p));
+            } catch (err) {
+                console.error('Subs fetch error:', err);
+                this._renderEmpty('Unable to load subscriptions. Please try again.');
+            } finally { this.loading = false; }
+        },
+
+        render(subs) {
+            if (!this.container) return;
+            this.container.innerHTML = '';
+            if (!subs?.length) { this._renderEmpty(); return; }
+            subs.forEach(sub => {
+                const plan     = sub.plan || {};
+                const isActive = sub.status === 'active';
+                const col      = document.createElement('div');
+                col.className  = 'col-sm-6 col-lg-4';
+                col.innerHTML  = `
+                    <div class="sub-card ${isActive ? 'sub-active' : ''}">
+                        <span class="status-badge ${isActive ? 'bg-success text-white' : 'bg-secondary-subtle text-secondary'}">
+                            ${Utils.escape(sub.status || 'inactive')}
+                        </span>
+                        <div class="sub-name mb-1">${Utils.escape(plan.name || 'Unnamed Plan')}</div>
+                        <div class="sub-meta mb-3">${Utils.escape(plan.description || '')}</div>
+                        <div class="d-flex align-items-end justify-content-between">
+                            <div>
+                                <div class="sub-units">${sub.total_units || 0}</div>
+                                <div class="sub-meta">units remaining</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-semibold text-dark">${Utils.currency(plan.amount || 0)}</div>
+                                <div class="sub-meta">${plan.units || 0} total units</div>
+                            </div>
+                        </div>
+                        <div class="pt-2 mt-2 border-top">
+                            <small class="text-muted">Since: ${Utils.formatDate(sub.created_at)}</small>
+                        </div>
+                    </div>`;
+                this.container.appendChild(col);
+            });
+        },
+
+        _renderEmpty(msg) {
+            if (!this.container) return;
+            this.container.innerHTML = `
+                <div class="col-12 empty-state">
+                    <div class="empty-icon">📋</div>
+                    <p class="text-muted mb-1 mt-2">${msg || 'No active subscriptions yet.'}</p>
+                    <small class="text-muted">Subscribe to a plan below to start tracking your volume.</small>
+                </div>`;
+        }
+    };
+
+    /* ── Plans Manager ──────────────────────────────────────────── */
+    const PlansManager = {
+        container:    null,
+        addModal:     null,
+        editModal:    null,
+
+        init() {
+            this.container = Utils.el('plans-container');
+            if (!this.container) return;
+            this._initModals();
+            this._toggleAdminFeatures();
+            this.fetch();
+        },
+
+        _initModals() {
+            const addEl = document.getElementById('newPlanModal');
+            if (addEl) {
+                this.addModal = bootstrap.Modal.getOrCreateInstance(addEl);
+                document.getElementById('addPlanForm')?.addEventListener('submit', e => {
+                    e.preventDefault(); this._createPlan();
+                });
+            }
+            const editEl = document.getElementById('editPlanModal');
+            if (editEl) {
+                this.editModal = bootstrap.Modal.getOrCreateInstance(editEl);
+                document.getElementById('editPlanForm')?.addEventListener('submit', e => {
+                    e.preventDefault(); this._updatePlan();
+                });
+            }
+        },
+
+        _toggleAdminFeatures() {
+            const isAdmin = Utils.isAdmin();
+            const createBtn = Utils.el('createPlanBtn');
+            if (createBtn) createBtn.classList.toggle('d-none', !isAdmin);
+            const badge = Utils.el('admin-badge');
+            if (badge && isAdmin) {
+                badge.textContent = 'Admin';
+                badge.className = 'badge rounded-pill bg-danger';
+                badge.classList.remove('d-none');
+            }
+        },
+
+        async fetch() {
+            if (!this.container) return;
+            this.container.innerHTML = `<tr><td colspan="4" class="text-center py-4">
+                <div class="spinner-border spinner-border-sm me-2"></div>Loading plans…</td></tr>`;
+            try {
+                const res = await fetch(`${API_BASE}/plans`, {
+                    headers: Utils.authHeaders(), cache: 'no-store'
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const json = await res.json();
+                const plans = json.data?.plans || json.data || json.plans || [];
+                this.container.innerHTML = '';
+                if (!plans.length) {
+                    this.container.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">No plans available yet.</td></tr>';
+                    return;
+                }
+                plans.forEach(plan => this.container.insertAdjacentHTML('beforeend', this._row(plan)));
+                this._bindEvents();
+            } catch (err) {
+                this.container.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-danger">
+                    Error loading plans: ${Utils.escape(err.message)}</td></tr>`;
+            }
+        },
+
+        _row(plan) {
+            const isAdmin = Utils.isAdmin();
+            return `
+                <tr class="plan-row" data-plan-id="${plan.id}">
+                    <td class="py-3 ps-0">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="flex-shrink-0 rounded-2 overflow-hidden bg-light" style="width:56px;height:56px">
+                                <img src="static/img/account/products/03.jpg" class="w-100 h-100 object-fit-cover"
+                                    alt="${Utils.escape(plan.name)}" onerror="this.style.display='none'">
+                            </div>
+                            <div>
+                                <div class="fw-semibold fs-sm">${Utils.escape(plan.name || 'Unnamed')}</div>
+                                <div class="fs-xs text-muted">${Utils.escape(plan.description || '')}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="d-none d-md-table-cell py-3">
+                        <span class="badge fs-xs text-info bg-info-subtle rounded-pill px-3">
+                            ${Utils.currency(plan.amount || 0)}
+                        </span>
+                    </td>
+                    <td class="text-end d-none d-sm-table-cell py-3">
+                        <span class="fw-medium">${Utils.escape(String(plan.units || 'N/A'))}</span>
+                        <span class="text-muted fs-xs ms-1">units</span>
+                    </td>
+                    <td class="text-end py-3">
+                        <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
+                            ${isAdmin ? `
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-info edit-plan-btn rounded-start" data-plan-id="${plan.id}">
+                                        <i class="fi-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger delete-plan-btn rounded-end" data-plan-id="${plan.id}">
+                                        <i class="fi-trash"></i>
+                                    </button>
+                                </div>` : ''}
+                            <button class="btn btn-sm btn-dark rounded-pill subscribe-btn px-3"
+                                data-plan-id="${plan.id}" data-plan-name="${Utils.escape(plan.name)}"
+                                data-plan-amount="${plan.amount}">
+                                Recharge
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+        },
+
+        _bindEvents() {
+            if (!this.container) return;
+            this.container.addEventListener('click', e => {
+                const edit    = e.target.closest('.edit-plan-btn');
+                const del     = e.target.closest('.delete-plan-btn');
+                const sub     = e.target.closest('.subscribe-btn');
+                if (edit) { e.preventDefault(); this._openEdit(edit.dataset.planId); }
+                if (del)  { e.preventDefault(); this._confirmDelete(del.dataset.planId); }
+                if (sub)  { e.preventDefault(); PaymentHandler.subscribe(sub.dataset.planId, sub); }
+            });
+        },
+
+        async _openEdit(planId) {
+            try {
+                const res = await fetch(`${API_BASE}/plans/${planId}`, {
+                    headers: Utils.authHeaders(), cache: 'no-store'
+                });
+                const json = await res.json();
+                const plan = json.data || json;
+                document.getElementById('editPlanId').value          = plan.id;
+                document.getElementById('editPlanName').value        = plan.name || '';
+                document.getElementById('editPlanDescription').value = plan.description || '';
+                document.getElementById('editPlanPrice').value       = plan.amount || '';
+                document.getElementById('editPlanVolume').value      = plan.units || '';
+                this.editModal?.show();
+            } catch (err) { Utils.toast(`Error: ${err.message}`, 'danger'); }
+        },
+
+        _confirmDelete(planId) {
+            if (!confirm('Delete this plan? This cannot be undone.')) return;
+            this._deletePlan(planId);
+        },
+
+        async _createPlan() {
+            try {
+                const data = {
+                    name:        document.getElementById('planName').value,
+                    description: document.getElementById('planDescription').value,
+                    amount:      parseFloat(document.getElementById('planPrice').value),
+                    units:       parseInt(document.getElementById('planVolume').value)
+                };
+                const res = await fetch(`${API_BASE}/plans`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...Utils.authHeaders() },
+                    body: JSON.stringify(data)
+                });
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.error || json.message || 'Failed');
+                this.addModal?.hide();
+                document.getElementById('addPlanForm')?.reset();
+                await this.fetch();
+                Utils.toast('Plan created!', 'success');
+            } catch (err) { Utils.toast(`Error: ${err.message}`, 'danger'); }
+        },
+
+        async _updatePlan() {
+            try {
+                const planId = document.getElementById('editPlanId').value;
+                const data = {
+                    name:        document.getElementById('editPlanName').value,
+                    description: document.getElementById('editPlanDescription').value,
+                    amount:      parseFloat(document.getElementById('editPlanPrice').value),
+                    units:       parseInt(document.getElementById('editPlanVolume').value)
+                };
+                const res = await fetch(`${API_BASE}/plans/${planId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', ...Utils.authHeaders() },
+                    body: JSON.stringify(data)
+                });
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.error || json.message || 'Failed');
+                this.editModal?.hide();
+                await this.fetch();
+                Utils.toast('Plan updated!', 'success');
+            } catch (err) { Utils.toast(`Error: ${err.message}`, 'danger'); }
+        },
+
+        async _deletePlan(planId) {
+            try {
+                const res = await fetch(`${API_BASE}/plans/${planId}`, {
+                    method: 'DELETE', headers: Utils.authHeaders()
+                });
+                const json = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(json.error || 'Failed');
+                document.querySelector(`[data-plan-id="${planId}"]`)?.closest('tr')?.remove();
+                Utils.toast('Plan deleted.', 'success');
+            } catch (err) { Utils.toast(`Error: ${err.message}`, 'danger'); }
+        }
+    };
+
+    /* ── Payment Handler (Popup-first, redirect fallback) ────────── */
+    const PaymentHandler = {
+        _activeRef: null,
+
+        /* ── Load Paystack InlineJS dynamically ───────────────────── */
+        async _loadPaystackScript() {
+            return new Promise((resolve, reject) => {
+                if (window.PaystackPop) { resolve(window.PaystackPop); return; }
+                if (document.getElementById('paystack-inline-js')) {
+                    const check = setInterval(() => {
+                        if (window.PaystackPop) { clearInterval(check); resolve(window.PaystackPop); }
+                    }, 100);
+                    setTimeout(() => { clearInterval(check); reject(new Error('Paystack script load timeout')); }, 10000);
+                    return;
+                }
+                const script = document.createElement('script');
+                script.id = 'paystack-inline-js';
+                script.src = 'https://js.paystack.co/v2/inline.js';
+                script.async = true;
+                script.onload = () => resolve(window.PaystackPop);
+                script.onerror = () => reject(new Error('Failed to load Paystack InlineJS'));
+                document.head.appendChild(script);
+            });
+        },
+        
+        async subscribe(planId, button) {
+    if (!planId) return;
+    this._setLoading(button, true);
+    try {
+        const token = Utils.getToken();
+        if (!token) throw new Error('Please sign in first.');
+        const email = Utils.userEmail();
+        if (!email) throw new Error('Could not read user email from token.');
+
+        /* 1. Initialize payment on backend */
+        const initRes = await fetch(`${API_BASE}/payment/${planId}/paystack`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'Client-Callback-Url': window.location.href
+            },
+            body: JSON.stringify({ email })
+        });
+        const initJson = await initRes.json();
+        
+        if (!initRes.ok || !initJson.success) {
+            throw new Error(initJson.error || initJson.message || `Init failed (${initRes.status})`);
+        }
+
+        /* ── CORRECTION ─────────────────────────────── */
+        // Support both: {data: {access_code...}} and flat {access_code...}
+        const paymentData = initJson.data || initJson;
+        // Support both: backend "redirect" and standard "authorization_url"
+        const accessCode  = paymentData.access_code;
+        const reference   = paymentData.reference;
+        const redirectUrl = paymentData.redirect || paymentData.authorization_url;
+        /* ────────────────────────────────────────────── */
+
+        console.log('Payment init data:', paymentData);
+
+        if (!accessCode && !redirectUrl) {
+            throw new Error('Payment URL or access code not received from server.');
+        }
+
+        this._activeRef = reference;
+        this._setLoading(button, false);
+
+        /* 2. Try inline popup first, fallback to redirect */
+        if (accessCode) {
+            try {
+                await this._payWithInline(accessCode, reference);
+                return;
+            } catch (inlineErr) {
+                console.warn('Inline payment failed, falling back to redirect:', inlineErr);
+            }
+        }
+
+        /* 3. Fallback: redirect to Paystack checkout */
+        if (redirectUrl) {
+            Utils.toast('Redirecting to secure checkout…', 'info');
+            setTimeout(() => { window.location.href = redirectUrl; }, 400);
+        } else {
+            throw new Error('No payment method available.');
+        }
+
+    } catch (err) {
+        console.error('Payment error:', err);
+        this._setLoading(button, false);
+        Utils.toast(`Payment error: ${err.message}`, 'danger');
+    }
+},
+        async _payWithInline(accessCode, reference) {
+            const PaystackPop = await this._loadPaystackScript();
+            const popup = new PaystackPop();
+
+            return new Promise((resolve, reject) => {
+                let resolved = false;
+
+                const tx = popup.resumeTransaction(accessCode, {
+                    onSuccess: (response) => {
+                        if (resolved) return;
+                        resolved = true;
+                        console.log('[Paystack] Payment success:', response);
+                        this._verify(reference).then(resolve).catch(reject);
+                    },
+                    onCancel: () => {
+                        if (resolved) return;
+                        resolved = true;
+                        console.log('[Paystack] Payment cancelled by user');
+                        Utils.toast('Payment was cancelled.', 'warning');
+                        resolve();
+                    },
+                    onError: (error) => {
+                        if (resolved) return;
+                        resolved = true;
+                        console.error('[Paystack] Payment error:', error);
+                        reject(new Error(error?.message || 'Payment failed'));
+                    },
+                    onLoad: () => {
+                        console.log('[Paystack] Checkout loaded');
+                    }
+                });
+
+                setTimeout(() => {
+                    if (!resolved) {
+                        resolved = true;
+                        try { popup.cancelTransaction(tx); } catch (_) {}
+                        reject(new Error('Payment timed out'));
+                    }
+                }, 600000);
+            });
+        },
+
+        async _verify(reference) {
+            if (!reference) {
+                Utils.toast('Missing transaction reference for verification.', 'danger');
+                return;
+            }
+            Utils.toast('Verifying payment, please wait…', 'info');
+            try {
+                const res = await fetch(
+                    `${API_BASE}/payment/callback/paystack?reference=${encodeURIComponent(reference)}`,
+                    { headers: Utils.authHeaders(), cache: 'no-store' }
+                );
+                const json = await res.json();
+                const ok = json.success || json.data?.success;
+                const msg = ok
+                    ? (json.message || json.data?.message || 'Payment successful! Subscription updated.')
+                    : (json.error || json.data?.error || 'Payment verification failed.');
+                Utils.toast(msg, ok ? 'success' : 'danger');
+                if (ok) {
+                    await SubsManager.fetch(1);
+                    await PlansManager.fetch();
+                    const clean = window.location.origin + window.location.pathname;
+                    window.history.replaceState({}, '', clean);
+                }
+            } catch (err) {
+                console.error('Verify error:', err);
+                Utils.toast('Could not verify payment. Please refresh or contact support.', 'warning');
+            }
+        },
+
+        _setLoading(btn, isLoading) {
+            if (!btn) return;
+            btn.disabled = isLoading;
+            btn.innerHTML = isLoading
+                ? '<span class="spinner-border spinner-border-sm" role="status"></span> Processing…'
+                : 'Recharge';
+        }
+    };
+
+    /* ── URL Handler (handle Paystack redirect callback on page load) */
+    const URLHandler = {
+        async handle() {
+            const params = Object.fromEntries(new URLSearchParams(window.location.search));
+            const ref = params.reference || params.trxref;
+            if (!ref) return;
+            window.history.replaceState({}, '', window.location.origin + window.location.pathname);
+            Utils.toast('Verifying transaction, please wait…', 'info');
+            await PaymentHandler._verify(ref);
+        }
+    };
+    
+
+    /* ── Bootstrap ──────────────────────────────────────────────── */
+    async function init() {
+        SubsManager.init();
+        PlansManager.init();
+        await URLHandler.handle();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+{% endblock content %}

@@ -27,13 +27,22 @@ class FashionProductsAPI {
      * Initialize the application
      */
     async init() {
+        // Wait for DOM to be ready before initializing
+        await new Promise(resolve => {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', resolve, { once: true });
+            } else {
+                resolve();
+            }
+        });
+
         try {
             this.setupEventListeners();
             await this.loadInitialData();
-            this.renderInitialTabs();
+            await this.renderInitialTabs();
         } catch (error) {
             console.error('Initialization failed:', error);
-            this.showError('Failed to initialize application');
+            // this.showError('Failed to initialize application');
         }
     }
 
@@ -640,6 +649,7 @@ class FashionProductsAPI {
     /**
      * Get product image with fallbacks
      */
+
     getProductImage(product) {
         return product.image_urls?.[0] || 
                product.images?.[0]?.file_path || 
@@ -1032,7 +1042,9 @@ createProductModalHTML(product) {
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header border-0 pb-0">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <!-- Make the close button simulate a backdrop click (falls back to hiding the modal) -->
+                    <button type="button" class="btn-close" onclick="window.fashionAPI.closeProductModal()" aria-label="Close"></button>
+                    
                 </div>
                 <div class="modal-body px-4 pt-0">
                     <div class="row g-4">
@@ -1160,6 +1172,36 @@ createProductModalHTML(product) {
     `;
 }
 
+closeProductModal() {
+    const modal = document.getElementById('productModal');
+    if (modal) {
+        const bsModal = bootstrap.Modal.getInstance(modal);
+        if (bsModal) {
+            bsModal.hide();
+        } else {
+            // If no Bootstrap instance exists, manually remove
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+            document.body.classList.remove('modal-open');
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+        }
+    }
+}
+
+/**
+ * Dismiss a Bootstrap modal by its ID
+ * @param {string} id - The ID of the modal to dismiss
+ */
+dismissModalById(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    const instance = bootstrap.Modal.getInstance(modal) || new bootstrap.Modal(modal);
+    instance.hide();
+}
+
 /**
  * Get all product images with fallbacks
  * @param {Object} product - Product data
@@ -1184,6 +1226,7 @@ getProductImages(product) {
     
     return images.filter(Boolean);
 }
+
 
 // /**
 //  * Create image gallery HTML

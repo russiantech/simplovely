@@ -214,6 +214,8 @@ def signup():
 @jwt_required(optional=True)
 def signin():
     try:
+        print("signin request data ->", request.get_json(), request.headers)
+        
         # Check if the request content type is application/json
         if request.content_type != 'application/json' or not request.json:
             return error_response("Content-Type must be application/json & JSON payload expected.")
@@ -270,10 +272,13 @@ def signin():
             return response
 
         # If authentication failed
-        return error_response("Invalid username or password.", status_code=401)
+        # return error_response("Invalid username or password.", status_code=401)
+        # If authentication failed
+        return error_response("Invalid username or password.", status_code=403)
 
     except Exception as e:
         # Log the exception for debugging
+        print(traceback.print_exc())
         traceback.print_exc()
         return error_response(f"Error signing in: {e}", status_code=400)
 

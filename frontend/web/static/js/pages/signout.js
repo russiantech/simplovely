@@ -1,35 +1,33 @@
+// signout.js
+document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('signout-button');
+    if (!btn) return;
 
-document.addEventListener("DOMContentLoaded", () => {
+    btn.addEventListener('click', async function () {
+        window.toggleButton(this, true);
+        try {
+            const data = await window.make_request(`${window.apiUrl}/users/signout`, {
+                method: 'POST',
+            });
 
-        document.getElementById('signout-button').addEventListener('click', async function() {
-            window.toggleButton(this, true, true); // Disable button
-            try {
-                const response = await window.make_request(`${window.apiUrl}/users/signout`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
+            // Clear local tokens regardless of API response
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
 
-                const data = await response;
-
-                if (response.success) {
-                    // Logout successful, clear tokens from local storage
-                    localStorage.removeItem('access_token'); 
-                    localStorage.removeItem('refresh_token'); 
-                    window.response_modal(`Signing-out: ${data.message}`);
-                    window.location.href = data.redirect && data.redirect;        
-                } else {
-                    window.response_modal(`Signing-out: ${response.error}`);
-                    window.location.href = data.redirect && data.redirect;
-                }
-
-            } catch (error) {
-                console.error('During signout:', error);
-                window.response_modal(`Signing-out - ${error}`);
-            } finally {
-                window.toggleButton(this, false, false); // Re-enable button after request completes
+            if (data && data.success) {
+                window.response_modal(data.message || 'Signed out successfully.', 'success');
+                setTimeout(() => {
+                    window.location.href = data.redirect || '/signin';
+                }, 1200);
+            } else {
+                // Still redirect even if the API call wasn't clean
+                window.location.href = '/signin';
             }
-        });
-        });
-        
+        } catch (_) {
+            // Sign out locally even if the API call fails
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            window.location.href = '/signin';
+        }
+    });
+});

@@ -168,7 +168,7 @@ class User(db.Model):
             else:
                 token = None
                 
-                            # Inspect and print token contents
+            # Inspect and print token contents
             decoded_token = self.check_token(token)  # Disable signature verification
             # print(f"Generated {token_type} token: {decoded_token}")
             # logging.info(f"Generated {token_type} token: {decoded_token}")

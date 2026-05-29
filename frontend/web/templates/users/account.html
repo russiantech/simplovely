@@ -1,163 +1,838 @@
 {% extends "incs/base.html" %}
-{% block title %} Account - Laundry And Fashion {% endblock title %}
+{% block title %} Dashboard — Laundry & Fashion {% endblock title %}
 
 {% block content %}
 {% include 'incs/modals/add_plan_modal.html' %}
 {% include 'incs/modals/edit_plan_modal.html' %}
-    <!-- Page content -->
-    <main class="content-wrapper">
-        <div class="container pt-4 pt-lg-5 pb-5">
-            <div class="row pt-sm-2 pt-md-3 pt-lg-0 pb-2 pb-sm-3 pb-md-4 pb-lg-5">
-                <!-- Sidebar navigation that turns into offcanvas on screens < 992px wide (lg breakpoint) -->
-                
-                {% include 'incs/user_pages/sidebar.html' %}
 
-                <!-- Dashboard content -->
-                <div class="col-lg-9 pt-2 pt-xl-3">
-                    <!-- Header -->
-                    <div class="d-flex align-items-center justify-content-between gap-3 pb-3 mb-2 mb-md-3">
-                        <h1 class="h2 mb-0">Dashboard</h1>
+<style>
+/* ─── account.css ────────────────────────────────────────────── */
+
+/* Layout */
+@media (max-width: 991.98px) {
+    .content-wrapper .row > .col-lg-9 { min-width: 0; overflow-x: auto; }
+}
+.content-wrapper .row { flex-wrap: wrap; }
+.content-wrapper .col-lg-9 { min-width: 0; }
+.table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Stat card */
+.stat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 1rem;
+}
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,.1);
+}
+
+/* Usage progress */
+.progress-bar { transition: width 0.7s cubic-bezier(.4,0,.2,1); }
+
+/* No-data states */
+.empty-state { text-align: center; padding: 3rem 1rem; }
+.empty-state .empty-icon { font-size: 2.5rem; color: #dee2e6; margin-bottom: 0.75rem; }
+
+/* Usage table sticky header */
+.usage-table-wrap { max-height: 420px; overflow-y: auto; }
+.usage-table-wrap thead th {
+    position: sticky; top: 0;
+    background: #fff; z-index: 2;
+    white-space: nowrap;
+}
+
+/* Admin toolbar */
+.admin-toolbar { gap: 0.5rem; flex-wrap: wrap; }
+#user-search-input::placeholder { font-size: 0.8rem; }
+
+/* Low units warning */
+.units-low { color: var(--bs-danger) !important; }
+
+/* Service summary cards */
+.service-card {
+    border: 1px solid #e9ecef;
+    border-radius: 0.875rem;
+    padding: 1.25rem;
+    height: 100%;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.service-card:hover {
+    box-shadow: 0 0.25rem 1rem rgba(0,0,0,.07);
+    transform: translateY(-2px);
+}
+</style>
+
+<main class="content-wrapper">
+    <div class="container pt-4 pt-lg-5 pb-5">
+        <div class="row pt-sm-2 pt-md-3 pt-lg-0 pb-2 pb-sm-3 pb-md-4 pb-lg-5">
+            {% include 'incs/user_pages/sidebar.html' %}
+
+            <!-- Dashboard content -->
+            <div class="col-lg-9 pt-2 pt-xl-3">
+
+                <!-- Page header -->
+                <div class="d-flex align-items-center justify-content-between gap-3 pb-3 mb-2 mb-md-3 flex-wrap">
+                    <h1 class="h2 mb-0">Dashboard</h1>
+                    <div class="d-flex align-items-center gap-2">
+                        <span id="user-role-badge" class="badge rounded-pill"></span>
+                        <a href="./plans" class="btn btn-sm btn-outline-dark rounded-pill">
+                            <i class="fi-plus fs-sm me-1"></i>Recharge
+                        </a>
                     </div>
-                    
-                    <!-- Stats -->
-                    <div class="row g-3 g-xl-4 pb-3 mb-2 mb-sm-3">
-                        <div class="col-md-12 col-sm-12" id="usage-stats">
-                            <div class="h-100 bg-warning-subtle rounded-4 text-center p-4">
-                                <h2 class="fs-sm pb-2 mb-1">Volume & Usage</h2>
-                                <div class="h2 pb-1 mb-2" id="units-used">Loading...</div>
-                                <!-- Added date display -->
-                                <div class="fs-xs text-muted mb-2">As of: <span id="usage-date"></span></div>
-                                <div class="progress mb-3" role="progressbar" aria-valuemin="0" aria-valuemax="100">
-                                    <div class="progress-bar bg-dark fw-medium rounded-pill" id="usage-progress" style="width: 0%">0%</div>
-                                </div>
-                                <button id="units-left" class="badge border-0 fs-xs text-info bg-info-subtle rounded-pill">Track-usage</button>
+                </div>
+
+                <!-- Volume & Usage stat card -->
+                <div class="row g-3 g-xl-4 pb-3 mb-2 mb-sm-3">
+                    <div class="col-12" id="usage-stats">
+                        <div class="stat-card bg-warning-subtle p-4 text-center">
+                            <h2 class="fs-sm text-muted pb-1 mb-1">Volume &amp; Usage</h2>
+                            <div class="h2 pb-1 mb-2" id="units-used">Loading…</div>
+                            <div class="fs-xs text-muted mb-3">
+                                As of: <span id="usage-date"></span>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- User Management Section (Requirement 3) -->
-                    {% if user.role == 'admin' %}
-                    <div class="border rounded-4 py-4 px-3 px-sm-4 mb-4">
-                        <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3">
-                            <h1 class="h2 mb-0">User Management</h1>
-                        </div>
-                        
-                        <div class="table-responsive">
-                            <table class="table align-middle fs-sm mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Subscription Status</th>
-                                        <th>Plan</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="users-container">
-                                    <!-- Users will be populated here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- Plans Management Section -->
-                    <div class="border rounded-4 py-4 px-3 px-sm-4">
-                        <div>
-                            <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3">
-                                <div class="d-flex align-items-center gap-3 me-4">
-                                  <h1 class="h2 mb-1 mb-sm-2">Services Plans</h1>
-                                </div>
-                                
-                                <!-- Conditionally show Add Plan button -->
-                                {% if user.role == 'admin' %}
-                                <button id="createPlanBtn" class="nav-link animate-underline fs-base px-0" href="#newPlanModal" data-bs-toggle="modal">
-                                  <i class="ci-plus fs-lg ms-n1 me-2"></i>
-                                  <span class="animate-target badge text-bg-info rounded-pill">Add plans</span>
-                                </button>
-                                {% endif %}
+                            <div class="progress mb-3" role="progressbar" style="height: 8px;" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar bg-dark fw-medium rounded-pill"
+                                    id="usage-progress" style="width: 0%">0%</div>
                             </div>
-
-                            <table class="table align-middle fs-sm mb-0 table-hover">
-                                <thead>
-                                    <tr>
-                                        <th class="ps-0" scope="col">
-                                            <span class="fw-normal text-body">Plans</span>
-                                        </th>
-                                        <th class="d-none d-md-table-cell" scope="col">
-                                            <span class="fw-normal text-body">Amount</span>
-                                        </th>
-                                        <th class="text-end d-none d-sm-table-cell" scope="col">
-                                            <span class="fw-normal text-body">Volume</span>
-                                        </th>
-                                        <th class="text-end" scope="col">
-                                            <span class="fw-normal text-body">Action</span>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody class="product-list plans-container">
-                                    <!-- Plans will be populated here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Service Summary -->
-                    <div class="card border-0 shadow mt-4">
-                        <div class="card-body">
-                            <h5 class="card-title mb-4">Service Summary</h5>
-                            <div class="row g-4">
-                                <!-- Pick Up Service -->
-                                <div class="col-12 col-md-6 col-lg-4">
-                                    <div class="card h-100 border-0 shadow-sm">
-                                        <div class="card-body">
-                                            <h6 class="card-title d-flex align-items-center">
-                                                <i class="fas fa-box-open text-primary me-2"></i>
-                                                Pick Up
-                                            </h6>
-                                            <p class="card-text text-muted fs-sm mb-0">
-                                                We prepare your fabrics down, so you can come take them away.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Delivery Service -->
-                                <div class="col-12 col-md-6 col-lg-4">
-                                    <div class="card h-100 border-0 shadow-sm">
-                                        <div class="card-body">
-                                            <h6 class="card-title d-flex align-items-center">
-                                                <i class="fas fa-truck text-primary me-2"></i>
-                                                Delivery
-                                            </h6>
-                                            <p class="card-text text-muted fs-sm mb-0">
-                                                We convey your fabrics to your destination.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Measurement Service -->
-                                <div class="col-12 col-md-6 col-lg-4">
-                                    <div class="card h-100 border-0 shadow-sm">
-                                        <div class="card-body">
-                                            <h6 class="card-title d-flex align-items-center">
-                                                <i class="fas fa-ruler-combined text-primary me-2"></i>
-                                                Take Measurement
-                                            </h6>
-                                            <p class="card-text text-muted fs-sm mb-0">
-                                                Our tailor comes over to measure and confirm fabrics.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="d-flex align-items-center justify-content-center gap-3 flex-wrap">
+                                <span id="units-left"
+                                    class="badge border-0 fs-xs text-info bg-info-subtle rounded-pill px-3 py-2"
+                                    role="button" data-bs-toggle="modal" data-bs-target="#usageModal"
+                                    style="cursor: pointer;">
+                                    Track usage
+                                </span>
+                                <a href="./plans" class="badge text-decoration-none fs-xs bg-dark text-white rounded-pill px-3 py-2">
+                                    View plans
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Admin: User Management (shown to admins only) -->
+                <div id="admin-users-section" class="border rounded-4 py-4 px-3 px-sm-4 mb-4 d-none">
+                    <div class="d-flex align-items-center justify-content-between pb-1 mb-3 flex-wrap gap-2">
+                        <h2 class="h4 mb-0">User Management</h2>
+                        <div class="d-flex admin-toolbar align-items-center">
+                            <a href="./fashion-crud"
+                                class="btn btn-dark btn-sm d-flex align-items-center gap-1 rounded-pill">
+                                <i class="fi-shirt fs-sm"></i>
+                                <span>Fashion Manager</span>
+                            </a>
+                            <input type="text" id="user-search-input"
+                                class="form-control form-control-sm rounded-pill"
+                                placeholder="Search users…"
+                                style="max-width: 180px;">
+                            <select id="users-per-page" class="form-select form-select-sm" style="width: auto;">
+                                <option value="5">5 / page</option>
+                                <option value="10" selected>10 / page</option>
+                                <option value="20">20 / page</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle fs-sm mb-0 table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Status / Units</th>
+                                    <th>Plan</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-container">
+                                <tr><td colspan="6" class="text-center py-3 text-muted">Loading users…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav id="users-pagination" class="d-flex justify-content-center mt-3"></nav>
+                </div>
+
+                <!-- Volume Usage History -->
+                <div id="usage-section" class="border rounded-4 py-4 px-3 px-sm-4 mb-4">
+                    <div class="d-flex align-items-center justify-content-between pb-1 mb-3 flex-wrap gap-2">
+                        <h2 class="h4 mb-0">Volume Usage History</h2>
+                        <button id="recordUsageBtn" class="btn btn-sm btn-outline-info rounded-pill d-none">
+                            <i class="fi-plus fs-sm me-1"></i>Record Usage
+                        </button>
+                    </div>
+                    <div class="usage-table-wrap table-responsive">
+                        <table class="table table-bordered border-info-subtle fs-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">User</th>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Used</th>
+                                    <th scope="col">Total</th>
+                                    <th scope="col">Remaining</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usage-table-body">
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                        Loading usage history…
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav id="usage-pagination" class="d-flex justify-content-center mt-3"></nav>
+                </div>
+
+                <!-- Service Summary -->
+                <div class="border rounded-4 py-4 px-3 px-sm-4 mb-4">
+                    <h2 class="h4 mb-4">Service Summary</h2>
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-6 col-md-4">
+                            <div class="service-card">
+                                <h6 class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="text-primary"><i class="fi-package fs-lg"></i></span>
+                                    Pick Up
+                                </h6>
+                                <p class="fs-sm text-muted mb-0">We prepare your fabrics so you can come pick them up at your convenience.</p>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4">
+                            <div class="service-card">
+                                <h6 class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="text-primary"><i class="fi-delivery fs-lg"></i></span>
+                                    Delivery
+                                </h6>
+                                <p class="fs-sm text-muted mb-0">We convey your freshly cleaned fabrics directly to your destination.</p>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4">
+                            <div class="service-card">
+                                <h6 class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="text-primary"><i class="fi-layers fs-lg"></i></span>
+                                    Take Measurement
+                                </h6>
+                                <p class="fs-sm text-muted mb-0">Our tailor visits to measure and confirm fabrics for a perfect fit.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
-    </main>
-    
-    <script src="./static/js/pages/account.js"></script>
+    </div>
+</main>
+
+<!-- Usage Modal -->
+<div class="modal fade" id="usageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Volume Usage Details</h5>
+                <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive" style="max-height: 60vh;">
+                    <table class="table table-bordered border-info-subtle fs-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th><th>User</th><th>Date</th><th>Status</th>
+                                <th>Used</th><th>Total</th><th>Remaining</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usage-modal-body">
+                            <tr><td colspan="7" class="text-center py-4 text-muted">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ─── account.js — Dashboard (stats, usage history, admin users) ──── */
+(function () {
+    "use strict";
+
+    /* ── API & Config ───────────────────────────────────────────── */
+    function getApiUrl() {
+        return window.location.hostname === 'simplylovely.ng'
+            ? 'https://api.simplylovely.ng/api'
+            : 'http://localhost:5001/api';
+    }
+    const API_BASE   = getApiUrl();
+    const TOKEN_KEY  = 'access_token';
+
+    const CONFIG = {
+        LOW_UNITS_THRESHOLD: 20,
+        CURRENCY_OPTIONS: { style: 'currency', currency: 'NGN', minimumFractionDigits: 2 },
+        USERS_PER_PAGE: 10,
+        USAGE_PER_PAGE: 10,
+    };
+
+    /* ── Utilities ──────────────────────────────────────────────── */
+    const Utils = {
+        el: id => document.getElementById(id),
+        qs: sel => document.querySelector(sel),
+        getToken: () => localStorage.getItem(TOKEN_KEY),
+        authHeaders() {
+            const t = this.getToken();
+            return t ? { Authorization: `Bearer ${t}` } : {};
+        },
+        decodeJwt(token) {
+            try {
+                if (!token) return null;
+                const parts = token.split('.');
+                if (parts.length !== 3) return null;
+                return JSON.parse(atob(parts[1]));
+            } catch (_) { return null; }
+        },
+        getRoles() {
+            const p = this.decodeJwt(this.getToken());
+            return Array.isArray(p?.roles) ? p.roles : [];
+        },
+        isAdmin() { return this.getRoles().some(r => r === 'admin' || r === 'dev'); },
+        formatDate(d) {
+            if (!d) return 'N/A';
+            try { return new Date(d).toLocaleString('en-NG'); } catch (_) { return d; }
+        },
+        formatCurrency(n) {
+            if (typeof n !== 'number' || isNaN(n)) return 'N/A';
+            return n.toLocaleString('en-NG', CONFIG.CURRENCY_OPTIONS);
+        },
+        escape(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+        },
+        toast(msg, type = 'info') {
+            if (typeof window.response_modal === 'function') {
+                window.response_modal(msg, type); return;
+            }
+            let c = document.getElementById('_toast_container');
+            if (!c) {
+                c = document.createElement('div');
+                c.id = '_toast_container';
+                c.className = 'toast-container position-fixed top-0 end-0 p-3';
+                c.style.zIndex = '9999';
+                document.body.appendChild(c);
+            }
+            const bg = type === 'success' ? 'bg-success' :
+                       type === 'danger'  ? 'bg-danger'  :
+                       type === 'warning' ? 'bg-warning text-dark' : 'bg-info';
+            const id = 'toast_' + Date.now();
+            c.insertAdjacentHTML('beforeend', `
+                <div id="${id}" class="toast align-items-center ${bg} text-white border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${this.escape(msg)}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>`);
+            const el = document.getElementById(id);
+            new bootstrap.Toast(el, { delay: 5000 }).show();
+            el.addEventListener('hidden.bs.toast', () => el.remove());
+        },
+        safeGet: (obj, path, def = null) => {
+            try { return path.split('.').reduce((c, k) => c?.[k], obj) ?? def; }
+            catch (_) { return def; }
+        }
+    };
+
+    /* ── Pagination ─────────────────────────────────────────────── */
+    const Pagination = {
+        render(container, currentPage, totalPages, onPage) {
+            if (!container) return;
+            if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+            const max = 5;
+            let start = Math.max(1, currentPage - Math.floor(max / 2));
+            let end   = Math.min(totalPages, start + max - 1);
+            if (end - start < max - 1) start = Math.max(1, end - max + 1);
+
+            let html = '<ul class="pagination pagination-sm mb-0">';
+            html += `<li class="page-item ${currentPage===1?'disabled':''}"><a class="page-link" href="#" data-page="${currentPage-1}">‹</a></li>`;
+            if (start > 1) html += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>${start>2?'<li class="page-item disabled"><span class="page-link">…</span></li>':''}`;
+            for (let i = start; i <= end; i++) {
+                html += `<li class="page-item ${i===currentPage?'active':''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+            }
+            if (end < totalPages) html += `${end<totalPages-1?'<li class="page-item disabled"><span class="page-link">…</span></li>':''}<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a></li>`;
+            html += `<li class="page-item ${currentPage===totalPages?'disabled':''}"><a class="page-link" href="#" data-page="${currentPage+1}">›</a></li></ul>`;
+
+            container.innerHTML = html;
+            container.querySelectorAll('.page-link[data-page]').forEach(a => {
+                a.addEventListener('click', e => {
+                    e.preventDefault();
+                    const p = parseInt(a.dataset.page);
+                    if (p && p !== currentPage && p >= 1 && p <= totalPages) onPage(p);
+                });
+            });
+        }
+    };
+
+    /* ── Usage Statistics ───────────────────────────────────────── */
+    const UsageStats = {
+        async fetch() {
+            try {
+                const res = await fetch(`${API_BASE}/usage/statistics`, {
+                    headers: Utils.authHeaders(), cache: 'no-store'
+                });
+                const json = res.ok ? await res.json() : null;
+                this.render(json?.data || json || {});
+            } catch (e) {
+                console.warn('Usage stats error:', e);
+                this.render({});
+            }
+        },
+        render(data) {
+            const used      = data.units_used      || 0;
+            const total     = data.total_units     || 0;
+            const remaining = data.remaining_units || 0;
+            const pct       = Math.max(0, Math.min(100, Math.round((data.usage_percentage || 0) * 100) / 100));
+
+            const usedEl = Utils.el('units-used');
+            if (usedEl) usedEl.textContent = `${used} units used of ${total}`;
+
+            const dateEl = Utils.el('usage-date');
+            if (dateEl) dateEl.textContent = new Date().toLocaleDateString('en-NG');
+
+            const bar = Utils.el('usage-progress');
+            if (bar) {
+                bar.style.width = `${pct}%`;
+                bar.textContent = `${pct}%`;
+                bar.setAttribute('aria-valuenow', pct);
+            }
+
+            const leftEl = Utils.el('units-left');
+            if (leftEl) {
+                leftEl.textContent = `${remaining} units remaining`;
+                if (remaining <= CONFIG.LOW_UNITS_THRESHOLD) {
+                    leftEl.classList.add('units-low');
+                    if (!leftEl.querySelector('.warn-badge')) {
+                        leftEl.insertAdjacentHTML('beforeend', ' <span class="warn-badge">⚠ Low — Recharge</span>');
+                    }
+                } else {
+                    leftEl.classList.remove('units-low');
+                    leftEl.querySelector('.warn-badge')?.remove();
+                }
+            }
+        }
+    };
+
+    /* ── Usage History Manager ──────────────────────────────────── */
+    const UsageHistory = {
+        tableBody:  null,
+        modalBody:  null,
+        paginationEl: null,
+        currentPage: 1,
+        perPage: CONFIG.USAGE_PER_PAGE,
+        totalPages: 1,
+        loading: false,
+
+        init() {
+            this.tableBody   = Utils.el('usage-table-body');
+            this.modalBody   = Utils.el('usage-modal-body');
+            this.paginationEl = Utils.el('usage-pagination');
+
+            const recordBtn = Utils.el('recordUsageBtn');
+            if (recordBtn && Utils.isAdmin()) {
+                recordBtn.classList.remove('d-none');
+                recordBtn.addEventListener('click', () => this.showRecordForm());
+            }
+
+            this.fetch(1);
+        },
+
+        async fetch(page = 1) {
+            if (this.loading) return;
+            this.loading = true;
+            this.currentPage = page;
+
+            this._setLoadingState();
+
+            try {
+                const res = await fetch(
+                    `${API_BASE}/usage?include_user=1&page=${page}&per_size=${this.perPage}`,
+                    { headers: Utils.authHeaders(), cache: 'no-store' }
+                );
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const json = await res.json();
+
+                const data    = json.data || json;
+                console.log('Fetched usage history:', data);
+                // Handle nested PageSerializer response: data.usage = {page_meta, success, usage: [...]}
+                const usageData = data?.usage || {};
+                const records = Array.isArray(usageData)
+                    ? usageData
+                    : (usageData?.usage || data?.records || (Array.isArray(data) ? data : []));
+                const meta    = data?.pagination || usageData?.page_meta || {};
+                this.totalPages = meta.total_pages || meta.total_pages_count || 1;
+
+                this.renderTable(records);
+                this.renderModal(records);
+                Pagination.render(this.paginationEl, this.currentPage, this.totalPages, p => this.fetch(p));
+            } catch (err) {
+                console.error('Usage fetch error:', err);
+                this.renderEmpty('Error loading usage history. Please try again.');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        _setLoadingState() {
+            const spinner = `<tr><td colspan="7" class="text-center py-4 text-muted">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>Loading…</td></tr>`;
+            if (this.tableBody) this.tableBody.innerHTML = spinner;
+            if (this.modalBody) this.modalBody.innerHTML = spinner;
+        },
+
+        renderTable(records) {
+            if (!this.tableBody) return;
+            if (!records?.length) { this.renderEmpty(); return; }
+            this.tableBody.innerHTML = '';
+            records.forEach((item, i) => this.tableBody.insertAdjacentHTML('beforeend', this._row(item, i)));
+        },
+
+        renderModal(records) {
+            if (!this.modalBody) return;
+            if (!records?.length) {
+                this.modalBody.innerHTML = this._emptyRow();
+                return;
+            }
+            this.modalBody.innerHTML = '';
+            records.forEach((item, i) => this.modalBody.insertAdjacentHTML('beforeend', this._row(item, i)));
+        },
+
+        _row(item, i) {
+            const num    = (this.currentPage - 1) * this.perPage + i + 1;
+            const user   = Utils.escape(item.user?.username || item.user?.name || 'N/A');
+            const status = item.status || 'N/A';
+            const color  = status === 'active' ? 'success' : 'secondary';
+            return `<tr>
+                <td class="text-muted fs-xs">${num}</td>
+                <td>${user}</td>
+                <td class="text-nowrap">${Utils.formatDate(item.created_at)}</td>
+                <td><span class="badge bg-${color}-subtle text-${color} rounded-pill">${Utils.escape(status)}</span></td>
+                <td class="fw-semibold">${item.units_used || 0}</td>
+                <td>${item.total_units || 0}</td>
+                <td>${item.remaining_units || 0}</td>
+            </tr>`;
+        },
+
+        _emptyRow(msg) {
+            return `<tr><td colspan="7" class="text-center py-5">
+                <div class="empty-icon">📋</div>
+                <p class="text-muted mb-1 mt-2">${msg || 'No usage records found yet.'}</p>
+                <small class="text-muted">Subscribe or recharge a plan to start tracking your laundry volume here.</small>
+            </td></tr>`;
+        },
+
+        renderEmpty(msg) {
+            const html = this._emptyRow(msg);
+            if (this.tableBody) this.tableBody.innerHTML = html;
+            if (this.modalBody) this.modalBody.innerHTML = html;
+            if (this.paginationEl) this.paginationEl.innerHTML = '';
+        },
+
+        showRecordForm() {
+            const section = Utils.el('usage-section');
+            if (!section) return;
+            const existing = Utils.el('inline-usage-form');
+            if (existing) { existing.remove(); return; }
+
+            const div = document.createElement('div');
+            div.id = 'inline-usage-form';
+            div.className = 'bg-light rounded-3 p-3 mb-3 border';
+            div.innerHTML = `
+                <h6 class="mb-3">Record New Usage</h6>
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label small">User</label>
+                        <select id="usageUserSel" class="form-select form-select-sm">
+                            <option value="">Select user…</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Units Used</label>
+                        <input type="number" id="usageUnitsInput" class="form-control form-control-sm" placeholder="e.g. 5" min="1">
+                    </div>
+                    <div class="col-md-5">
+                        <button id="submitUsageBtn" class="btn btn-dark btn-sm">Save</button>
+                        <button id="cancelUsageBtn" class="btn btn-secondary btn-sm ms-1">Cancel</button>
+                    </div>
+                </div>`;
+            section.insertBefore(div, section.querySelector('.usage-table-wrap') || section.querySelector('.table-responsive'));
+
+            Utils.el('cancelUsageBtn').addEventListener('click', () => div.remove());
+            Utils.el('submitUsageBtn').addEventListener('click', () => this.submitUsage());
+            this._loadUsersForSelect();
+        },
+
+        async _loadUsersForSelect() {
+            const sel = Utils.el('usageUserSel');
+            if (!sel) return;
+            try {
+                const res = await fetch(`${API_BASE}/users?page_size=100`, {
+                    headers: Utils.authHeaders(), cache: 'no-store'
+                });
+                const json = await res.json();
+                const users = json.data?.users || json.users || [];
+                users.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u.id;
+                    opt.textContent = u.username || u.name || u.email;
+                    sel.appendChild(opt);
+                });
+            } catch (e) { console.warn('Load users error:', e); }
+        },
+
+        async submitUsage() {
+            const userId = Utils.el('usageUserSel')?.value;
+            const units  = parseInt(Utils.el('usageUnitsInput')?.value || 0);
+            if (!userId || !units || units <= 0) {
+                Utils.toast('Please select a user and enter valid units.', 'warning'); return;
+            }
+            const btn = Utils.el('submitUsageBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            try {
+                const res = await fetch(`${API_BASE}/usage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...Utils.authHeaders() },
+                    body: JSON.stringify({ user_id: parseInt(userId), units_used: units })
+                });
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.error || json.message || 'Failed');
+                Utils.toast(json.message || 'Usage recorded!', 'success');
+                Utils.el('inline-usage-form')?.remove();
+                await this.fetch(1);
+                await UsageStats.fetch();
+            } catch (err) {
+                Utils.toast(`Error: ${err.message}`, 'danger');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save';
+            }
+        }
+    };
+
+    /* ── User Manager (Admin) ───────────────────────────────────── */
+    const UserManager = {
+        container:     null,
+        paginationEl:  null,
+        currentPage:   1,
+        perPage:       CONFIG.USERS_PER_PAGE,
+        allUsers:      [],
+        filteredUsers: [],
+        totalPages:    1,
+        loading:       false,
+
+        init() {
+            if (!Utils.isAdmin()) return;
+            this.container    = Utils.el('users-container');
+            this.paginationEl = Utils.el('users-pagination');
+            Utils.el('admin-users-section')?.classList.remove('d-none');
+
+            Utils.el('users-per-page')?.addEventListener('change', e => {
+                this.perPage = parseInt(e.target.value);
+                this.loadUsers(1);
+            });
+
+            let debounce;
+            Utils.el('user-search-input')?.addEventListener('input', e => {
+                clearTimeout(debounce);
+                debounce = setTimeout(() => this._filter(e.target.value), 300);
+            });
+
+            this.loadUsers(1);
+        },
+
+        async loadUsers(page) {
+            if (this.loading) return;
+            this.loading = true;
+            if (this.container) this.container.innerHTML =
+                '<tr><td colspan="6" class="text-center py-3 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Loading…</td></tr>';
+
+            try {
+                const res = await fetch(`${API_BASE}/users?page=${page}&page_size=${this.perPage}`, {
+                    headers: Utils.authHeaders(), cache: 'no-store'
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const json = await res.json();
+
+                const users = json.data?.users || json.users || (Array.isArray(json.data) ? json.data : []);
+                const meta  = json.data?.page_meta || json.page_meta || {};
+                this.allUsers      = users;
+                this.filteredUsers = [...users];
+                this.currentPage   = page;
+                this.totalPages    = meta.total_pages_count || Math.ceil(users.length / this.perPage) || 1;
+                this._renderPage();
+            } catch (err) {
+                console.error('Load users error:', err);
+                if (this.container) this.container.innerHTML =
+                    `<tr><td colspan="6" class="text-center py-3 text-danger">${Utils.escape(err.message)}</td></tr>`;
+            } finally { this.loading = false; }
+        },
+
+        _filter(q) {
+            const s = q.toLowerCase().trim();
+            this.filteredUsers = s
+                ? this.allUsers.filter(u =>
+                    (u.name||'').toLowerCase().includes(s) ||
+                    (u.username||'').toLowerCase().includes(s) ||
+                    (u.email||'').toLowerCase().includes(s) ||
+                    (u.phone||'').toLowerCase().includes(s))
+                : [...this.allUsers];
+            this.currentPage = 1;
+            this.totalPages  = Math.ceil(this.filteredUsers.length / this.perPage) || 1;
+            this._renderPage();
+        },
+
+        _renderPage() {
+            const start = (this.currentPage - 1) * this.perPage;
+            const page  = this.filteredUsers.slice(start, start + this.perPage);
+            if (!this.container) return;
+            this.container.innerHTML = '';
+
+            if (!page.length) {
+                this.container.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">No users found.</td></tr>';
+                Pagination.render(this.paginationEl, 1, 1, () => {});
+                return;
+            }
+
+            page.forEach(user => {
+                const sub     = user.subscriptions?.[0] || {};
+                const status  = sub.status || 'inactive';
+                const units   = sub.total_units || 0;
+                const plan    = sub.plan?.name || sub.name || 'No plan';
+                const since   = sub.created_at ? new Date(sub.created_at).toLocaleDateString('en-NG') : '';
+                const color   = status === 'active' ? 'success' : status === 'expired' ? 'danger' : 'warning';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${Utils.escape(user.name || user.username || 'N/A')}</td>
+                    <td class="text-truncate" style="max-width:160px">${Utils.escape(user.email || 'N/A')}</td>
+                    <td>${Utils.escape(user.phone || 'N/A')}</td>
+                    <td>
+                        <span class="badge bg-${color}-subtle text-${color} rounded-pill">${Utils.escape(status)}</span>
+                        <span class="ms-1 fw-medium">${units} units</span>
+                        ${since ? `<div class="fs-xs text-muted">${since}</div>` : ''}
+                    </td>
+                    <td>${Utils.escape(plan)}</td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-info assign-plan-btn rounded-start" data-uid="${user.id}" title="Assign Plan">
+                                <i class="fi-plus"></i> Plan
+                            </button>
+                            <button class="btn btn-outline-danger delete-user-btn rounded-end" data-uid="${user.id}" title="Delete">
+                                <i class="fi-trash"></i>
+                            </button>
+                        </div>
+                    </td>`;
+                this.container.appendChild(tr);
+            });
+
+            this.container.querySelectorAll('.assign-plan-btn').forEach(btn => {
+                btn.addEventListener('click', () => this._openAssignModal(btn.dataset.uid));
+            });
+            this.container.querySelectorAll('.delete-user-btn').forEach(btn => {
+                btn.addEventListener('click', () => this._deleteUser(btn.dataset.uid));
+            });
+
+            Pagination.render(this.paginationEl, this.currentPage, this.totalPages, p => {
+                this.currentPage = p; this._renderPage();
+            });
+        },
+
+        async _openAssignModal(userId) {
+            try {
+                const res = await fetch(`${API_BASE}/plans`, { headers: Utils.authHeaders(), cache: 'no-store' });
+                const json = await res.json();
+                const plans = json.data?.plans || json.plans || json.data || [];
+
+                document.getElementById('dynamicAssignModal')?.remove();
+                document.body.insertAdjacentHTML('beforeend', `
+                    <div class="modal fade" id="dynamicAssignModal" tabindex="-1">
+                        <div class="modal-dialog"><div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Assign Plan to User</h5>
+                                <button class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Select Plan</label>
+                                    <select class="form-select" id="assignPlanSelect" required>
+                                        <option value="">Choose a plan…</option>
+                                        ${plans.map(p => `<option value="${p.id}">${Utils.escape(p.name)} — ${Utils.formatCurrency(p.amount)} (${p.units} units)</option>`).join('')}
+                                    </select>
+                                </div>
+                                <button id="confirmAssignBtn" class="btn btn-dark w-100">Assign Plan</button>
+                            </div>
+                        </div></div>
+                    </div>`);
+                const modalEl = document.getElementById('dynamicAssignModal');
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+                Utils.el('confirmAssignBtn').addEventListener('click', async () => {
+                    const planId = Utils.el('assignPlanSelect').value;
+                    if (!planId) { Utils.toast('Please select a plan.', 'warning'); return; }
+                    try {
+                        const r = await fetch(`${API_BASE}/subscription/${userId}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', ...Utils.authHeaders() },
+                            body: JSON.stringify({ plan_id: parseInt(planId) })
+                        });
+                        const j = await r.json();
+                        if (!r.ok) throw new Error(j.error || j.message || 'Failed');
+                        Utils.toast(j.message || 'Plan assigned!', 'success');
+                        modal.hide();
+                        this.loadUsers(this.currentPage);
+                    } catch (e) { Utils.toast(`Error: ${e.message}`, 'danger'); }
+                });
+                modalEl.addEventListener('hidden.bs.modal', () => modalEl.remove());
+            } catch (e) { Utils.toast(`Error: ${e.message}`, 'danger'); }
+        },
+
+        async _deleteUser(userId) {
+            if (!confirm('Delete this user? This cannot be undone.')) return;
+            try {
+                const res = await fetch(`${API_BASE}/users/${userId}`, {
+                    method: 'DELETE', headers: Utils.authHeaders()
+                });
+                const json = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(json.error || 'Failed to delete user');
+                Utils.toast('User deleted.', 'success');
+                this.loadUsers(this.currentPage);
+            } catch (e) { Utils.toast(`Error: ${e.message}`, 'danger'); }
+        }
+    };
+
+    /* ── Role badge in page header ──────────────────────────────── */
+    function setRoleBadge() {
+        const isAdmin = Utils.isAdmin();
+        const badge = Utils.el('user-role-badge');
+        if (badge) {
+            badge.textContent = isAdmin ? 'Admin' : 'Member';
+            badge.className = `badge rounded-pill ${isAdmin ? 'bg-danger' : 'bg-info'}`;
+        }
+    }
+
+    /* ── App init ───────────────────────────────────────────────── */
+    async function init() {
+        setRoleBadge();
+        UsageStats.fetch();
+        UsageHistory.init();
+        UserManager.init();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
 {% endblock content %}

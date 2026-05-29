@@ -1,615 +1,427 @@
-
 {% extends "incs/base.html" %}
+
 {% block title %} Settings - Laundry And Fashion {% endblock title %}
 
 {% block content %}
-{% include 'incs/modals/add_plan_modal.html' %}
 
-  <!-- Page content -->
-  <main class="content-wrapper">
+<style>
+/* ─── Responsive Fixes ────────────────────────────────────── */
+@media (max-width: 991.98px) {
+    .content-wrapper .row > .col-lg-9 { min-width: 0; overflow-x: auto; }
+}
+.content-wrapper .col-lg-9 { min-width: 0; }
+
+/* ─── Form Styling ──────────────────────────────────────── */
+.password-toggle { position: relative; }
+.password-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    cursor: pointer;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236c757d' viewBox='0 0 16 16'%3E%3Cpath d='M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z'/%3E%3Cpath d='M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z'/%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+    border: none;
+}
+.password-toggle-btn.active {
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236c757d' viewBox='0 0 16 16'%3E%3Cpath d='M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z'/%3E%3Cpath d='M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z'/%3E%3Cpath d='M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z'/%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+}
+</style>
+
+<main class="content-wrapper">
     <div class="container py-5 mt-n2 mt-sm-0">
-      <div class="row pt-md-2 pt-lg-3 pb-sm-2 pb-md-3 pb-lg-4 pb-xl-5">
+        <div class="row pt-md-2 pt-lg-3 pb-sm-2 pb-md-3 pb-lg-4 pb-xl-5">
+            {% include 'incs/user_pages/sidebar.html' %}
 
-        <!-- Sidebar navigation -->
-        {% include 'incs/user_pages/sidebar.html' %}
+            <div class="col-lg-9">
+                <div class="ps-lg-3 ps-xl-0">
 
-        <!-- Personal info content -->
-        <div class="col-lg-9">
-          <div class="ps-lg-3 ps-xl-0">
+                    <h1 class="h2 mb-1 mb-sm-2" id="user_id" data-user-id="">Personal info</h1>
 
-            <!-- Page title with user ID -->
-            <h1 class="h2 mb-1 mb-sm-2" id="user_id" data-user-id="">Personal info</h1>
-
-            <!-- Basic info section -->
-            <div class="border-bottom py-4">
-              <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3">
-                <h2 class="h6 mb-0">Basic info</h2>
-                <a class="badge text-bg-info rounded-pill p-1 text-decoration-none hiding-collapse-toggle collapsed" href=".basic-info"
-                  data-bs-toggle="collapse" aria-expanded="false"
-                  aria-controls="basicInfoPreview basicInfoEdit">Edit</a>
-              </div>
-              <div class="basic-info collapse show" id="basicInfoPreview">
-                <ul class="list-unstyled fs-sm m-0">
-                  <li class="user-name">Loading...</li>
-                  <li class="user-username">Loading...</li>
-                </ul>
-              </div>
-              <div class="basic-info collapse" id="basicInfoEdit">
-                <form id="basic_info_update_form" class="row g-3 g-sm-4 needs-validation" novalidate>
-                  <div class="col-sm-6">
-                    <label for="username" class="form-label">Username</label>
-                    <div class="position-relative">
-                      <input type="text" class="form-control text-warning" disabled name="username" id="username" required>
-                      <div class="invalid-feedback">Please enter your username!</div>
+                    <!-- Basic info -->
+                    <div class="border-bottom py-4">
+                        <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3">
+                            <h2 class="h6 mb-0">Basic info</h2>
+                            <a class="badge text-bg-info rounded-pill p-1 text-decoration-none hiding-collapse-toggle collapsed"
+                                href=".basic-info" data-bs-toggle="collapse" aria-expanded="false">Edit</a>
+                        </div>
+                        <div class="basic-info collapse show" id="basicInfoPreview">
+                            <ul class="list-unstyled fs-sm m-0">
+                                <li class="user-name">Loading...</li>
+                                <li class="user-username">Loading...</li>
+                            </ul>
+                        </div>
+                        <div class="basic-info collapse" id="basicInfoEdit">
+                            <form id="basic_info_update_form" class="row g-3 g-sm-4 needs-validation" novalidate>
+                                <div class="col-sm-6">
+                                    <label for="username" class="form-label">Username</label>
+                                    <input type="text" class="form-control text-warning" disabled name="username" id="username" required>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label for="name" class="form-label">Full name</label>
+                                    <input type="text" class="form-control" name="name" id="name" required>
+                                    <div class="invalid-feedback">Please enter your full name!</div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="d-flex gap-3 pt-2 pt-sm-0">
+                                        <button type="submit" class="btn btn-dark">
+                                            <span class="btn-text">Save changes</span>
+                                            <span class="btn-spinner spinner-border spinner-border-sm d-none" role="status"></span>
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target=".basic-info">Close</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                  </div>
-                  <div class="col-sm-6">
-                    <label for="name" class="form-label">Full name</label>
-                    <div class="position-relative">
-                      <input type="text" class="form-control" name="name" id="name" required>
-                      <div class="invalid-feedback">Please enter your full name!</div>
+
+                    <!-- Contact info -->
+                    <div class="border-bottom py-4">
+                        <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3">
+                            <h2 class="h6 mb-0">Contact</h2>
+                            <a class="badge text-bg-info rounded-pill p-1 text-decoration-none hiding-collapse-toggle collapsed"
+                                href=".contact-info" data-bs-toggle="collapse" aria-expanded="false">Edit</a>
+                        </div>
+                        <div class="contact-info collapse show" id="contactInfoPreview">
+                            <ul class="list-unstyled fs-sm m-0">
+                                <li class="user-email">Loading...</li>
+                                <li class="user-phone">Loading...</li>
+                            </ul>
+                        </div>
+                        <div class="contact-info collapse" id="contactInfoEdit">
+                            <form id="contact_info_update_form" class="row g-3 g-sm-4 needs-validation" novalidate>
+                                <div class="col-sm-6">
+                                    <label for="email" class="form-label">Email address</label>
+                                    <input type="email" name="email" class="form-control" id="email" required>
+                                    <div class="invalid-feedback">Please enter a valid email!</div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label for="phone" class="form-label">Phone number</label>
+                                    <input type="tel" name="phone" class="form-control" id="phone" required>
+                                    <div class="invalid-feedback">Please enter your phone number!</div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="d-flex gap-3 pt-2 pt-sm-0">
+                                        <button type="submit" class="btn btn-dark">
+                                            <span class="btn-text">Save changes</span>
+                                            <span class="btn-spinner spinner-border spinner-border-sm d-none" role="status"></span>
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target=".contact-info">Close</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                  </div>
-                  <div class="col-12">
-                    <div class="d-flex gap-3 pt-2 pt-sm-0">
-                      <button type="submit" class="btn btn-dark">Save changes</button>
-                      <button type="button" class="btn btn-secondary" data-bs-toggle="collapse"
-                        data-bs-target=".basic-info">Close</button>
+
+                    <!-- Password -->
+                    <div class="border-bottom py-4">
+                        <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3">
+                            <h2 class="h6 mb-0">Password</h2>
+                            <a class="badge text-bg-info rounded-pill p-1 text-decoration-none hiding-collapse-toggle collapsed"
+                                href=".password-change" data-bs-toggle="collapse" aria-expanded="false">Edit</a>
+                        </div>
+                        <div class="password-change collapse show" id="passChangePreview">
+                            <ul class="list-unstyled fs-sm m-0">
+                                <li>••••••••••••••</li>
+                            </ul>
+                        </div>
+                        <div class="password-change collapse" id="passChangeEdit">
+                            <form id="password_change_form" class="row g-3 g-sm-4 needs-validation" novalidate>
+                                <div class="col-sm-6">
+                                    <label for="current-password" class="form-label">Current password</label>
+                                    <div class="password-toggle">
+                                        <input type="password" name="current_password" class="form-control" id="current-password" required>
+                                        <button type="button" class="password-toggle-btn" aria-label="Show/hide password" onclick="togglePassword('current-password', this)"></button>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label for="new-password" class="form-label">New password</label>
+                                    <div class="password-toggle">
+                                        <input type="password" name="new_password" class="form-control" id="new-password" required>
+                                        <button type="button" class="password-toggle-btn" aria-label="Show/hide password" onclick="togglePassword('new-password', this)"></button>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="d-flex gap-3 pt-2 pt-sm-0">
+                                        <button type="submit" class="btn btn-dark">
+                                            <span class="btn-text">Save changes</span>
+                                            <span class="btn-spinner spinner-border spinner-border-sm d-none" role="status"></span>
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target=".password-change">Close</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                  </div>
-                </form>
-              </div>
+
+                    <!-- Account deletion -->
+                    <div class="pt-3 mt-2 mt-sm-3">
+                        <h2 class="h6">Delete account</h2>
+                        <p class="fs-sm">When you delete your account, your public profile will be deactivated immediately.</p>
+                        <button id="deleteAccountBtn" class="btn btn-outline-danger btn-sm" disabled>Delete account</button>
+                    </div>
+
+                </div>
             </div>
-
-            <!-- Contact info section -->
-            <div class="border-bottom py-4">
-              <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3">
-                <h2 class="h6 mb-0">Contact</h2>
-                <a class="badge text-bg-info rounded-pill p-1 text-decoration-none hiding-collapse-toggle collapsed" href=".contact-info"
-                  data-bs-toggle="collapse" aria-expanded="false"
-                  aria-controls="contactInfoPreview contactInfoEdit">Edit</a>
-              </div>
-              <div class="contact-info collapse show" id="contactInfoPreview">
-                <ul class="list-unstyled fs-sm m-0">
-                  <li class="user-email">Loading...</li>
-                  <li class="user-phone">Loading...</li>
-                </ul>
-              </div>
-              <div class="contact-info collapse" id="contactInfoEdit">
-                <form id="contact_info_update_form" class="row g-3 g-sm-4 needs-validation" novalidate>
-                  <div class="col-sm-6">
-                    <label for="email" class="form-label">Email address</label>
-                    <div class="position-relative">
-                      <input type="email" name="email" class="form-control" id="email" required>
-                      <div class="invalid-feedback">Please enter a valid email!</div>
-                    </div>
-                  </div>
-                  <div class="col-sm-6">
-                    <label for="phone" class="form-label">Phone number</label>
-                    <div class="position-relative">
-                      <input type="tel" name="phone" class="form-control" id="phone" required>
-                      <div class="invalid-feedback">Please enter your phone number!</div>
-                    </div>
-                  </div>
-                  <div class="col-12">
-                    <div class="d-flex gap-3 pt-2 pt-sm-0">
-                      <button type="submit" class="btn btn-dark">Save changes</button>
-                      <button type="button" class="btn btn-secondary" data-bs-toggle="collapse"
-                        data-bs-target=".contact-info">Close</button>
-                    </div>
-                  </div>
-                </form>
-              </div>
-            </div>
-
-            <!-- Password section -->
-            <div class="border-bottom py-4">
-              <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3">
-                <h2 class="h6 mb-0">Password</h2>
-                <a class="badge text-bg-info rounded-pill p-1 text-decoration-none hiding-collapse-toggle collapsed"
-                  href=".password-change" data-bs-toggle="collapse" aria-expanded="false"
-                  aria-controls="passChangePreview passChangeEdit">Edit</a>
-              </div>
-              <div class="password-change collapse show" id="passChangePreview">
-                <ul class="list-unstyled fs-sm m-0">
-                  <li>••••••••••••••</li>
-                </ul>
-              </div>
-              <div class="password-change collapse" id="passChangeEdit">
-                <form id="password_change_form" class="row g-3 g-sm-4 needs-validation" novalidate>
-                  <div class="col-sm-6">
-                    <label for="current-password" class="form-label">Current password</label>
-                    <div class="password-toggle">
-                      <input type="password" name="current_password" class="form-control" id="current-password" required>
-                      <label class="password-toggle-btn" aria-label="Show/hide password">
-                        <input type="checkbox" class="password-toggle-check">
-                      </label>
-                    </div>
-                  </div>
-                  <div class="col-sm-6">
-                    <label for="new-password" class="form-label">New password</label>
-                    <div class="password-toggle">
-                      <input type="password" name="new_password" class="form-control" id="new-password" required>
-                      <label class="password-toggle-btn" aria-label="Show/hide password">
-                        <input type="checkbox" class="password-toggle-check">
-                      </label>
-                    </div>
-                  </div>
-                  <div class="col-12">
-                    <div class="d-flex gap-3 pt-2 pt-sm-0">
-                      <button type="submit" class="btn btn-dark">Save changes</button>
-                      <button type="button" class="btn btn-secondary" data-bs-toggle="collapse"
-                        data-bs-target=".password-change">Close</button>
-                    </div>
-                  </div>
-                </form>
-              </div>
-            </div>
-
-            <!-- Account deletion section -->
-            <div class="pt-3 mt-2 mt-sm-3">
-              <h2 class="h6">Delete account</h2>
-              <p class="fs-sm">When you delete your account, your public profile will be deactivated immediately.</p>
-              <button id="deleteAccountBtn" class="btn btn-outline-danger btn-sm" disabled>Delete account</button>
-            </div>
-          </div>
         </div>
-      </div>
     </div>
-  </main>
+</main>
 
-
-{#
-<script>
-
-document.addEventListener("DOMContentLoaded", async () => {
-  try {
-
-    // First enforce authentication
-   // window.authRequired();
-
-    // Load and display user data
-    await loadAndDisplayUserProfile();
-
-    // Set up form handlers
-    setupFormHandlers();
-
-  } catch (error) {
-    console.error('Initialization error:', error);
-    window.response_modal('Failed to initialize page: ' + error.message);
-  }
-
-});
-
-/**
- * Fetches and displays user profile data
- */
-async function loadAndDisplayUserProfile() {
-  try {
-    // Show loading states
-    document.querySelectorAll('.user-name, .user-username, .user-email, .user-phone')
-      .forEach(el => el.textContent = 'Loading...');
-
-    // Get access token from localStorage
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('No access token found');
-    }
-
-    // Fetch user data with authentication
-    const user = await window.make_request(`${window.apiUrl}/users/current`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (!user) {
-      throw new Error('Invalid user data received');
-    }
-
-    // Update UI with user data
-    updateProfileUI(user);
-
-  } catch (error) {
-    console.error('Failed to load user profile:', error);
-    window.response_modal('Failed to load profile: ' + error.message);
-    // Set placeholder values on error
-    document.querySelectorAll('.user-name, .user-username, .user-email, .user-phone')
-      .forEach(el => el.textContent = 'Not available');
-  }
-}
-
-/**
- * Updates the UI with user profile data
- */
-function updateProfileUI(user) {
-  // Set user ID and title
-  const userIdElement = document.getElementById('user_id');
-  userIdElement.dataset.userId = user.id;
-  userIdElement.textContent = `${user.name || 'User'}'s Profile`;
-
-  // Basic info section
-  document.querySelector('.user-name').textContent = user.name || 'Not provided';
-  document.querySelector('.user-username').textContent = user.username || 'Not provided';
-  document.getElementById('username').value = user.username || '';
-  document.getElementById('name').value = user.name || '';
-  document.getElementById('name').placeholder = user.name || 'Enter your full name';
-
-  // Contact info section
-  document.querySelector('.user-email').textContent = user.email || 'Not provided';
-  document.querySelector('.user-phone').textContent = user.phone ? formatPhoneNumber(user.phone) : 'Not provided';
-  document.getElementById('email').value = user.email || '';
-  document.getElementById('phone').value = user.phone || '';
-  document.getElementById('email').placeholder = user.email || 'Enter your email';
-  document.getElementById('phone').placeholder = user.phone || 'Enter your phone number';
-
-  // Enable delete account button if user exists
-  document.getElementById('deleteAccountBtn').disabled = !user.id;
-}
-
-/**
- * Sets up form submission handlers
- */
-function setupFormHandlers() {
-  const userId = document.getElementById('user_id').dataset.userId;
-  if (!userId) return;
-
-  // Basic info form
-  document.getElementById('basic_info_update_form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    await handleProfileUpdate('basic_info_update_form', `users/${userId}`);
-  });
-
-  // Contact info form
-  document.getElementById('contact_info_update_form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    await handleProfileUpdate('contact_info_update_form', `users/${userId}`);
-  });
-
-  // Password form
-  document.getElementById('password_change_form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    // `/users/change-password``
-    // await handleProfileUpdate('password_change_form', `users/${userId}/password`);
-    await handleProfileUpdate('password_change_form', `users/change-password`);
-  });
-
-  // Delete account button
-  document.getElementById('deleteAccountBtn').addEventListener('click', () => {
-    handleAccountDeletion(userId);
-  });
-}
-
-/**
- * Handles profile update form submissions
- */
-async function handleProfileUpdate(formId, endpoint) {
-  const form = document.getElementById(formId);
-  const submitBtn = form.querySelector('button[type="submit"]');
-  const originalBtnText = submitBtn.textContent;
-  
-  try {
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Saving...';
-
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    const formData = new FormData(form);
-    // console.log(formData);
-    const response = await window.make_request(
-      `${window.apiUrl}/${endpoint}`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      }
-    );
-
-    window.response_modal('Profile updated successfully!');
-    
-    // Reload user data to reflect changes
-    await loadAndDisplayUserProfile();
-
-    // Collapse the edit section
-    const collapseTarget = form.closest('.collapse');
-    if (collapseTarget) {
-      bootstrap.Collapse.getInstance(collapseTarget).hide();
-    }
-
-  } catch (error) {
-    console.error('Update failed:', error);
-    window.response_modal('Update failed: ' + error.message);
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = originalBtnText;
-  }
-}
-
-/**
- * Handles account deletion
- */
-async function handleAccountDeletion(userId) {
-  if (!confirm('Are you absolutely sure you want to delete your account? This cannot be undone.')) {
-    return;
-  }
-
-  try {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    await window.make_request(
-      `${window.apiUrl}/users/${userId}`,
-      {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      }
-    );
-
-    // Redirect to logout after successful deletion
-    window.location.href = '/signout';
-  } catch (error) {
-    console.error('Account deletion failed:', error);
-    window.response_modal('Failed to delete account: ' + error.message);
-  }
-}
-
-/**
- * Formats phone number for display
- */
-function formatPhoneNumber(phone) {
-  if (!phone) return '';
-  // Remove all non-digit characters
-  const cleaned = phone.replace(/\D/g, '');
-  // Apply formatting (customize based on your needs)
-  return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
-}
-
-</script>
-#}
 
 <script>
-// Main initialization function
-async function initializeProfilePage() {
-  try {
-    // First enforce authentication
-    window.authRequired();
-
-    // Load and display user data
-    await loadAndDisplayUserProfile();
-
-    // Initialize password toggle functionality
-    initPasswordToggles();
-
-    // Set up form handlers only after everything is ready
-    setupFormHandlers();
-
-  } catch (error) {
-    console.error('Initialization error:', error);
-    window.response_modal('Failed to initialize page: ' + error.message);
-  }
-}
-
 /**
- * Fetches and displays user profile data
+ * Settings Page - Self-contained, no external dependencies
+ * Provides: apiRequest(), showToast(), requireAuth(), togglePassword()
  */
-async function loadAndDisplayUserProfile() {
-  try {
-    // Show loading states
-    document.querySelectorAll('.user-name, .user-username, .user-email, .user-phone')
-      .forEach(el => el.textContent = 'Loading...');
+(function() {
+    "use strict";
 
-    // Get access token from localStorage
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('No access token found');
-    }
+    // const API_BASE = window.apiUrl || '';
+    // const TOKEN_KEY = 'access_token';
 
-    // Fetch user data with authentication
-    const user = await window.make_request(`${window.apiUrl}/users/current`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (!user) {
-      throw new Error('Invalid user data received');
-    }
-
-    // Update UI with user data
-    updateProfileUI(user);
-
-  } catch (error) {
-    console.error('Failed to load user profile:', error);
-    window.response_modal('Failed to load profile: ' + error.message);
-    // Set placeholder values on error
-    document.querySelectorAll('.user-name, .user-username, .user-email, .user-phone')
-      .forEach(el => el.textContent = 'Not available');
-  }
-}
-
-/**
- * Updates the UI with user profile data
- */
-function updateProfileUI(user) {
-  // Set user ID and title
-  const userIdElement = document.getElementById('user_id');
-  userIdElement.dataset.userId = user.id;
-  userIdElement.textContent = `${user.name || 'User'}'s Profile`;
-
-  // Basic info section
-  document.querySelector('.user-name').textContent = user.name || 'Not provided';
-  document.querySelector('.user-username').textContent = user.username || 'Not provided';
-  document.getElementById('username').value = user.username || '';
-  document.getElementById('name').value = user.name || '';
-  document.getElementById('name').placeholder = user.name || 'Enter your full name';
-
-  // Contact info section
-  document.querySelector('.user-email').textContent = user.email || 'Not provided';
-  document.querySelector('.user-phone').textContent = user.phone ? formatPhoneNumber(user.phone) : 'Not provided';
-  document.getElementById('email').value = user.email || '';
-  document.getElementById('phone').value = user.phone || '';
-  document.getElementById('email').placeholder = user.email || 'Enter your email';
-  document.getElementById('phone').placeholder = user.phone || 'Enter your phone number';
-
-  // Enable delete account button if user exists
-  document.getElementById('deleteAccountBtn').disabled = !user.id;
-}
-
-/**
- * Sets up form submission handlers
- */
-function setupFormHandlers() {
-  const userId = document.getElementById('user_id').dataset.userId;
-  if (!userId) return;
-
-  // Basic info form
-  document.getElementById('basic_info_update_form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    await handleFormSubmission('basic_info_update_form', `users/${userId}`);
-  });
-
-  // Contact info form
-  document.getElementById('contact_info_update_form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    await handleFormSubmission('contact_info_update_form', `users/${userId}`);
-  });
-
-  // Password form
-  document.getElementById('password_change_form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    await handleFormSubmission('password_change_form', `users/change-password`);
-  });
-
-  // Delete account button
-  document.getElementById('deleteAccountBtn').addEventListener('click', () => {
-    handleAccountDeletion(userId);
-  });
-}
-
-/**
- * Handles form submissions
- */
-async function handleFormSubmission(formId, endpoint) {
-  const form = document.getElementById(formId);
-  const submitBtn = form.querySelector('button[type="submit"]');
-  const originalBtnText = submitBtn.textContent;
-  
-  try {
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Saving...';
-
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    // Create FormData from form
-    const formData = new FormData(form);
-    
-    // Convert FormData to JSON for the API
-    const jsonData = {};
-    formData.forEach((value, key) => {
-      jsonData[key] = value;
-    });
-
-    const response = await window.make_request(
-      `${window.apiUrl}/${endpoint}`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(jsonData)
-      }
-    );
-
-    window.response_modal('Update successful!');
-    
-    // Reload user data to reflect changes
-    await loadAndDisplayUserProfile();
-
-    // Collapse the edit section
-    const collapseTarget = form.closest('.collapse');
-    if (collapseTarget) {
-      bootstrap.Collapse.getInstance(collapseTarget).hide();
-    }
-
-  } catch (error) {
-    console.error('Update failed:', error);
-    window.response_modal('Update failed: ' + (error.message || 'Please check your inputs'));
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = originalBtnText;
-  }
-}
-
-/**
- * Handles account deletion
- */
-async function handleAccountDeletion(userId) {
-  if (!confirm('Are you absolutely sure you want to delete your account? This cannot be undone.')) {
-    return;
-  }
-
-  try {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    await window.make_request(
-      `${window.apiUrl}/users/${userId}`,
-      {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
+    function getApiUrl() {
+        if (window.location.hostname === 'simplylovely.ng') {
+            return 'https://api.simplylovely.ng/api';
         }
-      }
-    );
+        return 'http://localhost:5001/api';
+    }
+    const API_BASE = getApiUrl();
+    const TOKEN_KEY = 'access_token';
 
-    // Redirect to logout after successful deletion
-    window.location.href = '/signout';
-  } catch (error) {
-    console.error('Account deletion failed:', error);
-    window.response_modal('Failed to delete account: ' + error.message);
-  }
-}
+    // ─── HELPERS ────────────────────────────────────────────────────────────
+    function getToken() { return localStorage.getItem(TOKEN_KEY); }
 
-/**
- * Initializes password toggle functionality
- */
-function initPasswordToggles() {
-  document.querySelectorAll('.password-toggle-check').forEach(toggle => {
-    toggle.addEventListener('change', (e) => {
-      const passwordInput = e.target.closest('.password-toggle').querySelector('input[type="password"]');
-      passwordInput.type = e.target.checked ? 'text' : 'password';
-    });
-  });
-}
+    function getAuthHeaders() {
+        const token = getToken();
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+    }
 
-/**
- * Formats phone number for display
- */
-function formatPhoneNumber(phone) {
-  if (!phone) return '';
-  // Remove all non-digit characters
-  const cleaned = phone.replace(/\D/g, '');
-  // Apply formatting (customize based on your needs)
-  return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
-}
+    async function apiRequest(url, options = {}) {
+        const token = getToken();
+        if (!token) throw new Error('Authentication required. Please sign in.');
 
-// Initialize the page when DOM is fully loaded
-document.addEventListener("DOMContentLoaded", initializeProfilePage);
+        const defaults = {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                ...options.headers
+            },
+            cache: 'no-store'
+        };
+        if (options.body instanceof FormData) delete defaults.headers['Content-Type'];
+
+        const response = await fetch(url, { ...defaults, ...options });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(data.error || data.message || `HTTP ${response.status}`);
+        }
+        return data;
+    }
+
+    function showToast(message, type = 'info') {
+        if (typeof window.response_modal === 'function') {
+            window.response_modal(message, type);
+            return;
+        }
+
+        let container = document.getElementById('app-toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'app-toast-container';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+        }
+
+        const bgClass = type === 'success' ? 'bg-success' : type === 'danger' ? 'bg-danger' : type === 'warning' ? 'bg-warning text-dark' : 'bg-info';
+        const id = 'toast-' + Date.now();
+        container.insertAdjacentHTML('beforeend', `
+            <div id="${id}" class="toast align-items-center ${bgClass} border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">${escapeHtml(message)}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `);
+        const toast = new bootstrap.Toast(document.getElementById(id), { delay: 5000 });
+        toast.show();
+        document.getElementById(id).addEventListener('hidden.bs.toast', function() { this.remove(); });
+    }
+
+    function requireAuth() {
+        if (!getToken()) {
+            showToast('Please sign in to access this page.', 'warning');
+            setTimeout(() => { window.location.href = '/signin'; }, 1500);
+            return false;
+        }
+        return true;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function formatPhoneNumber(phone) {
+        if (!phone) return '';
+        const cleaned = phone.replace(/\D/g, '');
+        if (cleaned.length === 11) return cleaned.replace(/(\d{4})(\d{3})(\d{4})/, '$1 $2 $3');
+        return cleaned;
+    }
+
+    // ─── PASSWORD TOGGLE ────────────────────────────────────────────────────
+    window.togglePassword = function(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        btn.classList.toggle('active', isHidden);
+    };
+
+    // ─── PROFILE MANAGER ────────────────────────────────────────────────────
+    const ProfileManager = {
+        userId: null,
+
+        async init() {
+            if (!requireAuth()) return;
+            try {
+                await this.loadProfile();
+                this.setupForms();
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showToast('Failed to initialize: ' + error.message, 'danger');
+            }
+        },
+
+        async loadProfile() {
+            // Show loading
+            document.querySelectorAll('.user-name, .user-username, .user-email, .user-phone')
+                .forEach(el => el.textContent = 'Loading...');
+
+            try {
+                const result = await apiRequest(`${API_BASE}/users/current`);
+
+                // Handle different response structures
+                const user = result.data || result;
+                if (!user || !user.id) throw new Error('Invalid user data');
+
+                this.userId = user.id;
+                this.updateUI(user);
+            } catch (error) {
+                console.error(`Failed to load profile ${API_BASE}/users/current:`, error);
+
+                showToast('Failed to load profile: ' + error.message, 'danger');
+                document.querySelectorAll('.user-name, .user-username, .user-email, .user-phone')
+                    .forEach(el => el.textContent = 'Not available');
+            }
+        },
+
+        updateUI(user) {
+            const titleEl = document.getElementById('user_id');
+            titleEl.dataset.userId = user.id;
+            titleEl.textContent = `${user.name || user.username || 'User'}'s Profile`;
+
+            document.querySelector('.user-name').textContent = user.name || 'Not provided';
+            document.querySelector('.user-username').textContent = user.username || 'Not provided';
+            document.getElementById('username').value = user.username || '';
+            document.getElementById('name').value = user.name || '';
+
+            document.querySelector('.user-email').textContent = user.email || 'Not provided';
+            document.querySelector('.user-phone').textContent = user.phone ? formatPhoneNumber(user.phone) : 'Not provided';
+            document.getElementById('email').value = user.email || '';
+            document.getElementById('phone').value = user.phone || '';
+
+            const deleteBtn = document.getElementById('deleteAccountBtn');
+            deleteBtn.disabled = false;
+            deleteBtn.addEventListener('click', () => this.handleDelete());
+        },
+
+        setupForms() {
+            const userId = this.userId;
+            if (!userId) return;
+
+            document.getElementById('basic_info_update_form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleSubmit('basic_info_update_form', `users/${userId}`);
+            });
+
+            document.getElementById('contact_info_update_form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleSubmit('contact_info_update_form', `users/${userId}`);
+            });
+
+            document.getElementById('password_change_form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleSubmit('password_change_form', 'users/change-password');
+            });
+        },
+
+        async handleSubmit(formId, endpoint) {
+            const form = document.getElementById(formId);
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const btnSpinner = submitBtn.querySelector('.btn-spinner');
+
+            submitBtn.disabled = true;
+            btnText.classList.add('d-none');
+            btnSpinner.classList.remove('d-none');
+
+            try {
+                const formData = new FormData(form);
+                const jsonData = {};
+                formData.forEach((v, k) => { jsonData[k] = v; });
+
+                await apiRequest(`${API_BASE}/${endpoint}`, {
+                    method: 'POST',
+                    body: JSON.stringify(jsonData)
+                });
+
+                showToast('Update successful!', 'success');
+                await this.loadProfile();
+
+                // Collapse edit section
+                const collapse = form.closest('.collapse');
+                if (collapse) bootstrap.Collapse.getInstance(collapse)?.hide();
+
+            } catch (error) {
+                showToast('Update failed: ' + error.message, 'danger');
+            } finally {
+                submitBtn.disabled = false;
+                btnText.classList.remove('d-none');
+                btnSpinner.classList.add('d-none');
+            }
+        },
+
+        async handleDelete() {
+            if (!confirm('Are you absolutely sure? This cannot be undone.')) return;
+
+            try {
+                await apiRequest(`${API_BASE}/users/${this.userId}`, { method: 'DELETE' });
+                showToast('Account deleted. Redirecting...', 'success');
+                setTimeout(() => { window.location.href = '/signout'; }, 1500);
+            } catch (error) {
+                showToast('Failed to delete account: ' + error.message, 'danger');
+            }
+        }
+    };
+
+    // ─── INITIALIZATION ─────────────────────────────────────────────────────
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => ProfileManager.init());
+    } else {
+        ProfileManager.init();
+    }
+})();
 </script>
-
 {% endblock content %}

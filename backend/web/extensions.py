@@ -1,143 +1,272 @@
+"""
+web/extensions.py
+
+Centralized Flask extensions and infrastructure services.
+
+Features:
+- Safe environment loading
+- Stable Redis initialization with graceful fallback
+- Production-safe Flask-Limiter setup
+- Clean extension lifecycle management
+- Consistent logging
+- Optional Redis support
+- Secure/default CORS configuration
+"""
+
+from __future__ import annotations
+
+import logging
+from os import getenv
+from typing import Optional
+
+from dotenv import load_dotenv
+from pathlib import Path
+
+# ──────────────────────────────────────────────────────────────
+# Environment
+# ──────────────────────────────────────────────────────────────
+
+# load_dotenv()
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+ENV_PATH = BASE_DIR / ".env"
+
+load_dotenv(dotenv_path=ENV_PATH)
+
+
+logger = logging.getLogger(__name__)
+
+# ──────────────────────────────────────────────────────────────
+# Flask Extensions
+# ──────────────────────────────────────────────────────────────
+
+from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_mail import Mail
 from flask_moment import Moment
-
-# Load environment variables
-from dotenv import load_dotenv
-load_dotenv()
-from os import getenv
-
-# Initialize extensions
-mail = Mail()
-migrate = Migrate()
-moment = Moment()
-
-from authlib.integrations.flask_client import OAuth
-oauth = OAuth()
-
-from flask_wtf.csrf import CSRFProtect
-csrf = CSRFProtect()
-
-from flask_sqlalchemy import SQLAlchemy
-db = SQLAlchemy()
-
 from flask_bcrypt import Bcrypt
-bcrypt = Bcrypt()
-
 from flask_cors import CORS
-cors = CORS()
-
 from flask_caching import Cache
-cache = Cache()
-
-from dotenv import load_dotenv
-# Load environment variables from .env file
-load_dotenv()
-
-from redis import Redis
-# Initialize Redis client
-redis = Redis.from_url(getenv('REDIS_URI'))
-# import redis
-# redis = redis.Redis(
-#     host=getenv('REDIS_HOST'),
-#     port=getenv('REDIS_PORT'),
-#     decode_responses=True,
-#     username=getenv('REDIS_USERNAME'),
-#     password=getenv('REDIS_PASSWORD'),
-# )
-
-# Initialize Flask-Limiter with IP-based rate limiting
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-limiter = Limiter(
-    key_func=get_remote_address,
-    # default_limits=["200 per day", "50 per hour"]
-    default_limits=["1 per second", "5 per minute"],  # Allow up to 1 request per second or a burst of 5 in a minute
-    storage_uri=getenv('REDIS_URI', 'redis://localhost:6379/0')  # Ensure the Redis URL is correct
-)
-
-from flask_jwt_extended import JWTManager #, create_access_token, jwt_required, get_jwt_identity
-jwt = JWTManager()
-
+from flask_wtf.csrf import CSRFProtect
+from flask_jwt_extended import JWTManager
+from authlib.integrations.flask_client import OAuth
 from faker import Faker
+
+db = SQLAlchemy()
+migrate = Migrate()
+mail = Mail()
+moment = Moment()
+bcrypt = Bcrypt()
+cors = CORS()
+cache = Cache()
+csrf = CSRFProtect()
+jwt = JWTManager()
+oauth = OAuth()
 fake = Faker()
 
-def config_app(app, config_name):
-    """Configure app settings based on environment."""
+# ──────────────────────────────────────────────────────────────
+# Redis Configuration
+# ──────────────────────────────────────────────────────────────
+
+from redis import Redis
+from redis.exceptions import RedisError
+
+REDIS_URL = (
+    getenv("REDIS_URL")
+    or getenv("REDIS_URI")
+    or getenv("REDIS_CONNECTION_STRING")
+)
+
+redis_client: Optional[Redis] = None
+
+
+def create_redis_client() -> Optional[Redis]:
+    """
+    Create and validate Redis connection safely.
+
+    Returns:
+        Redis instance if successful, otherwise None.
+    """
+
+    global redis_client
+
+    if redis_client is not None:
+        return redis_client
+
+    if not REDIS_URL:
+        logger.warning("Redis URL not configured. Running without Redis.")
+        return None
+
+    try:
+        redis_client = Redis.from_url(
+            REDIS_URL,
+            decode_responses=True,
+            socket_connect_timeout=5,
+            socket_timeout=5,
+            retry_on_timeout=True,
+            health_check_interval=30,
+        )
+
+        # Validate connection immediately
+        redis_client.ping()
+
+        logger.info("Redis connected successfully.")
+        return redis_client
+
+    except RedisError as exc:
+        logger.warning(
+            "Redis unavailable. Application will continue without Redis. Error: %s",
+            exc,
+        )
+
+        redis_client = None
+        return None
+
+    except Exception as exc:
+        logger.exception(
+            "Unexpected Redis initialization error: %s",
+            exc,
+        )
+
+        redis_client = None
+        return None
+
+
+# Create Redis connection safely
+redis = create_redis_client()
+
+# ──────────────────────────────────────────────────────────────
+# Rate Limiting
+# ──────────────────────────────────────────────────────────────
+
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+# Use Redis storage if available, fallback to memory
+limiter_storage_uri = REDIS_URL if REDIS_URL else "memory://"
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=[
+        "1 per second",
+        "5 per minute",
+    ],
+    storage_uri=limiter_storage_uri,
+    strategy="fixed-window",
+)
+
+# ──────────────────────────────────────────────────────────────
+# App Configuration
+# ──────────────────────────────────────────────────────────────
+
+
+def config_app(app, config_name: str) -> None:
+    """
+    Configure Flask app from config object.
+    """
+
     from web.config import app_config
+
     app.config.from_object(app_config[config_name])
-    
-# from flask_socketio import SocketIO
-# socketio = SocketIO()
-# from flask_socketio import SocketIO
-# socketio = SocketIO(manage_session=False, cors_allowed_origins="*")
 
-def init_ext(app):
-    """Initialize all extensions."""
+    logger.info("Application configured using '%s' config.", config_name)
+
+
+# ──────────────────────────────────────────────────────────────
+# Extension Initialization
+# ──────────────────────────────────────────────────────────────
+
+
+def init_ext(app) -> None:
+    """
+    Initialize Flask extensions.
+    """
+
+    # Core
     db.init_app(app)
-    # f_session.init_app(app)
-    bcrypt.init_app(app)
-    cache.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": [
-    "https://simplylovely.ng",
-    "https://studentscores.simplylovely.ng",  # ← ADD THIS
-    "https://api-studentscores.simplylovely.ng",  # ← ADD THIS too
-    "http://localhost:5000",
-    "http://localhost:5001",
-    "https://flutterwave.com",
-    "https://api.paystack.com",  
-    "https://paystack.com"
-    ]}})
-    
-    # cors.init_app(app, resources={r"/api/*": {"origins": "https://simplylovely.ng"}})
-    # cors.init_app(app, resources={r"/*": {"origins": "*"}})  # Allow all origins; adjust as necessary
-    # cors.init_app(app, resources={r"/*": {"origins": "*"}})  # Allow all origins; adjust as necessary
-    # cors.init_app(app, resources={r"/socket.io/*": {"origins": "*"}})
-    # cors.init_app(app, resources={r"/socket.io/*": {"origins": "http://127.0.0.1:3002"}})
-    # CORS(app, resources={r"/socket.io/*": {"origins": "http://127.0.0.1:3002"}})
-
-    # s_manager.init_app(app)
-    jwt.init_app(app)
-    limiter.init_app(app)
-    mail.init_app(app)
     migrate.init_app(app, db)
-    moment.init_app(app)
-    oauth.init_app(app)
-    # socketio.init_app(app)
+
+    # Security/Auth
+    bcrypt.init_app(app)
+    jwt.init_app(app)
     csrf.init_app(app)
 
-def make_available():
-    """Provide application metadata."""
+    # Utilities
+    mail.init_app(app)
+    moment.init_app(app)
+    oauth.init_app(app)
+    cache.init_app(app)
+
+    # Rate Limiting
+    limiter.init_app(app)
+
+    # CORS
+    cors.init_app(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": [
+                    "https://simplylovely.ng",
+                    "https://www.simplylovely.ng",
+                    "http://localhost:5000",
+                    "http://localhost:5001",
+                ]
+            }
+        },
+        supports_credentials=True,
+    )
+
+    logger.info("Flask extensions initialized successfully.")
+
+
+# ──────────────────────────────────────────────────────────────
+# Shared Metadata
+# ──────────────────────────────────────────────────────────────
+
+
+def make_available() -> dict:
+    """
+    Shared frontend/application metadata.
+    """
+
     products_links = {
-        'salesnet_link': 'salenset.techa.tech',
-        'barman_link': 'barman.techa.tech',
-        'paysafe_link': 'paysafe.techa.tech',
-        'intellect_link': 'intellect.techa.tech',
-        'workforce_link': 'workforce.techa.tech'
-    }
-    app_data = {
-        'app_name': 'Salesnet',
-        'hype': 'Your Digital Learning Companion.',
-        'app_desc': 'Elite software engr team with special interest in artificial intelligence, data and hacking..',
-        'app_desc_long': 'Elite software engr team with special interest in artificial intelligence, data and hacking..\n\
-            Salesnet m-powers people & powers businesses to stay relevant with technologies and advancements.',
-        'app_location': 'Graceland Estate, Lekki, Lagos, Nigeria.',
-        'app_email': 'hi@techa.tech',
-        'app_logo': getenv('LOGO_URL'),
-        'site_logo': getenv('LOGO_URL'),
-        'site_link': 'https://www.techa.tech',
-        'whatsapp_link': 'https://www.techa.tech',
-        'terms_link': 'https://www.techa.tech/terms',
-        'policy_link': 'https://www.techa.tech/policy',
-        'cookie_link': 'https://www.techa.tech/cookie',
-        'github_link': 'https://github.com/russiantech',
-        'fb_link': 'https://www.facebook.com/RussianTechs',
-        'x_link': 'https://twitter.com/chris_jsmes',
-        'instagram_link': 'https://www.instagram.com/chrisjsmz/',
-        'linkedin_link': 'https://www.linkedin.com/in/chrisjsm',
-        'youtube_link': 'https://www.youtube.com/@russian_developer',
+        "salesnet_link": "https://salesnet.techa.tech",
+        "barman_link": "https://barman.techa.tech",
+        "paysafe_link": "https://paysafe.techa.tech",
+        "intellect_link": "https://intellect.techa.tech",
+        "workforce_link": "https://workforce.techa.tech",
     }
 
-    # Combine app_data and products_links
-    datas = {**app_data, **products_links}
-    return datas
+    app_data = {
+        "app_name": "Salesnet",
+        "hype": "Your Digital Learning Companion.",
+        "app_desc": (
+            "Elite software engineering team with special interest "
+            "in artificial intelligence, data and cybersecurity."
+        ),
+        "app_desc_long": (
+            "Salesnet empowers people and businesses to stay "
+            "relevant with evolving technologies and innovation."
+        ),
+        "app_location": "Lekki, Lagos, Nigeria",
+        "app_email": "hi@techa.tech",
+        "app_logo": getenv("LOGO_URL"),
+        "site_logo": getenv("LOGO_URL"),
+        "site_link": "https://www.techa.tech",
+        "whatsapp_link": "https://www.techa.tech",
+        "terms_link": "https://www.techa.tech/terms",
+        "policy_link": "https://www.techa.tech/policy",
+        "cookie_link": "https://www.techa.tech/cookie",
+        "github_link": "https://github.com/russiantech",
+        "fb_link": "https://www.facebook.com/RussianTechs",
+        "x_link": "https://twitter.com/chris_jsmes",
+        "instagram_link": "https://www.instagram.com/chrisjsmz/",
+        "linkedin_link": "https://www.linkedin.com/in/chrisjsm",
+        "youtube_link": "https://www.youtube.com/@russian_developer",
+    }
+
+    return {
+        **app_data,
+        **products_links,
+    }
+

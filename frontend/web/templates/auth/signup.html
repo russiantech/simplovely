@@ -282,7 +282,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.response_modal(result.error || 'Login failed. Please check your credentials.');
                 }
             } catch (error) {
-                window.response_modal(error.message || 'An error occurred during login');
+                const msg = (window.Utils && window.Utils.friendlyError) ? window.Utils.friendlyError(error) : (error.message || 'An error occurred. Please try again.');
+                window.response_modal(msg, 'danger');
             } finally {
                 window.toggleButton(submitButton, false);
             }

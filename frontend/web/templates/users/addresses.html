@@ -1,322 +1,54 @@
 {% extends "incs/base.html" %}
-{% block title %} Addresses - Simplylovely. {% endblock title %}
+{% block title %} Addresses - Laundry And Fashion {% endblock title %}
 
 {% block content %}
-
 {% include 'incs/modals/add_address_modal.html' %}
-<!-- Page content -->
+
+<style>
+/* ─── Responsive Fixes ────────────────────────────────────── */
+@media (max-width: 991.98px) {
+    .content-wrapper .row > .col-lg-9 { min-width: 0; overflow-x: auto; }
+}
+.content-wrapper .col-lg-9 { min-width: 0; }
+.table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ─── Loading & Empty States ──────────────────────────────── */
+.loading-state { text-align: center; padding: 2rem; color: #6c757d; }
+.empty-state { text-align: center; padding: 3rem 1rem; }
+.empty-state .icon { font-size: 3rem; color: #dee2e6; margin-bottom: 1rem; }
+
+/* ─── Address Card Styling ────────────────────────────────── */
+.address-card { transition: all 0.2s ease; }
+.address-card:hover { background-color: #f8f9fa; }
+</style>
+
 <main class="content-wrapper">
     <div class="container py-5 mt-n2 mt-sm-0">
         <div class="row pt-md-2 pt-lg-3 pb-sm-2 pb-md-3 pb-lg-4 pb-xl-5">
-
             {% include 'incs/user_pages/sidebar.html' %}
 
             <!-- Addresses content -->
             <div class="col-lg-9">
                 <div class="ps-lg-3 ps-xl-0">
 
-                    <!-- Page title -->
-
                     <div class="border-bottom-xx py-4">
-                        <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3">
+                        <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3 flex-wrap gap-2">
                             <div class="d-flex align-items-center gap-3 me-4">
                                 <h1 class="h2 mb-1 mb-sm-2">Addresses</h1>
-                                <a class="nav-link animate-underline fs-base px-0" href="#newAddressModal"
-                                    data-bs-toggle="modal">
+                                <a class="nav-link animate-underline fs-base px-0" href="#newAddressModal" data-bs-toggle="modal">
                                     <i class="ci-plus fs-lg ms-n1 me-2"></i>
                                     <span class="animate-target badge text-bg-info rounded-pill">Add address</span>
                                 </a>
                             </div>
-
-                            <a class="nav-link animate-underline fs-base px-0" href="#newAddressModal"
-                                data-bs-toggle="modal">
-                                <i class="ci-plus fs-lg ms-n1 me-2"></i>
-                                <span class="animate-target badge text-bg-info rounded-pill">Add address</span>
-                            </a>
                         </div>
 
                         <div id="addresses-container">
-                            <!-- Addresses will be dynamically inserted here -->
+                            <div class="loading-state">
+                                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                Loading addresses...
+                            </div>
                         </div>
                     </div>
-
-                    <script>
-                        document.addEventListener('DOMContentLoaded', () => {
-                            const addressForm = document.getElementById('update_address_form');
-                            // Fetch existing address data on page load
-                            fetchAddresses();
-                            
-                        });
-
-                        // Function to fetch and display addresses
-                        async function fetchAddresses() {
-                            try {
-                                const response = await window.make_request(`${window.apiUrl}/addresses`, {
-                                    method: 'GET',
-                                    headers: {
-                                        //'Authorization': `Bearer ${localStorage.getItem('access_token')}` // Include JWT token
-                                    }
-                                });
-
-                                if (response.success) {
-                                    const data = await response;
-                                    const addresses = data.addresses; // Adjust according to your API response structure
-                                    displayAddresses(addresses);
-                                    window.response_modal(data.message);
-                                } else {
-                                    window.response_modal(`${response.error}`);
-                                    console.error('Failed to fetch addresses');
-                                }
-                            } catch (error) {
-                                window.response_modal(`Error fetching addresses:', ${error}`);
-                                console.error(`Error fetching addresses: ${error}`);
-                            }
-                        }
-
-                        function displayAddresses(addresses) {
-                            const addressesContainer = document.getElementById('addresses-container');
-                            addressesContainer.innerHTML = ''; // Clear existing addresses
-
-                            addresses.forEach((address, index) => {
-                                const addressDiv = document.createElement('div');
-                                addressDiv.classList.add('border-bottom', 'py-4');
-
-                                addressDiv.innerHTML = `
-                                    <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3">
-                                        <div class="d-flex align-items-center gap-3 me-4">
-                                            <h2 class="h6 mb-0">Shipping Address ${index + 1}</h2>
-                                            ${address.is_primary ? '<span class="badge text-bg-success rounded-pill">Primary</span>' : ''}
-                                        </div>
-
-                                        <div class="d-flex gap-2 nav-link hiding-collapse-toggle p-0 collapsed">
-                                            <button type="button" class="delete-button nav-link hiding-collapse-toggle p-0 collapsed animate-target badge text-bg-danger rounded-pill p-1" data-id="${address.id}">Remove</button>
-                                            <a class="nav-link hiding-collapse-toggle p-0 collapsed animate-target badge text-bg-info rounded-pill p-1" href="#addressEdit${index}" data-bs-toggle="collapse" aria-expanded="false" aria-controls="addressPreview${index} addressEdit${index}">Update</a>
-                                        </div>
-                                    </div>
-                                    <div class="collapse show" id="addressPreview${index}">
-                                        <ul class="list-unstyled fs-sm m-0">
-                                            <li>${address.street_address || 'No street address provided'}, ${address.city}, ${address.state}, ${address.zip_code || 'No ZIP code'}, ${address.country}</li>
-                                        </ul>
-                                    </div>
-
-                                    <div class="collapse" id="addressEdit${index}">
-                                        <form id="update_address_form_${address.id}" method="put" action='addresses' class="update-form row g-3 g-sm-4 needs-validation" novalidate="">
-                                            <input type="hidden" name="address_id" value="${address.id}"/>
-                                            
-                                            <div class="col-sm-6">
-                                                <div class="position-relative">
-                                                    <label class="form-label">Country</label>
-                                                    <select name="country" class="form-select" id="countrySelect${index}" required="">
-                                                        <option value="">Select country...</option>
-                                                        <!-- Options will be populated dynamically -->
-                                                    </select>
-                                                    <div class="invalid-feedback">Please select your country!</div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="col-sm-6">
-                                                <div class="position-relative">
-                                                    <label class="form-label">State</label>
-                                                    <select name="state" class="form-select" id="stateSelect${index}" required="" disabled>
-                                                        <option value="">Select State...</option>
-                                                        <!-- Options will be populated dynamically -->
-                                                    </select>
-                                                    <div class="invalid-feedback">Please select your state!</div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="col-sm-6">
-                                                <div class="position-relative">
-                                                    <label class="form-label">City</label>
-                                                    <select name="city" class="form-select" id="citySelect${index}" required="" disabled>
-                                                        <option value="">Select city...</option>
-                                                        <!-- Options will be populated dynamically -->
-                                                    </select>
-                                                    <div class="invalid-feedback">Please select your city!</div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="col-sm-4">
-                                                <div class="position-relative">
-                                                    <label for="zip-${index}" class="form-label">ZIP code</label>
-                                                    <input name="zip_code" type="text" class="form-control" id="zip-${index}" value="${address.zip_code}" required="">
-                                                    <div class="invalid-feedback">Please enter your ZIP code!</div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="col-sm-8">
-                                                <div class="position-relative">
-                                                    <label for="address-${index}" class="form-label">Address</label>
-                                                    <input type="text" name='address' class="form-control" id="address-${index}" value="${address.street_address}" required="">
-                                                    <div class="invalid-feedback">Please enter your address!</div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="col-12">
-                                                <div class="d-flex gap-3 pt-2 pt-sm-0">
-                                                    <button type="submit" class="btn btn-primary">Save changes</button>
-                                                    <button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#addressEdit${index}" aria-expanded="true" aria-controls="addressPreview${index} addressEdit${index}">Close</button>
-                                                </div>
-                                            </div>
-                                        </form>
-                                    </div>
-
-                                `;
-
-                                addressesContainer.appendChild(addressDiv);
-                            });
-
-                            // Add event listener for delete buttons
-                            const deleteButtons = document.querySelectorAll('.delete-button');
-                            deleteButtons.forEach(button => {
-                                button.addEventListener('click', async function () {
-                                    const addressId = this.dataset.id;
-
-                                    // Animate the button
-                                    this.innerHTML = 'removing...';
-                                    this.classList.add('spinner-border', 'spinner-border-sm');
-
-                                    try {
-                                        const response = await window.make_request(`${window.apiUrl}/addresses/${addressId}`, {
-                                            method: 'DELETE',
-                                        });
-
-                                        if (!response.success) {
-                                            window.response_modal(response.error); // Display response message
-                                            //throw new Error('Network response was not ok');
-                                        } else {
-                                            window.response_modal(response.message || response.error); // Display response message
-                                            // fetchAddresses(); // Refresh displayed addresses
-                                        }
-                                    } catch (error) {
-                                        window.response_modal(`Error: ${error.message}`);
-                                    } finally {
-                                        this.innerHTML = 'Remove'; // Reset button text
-                                        this.classList.remove('spinner-border', 'spinner-border-sm');
-                                    }
-                                });
-                            });
-
-                            //
-                            const updateForms = document.querySelectorAll('.update-form');
-                            updateForms.forEach(form => {
-                                form.addEventListener('submit', async function (event) {
-                                    event.preventDefault(); // Prevent default form submission
-
-                                    // Gather form data
-                                    const formData = new FormData(form);
-                                    const data = Object.fromEntries(formData.entries());
-                                    // console.log(data);
-
-                                    // Animate the button
-                                    const submitButton = this.querySelector('button[type="submit"]');
-                                    submitButton.innerHTML = 'Updating...';
-                                    submitButton.classList.add('spinner-border', 'spinner-border-sm');
-
-                                    try {
-                                        const response = await window.make_request(`${window.apiUrl}/addresses/${data.address_id}`, {
-                                            method: 'PUT', // Use PUT for updating
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                            },
-                                            body: JSON.stringify(data), // Send data in the body
-                                        });
-
-                                        // Handle response
-                                        if (!response.success) {
-                                            window.response_modal(response.error); // Display error message
-                                        } else {
-                                            window.response_modal(response.message || response.error); // Display success message
-                                            // Optionally, refresh the displayed addresses
-                                            fetchAddresses();
-                                        }
-                                    } catch (error) {
-                                        window.response_modal(`Error: ${error.message}`);
-                                    } finally {
-                                        submitButton.innerHTML = 'Save changes'; // Reset button text
-                                        submitButton.classList.remove('spinner-border', 'spinner-border-sm');
-                                    }
-                                });
-                            });
-
-                            //
-                        }
-
-                        //
-                        document.addEventListener('DOMContentLoaded', function () {
-                            // Fetch countries on page load
-                            fetch(`${window.apiUrl}/countries?page_size=300`)
-                                .then(response => response.json())
-                                .then(data => {
-                                    const countrySelects = document.querySelectorAll('[id^="countrySelect"]');
-                                    countrySelects.forEach(select => {
-                                        data.countries.forEach(country => {
-                                            const option = document.createElement('option');
-                                            option.value = country.id; // Use the ID for API calls
-                                            option.textContent = country.name;
-                                            option.setAttribute('selected', country.is_selected);
-
-                                            select.appendChild(option);
-                                        });
-
-                                    });
-                                });
-
-                            // Event delegation for dynamically created selects
-                            document.getElementById('addresses-container').addEventListener('change', function (event) {
-                                if (event.target.matches('[id^="countrySelect"]')) {
-                                    const index = event.target.id.replace('countrySelect', '');
-                                    const countryId = event.target.value;
-                                    const stateSelect = document.getElementById(`stateSelect${index}`);
-                                    stateSelect.innerHTML = '<option value="">Select State...</option>'; // Reset states
-                                    stateSelect.disabled = true; // Disable until states are loaded
-
-                                    if (countryId) {
-                                        fetch(`${window.apiUrl}/states/${countryId}/countries`)
-                                            .then(response => response.json())
-                                            .then(data => {
-                                                data.states.forEach(state => {
-                                                    const option = document.createElement('option');
-                                                    option.value = state.id; // Use the ID for API calls
-                                                    option.textContent = state.name;
-                                                    stateSelect.appendChild(option);
-                                                });
-                                                stateSelect.disabled = false; // Enable states select
-                                            });
-                                    }
-                                }
-
-                                if (event.target.matches('[id^="stateSelect"]')) {
-                                    const index = event.target.id.replace('stateSelect', '');
-                                    const stateId = event.target.value;
-                                    const citySelect = document.getElementById(`citySelect${index}`);
-                                    citySelect.innerHTML = '<option value="">Select city...</option>'; // Reset cities
-                                    citySelect.disabled = true; // Disable until cities are loaded
-
-                                    if (stateId) {
-                                        fetch(`${window.apiUrl}/cities/${stateId}/states`)
-                                            .then(response => response.json())
-                                            .then(data => {
-                                                data.cities.forEach(city => {
-                                                    const option = document.createElement('option');
-                                                    option.value = city.id; // Use the ID for API calls
-                                                    option.textContent = city.name;
-                                                    citySelect.appendChild(option);
-                                                });
-                                                citySelect.disabled = false; // Enable cities select
-                                            });
-                                    }
-                                }
-
-                            });
-
-                        });
-
-                        document.addEventListener('DOMContentLoaded', function () {
-                            window.authRequired();
-                        });
-
-                    </script>
 
                     <!-- Alternative shipping address -->
                     <div class="border-bottom py-4">
@@ -341,4 +73,434 @@
         </div>
     </div>
 </main>
+
+<script>
+/**
+ * Addresses Page - Self-contained, no external dependencies
+ * Provides: apiRequest(), showToast(), requireAuth()
+ */
+(function() {
+    "use strict";
+
+    function getApiUrl() {
+        if (window.location.hostname === 'simplylovely.ng') {
+            return 'https://api.simplylovely.ng/api'; // Production URL
+        } else {
+            return 'http://localhost:5001/api'; // Development URL
+        }
+    }
+
+    window.apiUrl = getApiUrl();
+
+    // ─── CONFIG ─────────────────────────────────────────────────────────────
+    const API_BASE = window.apiUrl || '';
+    const TOKEN_KEY = 'access_token';
+
+    // ─── HELPERS ────────────────────────────────────────────────────────────
+    function getToken() { return localStorage.getItem(TOKEN_KEY); }
+
+    function getAuthHeaders() {
+        const token = getToken();
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+    }
+
+    /**
+     * Universal API request helper (replaces window.make_request)
+     */
+    async function apiRequest(url, options = {}) {
+        const token = getToken();
+        if (!token) {
+            throw new Error('Authentication required. Please sign in.');
+        }
+
+        const defaults = {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                ...options.headers
+            },
+            cache: 'no-store'
+        };
+
+        // Don't override Content-Type for FormData
+        if (options.body instanceof FormData) {
+            delete defaults.headers['Content-Type'];
+        }
+
+        const response = await fetch(url, { ...defaults, ...options });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            const msg = data.error || data.message || `HTTP ${response.status}`;
+            throw new Error(msg);
+        }
+        return data;
+    }
+
+    /**
+     * Toast notification helper (replaces window.response_modal)
+     */
+    function showToast(message, type = 'info') {
+        // Try to use existing global if available
+        if (typeof window.response_modal === 'function') {
+            window.response_modal(message, type);
+            return;
+        }
+
+        // Fallback: create a Bootstrap toast dynamically
+        let toastContainer = document.getElementById('app-toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'app-toast-container';
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
+
+        const bgClass = type === 'success' ? 'bg-success' : type === 'danger' ? 'bg-danger' : type === 'warning' ? 'bg-warning text-dark' : 'bg-info';
+        const toastId = 'toast-' + Date.now();
+
+        const toastHtml = `
+            <div id="${toastId}" class="toast align-items-center ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">${escapeHtml(message)}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        const toastEl = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+        toast.show();
+
+        toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+    }
+
+    /**
+     * Auth guard (replaces window.authRequired)
+     */
+    function requireAuth() {
+        const token = getToken();
+        if (!token) {
+            showToast('Please sign in to access this page.', 'warning');
+            setTimeout(() => { window.location.href = '/signin'; }, 1500);
+            return false;
+        }
+        return true;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        try { return new Date(dateStr).toLocaleDateString(); }
+        catch (_) { return dateStr; }
+    }
+
+    // ─── ADDRESSES MANAGER ──────────────────────────────────────────────────
+    const AddressesManager = {
+        container: null,
+        countries: [],
+
+        init() {
+            if (!requireAuth()) return;
+            this.container = document.getElementById('addresses-container');
+            if (!this.container) return;
+            this.loadAddresses();
+            this.loadCountries();
+        },
+
+        async loadAddresses() {
+            try {
+                this.container.innerHTML = `
+                    <div class="loading-state">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        Loading addresses...
+                    </div>`;
+
+                const result = await apiRequest(`${API_BASE}/addresses`);
+
+                // Handle different response structures
+                let addresses = [];
+                if (result.data && result.data.addresses) {
+                    addresses = result.data.addresses;
+                } else if (result.addresses) {
+                    addresses = result.addresses;
+                } else if (Array.isArray(result.data)) {
+                    addresses = result.data;
+                } else if (Array.isArray(result)) {
+                    addresses = result;
+                }
+
+                if (!addresses || addresses.length === 0) {
+                    this.renderEmpty();
+                    return;
+                }
+
+                this.renderAddresses(addresses);
+            } catch (error) {
+                console.error('Error loading addresses:', error);
+                this.container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📍</div>
+                        <p class="text-danger">${escapeHtml(error.message)}</p>
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="location.reload()">Retry</button>
+                    </div>`;
+            }
+        },
+
+        renderEmpty() {
+            this.container.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">📍</div>
+                    <p class="text-muted mb-1">No addresses saved yet.</p>
+                    <small class="text-muted">Add your first address using the button above.</small>
+                </div>`;
+        },
+
+        renderAddresses(addresses) {
+            this.container.innerHTML = '';
+
+            addresses.forEach((address, index) => {
+                const card = document.createElement('div');
+                card.className = 'address-card border-bottom py-4';
+                card.innerHTML = `
+                    <div class="nav flex-nowrap align-items-center justify-content-between pb-1 mb-3 flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-3 me-4">
+                            <h2 class="h6 mb-0">Shipping Address ${index + 1}</h2>
+                            ${address.is_primary ? '<span class="badge text-bg-success rounded-pill">Primary</span>' : ''}
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-address-btn" data-id="${address.id}">
+                                <i class="ci-trash"></i> Remove
+                            </button>
+                            <a class="btn btn-sm btn-outline-info" href="#addressEdit${index}" data-bs-toggle="collapse" aria-expanded="false">
+                                <i class="ci-edit"></i> Update
+                            </a>
+                        </div>
+                    </div>
+                    <div class="collapse show" id="addressPreview${index}">
+                        <ul class="list-unstyled fs-sm m-0">
+                            <li>${escapeHtml(address.street_address || 'No street address')}, ${escapeHtml(address.city || '')}, ${escapeHtml(address.state || '')}, ${escapeHtml(address.zip_code || 'No ZIP')}, ${escapeHtml(address.country || '')}</li>
+                        </ul>
+                    </div>
+                    <div class="collapse" id="addressEdit${index}">
+                        <form class="update-address-form row g-3 g-sm-4 needs-validation mt-2" novalidate data-address-id="${address.id}">
+                            <div class="col-sm-6">
+                                <label class="form-label">Country</label>
+                                <select name="country" class="form-select country-select" data-index="${index}" required>
+                                    <option value="">Select country...</option>
+                                </select>
+                                <div class="invalid-feedback">Please select your country!</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label">State</label>
+                                <select name="state" class="form-select state-select" data-index="${index}" required disabled>
+                                    <option value="">Select State...</option>
+                                </select>
+                                <div class="invalid-feedback">Please select your state!</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label">City</label>
+                                <select name="city" class="form-select city-select" data-index="${index}" required disabled>
+                                    <option value="">Select city...</option>
+                                </select>
+                                <div class="invalid-feedback">Please select your city!</div>
+                            </div>
+                            <div class="col-sm-4">
+                                <label class="form-label">ZIP code</label>
+                                <input name="zip_code" type="text" class="form-control" value="${escapeHtml(address.zip_code || '')}" required>
+                                <div class="invalid-feedback">Please enter your ZIP code!</div>
+                            </div>
+                            <div class="col-sm-8">
+                                <label class="form-label">Address</label>
+                                <input type="text" name="address" class="form-control" value="${escapeHtml(address.street_address || '')}" required>
+                                <div class="invalid-feedback">Please enter your address!</div>
+                            </div>
+                            <div class="col-12">
+                                <div class="d-flex gap-3">
+                                    <button type="submit" class="btn btn-primary">
+                                        <span class="btn-text">Save changes</span>
+                                        <span class="btn-spinner spinner-border spinner-border-sm d-none" role="status"></span>
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#addressEdit${index}">Close</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                `;
+                this.container.appendChild(card);
+            });
+
+            this.attachEventListeners();
+            this.populateCountrySelects();
+        },
+
+        attachEventListeners() {
+            // Delete buttons
+            this.container.querySelectorAll('.delete-address-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    if (!confirm('Are you sure you want to remove this address?')) return;
+
+                    const originalText = e.currentTarget.innerHTML;
+                    e.currentTarget.disabled = true;
+                    e.currentTarget.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                    try {
+                        await apiRequest(`${API_BASE}/addresses/${id}`, { method: 'DELETE' });
+                        showToast('Address removed successfully.', 'success');
+                        this.loadAddresses();
+                    } catch (error) {
+                        showToast(`Error: ${error.message}`, 'danger');
+                        e.currentTarget.disabled = false;
+                        e.currentTarget.innerHTML = originalText;
+                    }
+                });
+            });
+
+            // Update forms
+            this.container.querySelectorAll('.update-address-form').forEach(form => {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    if (!form.checkValidity()) {
+                        form.classList.add('was-validated');
+                        return;
+                    }
+
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    const btnText = submitBtn.querySelector('.btn-text');
+                    const btnSpinner = submitBtn.querySelector('.btn-spinner');
+
+                    submitBtn.disabled = true;
+                    btnText.classList.add('d-none');
+                    btnSpinner.classList.remove('d-none');
+
+                    const formData = new FormData(form);
+                    const data = Object.fromEntries(formData.entries());
+                    const addressId = form.dataset.addressId;
+
+                    try {
+                        await apiRequest(`${API_BASE}/addresses/${addressId}`, {
+                            method: 'PUT',
+                            body: JSON.stringify(data)
+                        });
+                        showToast('Address updated successfully.', 'success');
+                        this.loadAddresses();
+                    } catch (error) {
+                        showToast(`Error: ${error.message}`, 'danger');
+                        submitBtn.disabled = false;
+                        btnText.classList.remove('d-none');
+                        btnSpinner.classList.add('d-none');
+                    }
+                });
+            });
+
+            // Country/state/city cascading
+            this.container.addEventListener('change', (e) => {
+                if (e.target.classList.contains('country-select')) {
+                    this.handleCountryChange(e.target);
+                } else if (e.target.classList.contains('state-select')) {
+                    this.handleStateChange(e.target);
+                }
+            });
+        },
+
+        async loadCountries() {
+            try {
+                const result = await apiRequest(`${API_BASE}/countries?page_size=300`);
+                this.countries = result.data?.countries || result.countries || [];
+                this.populateCountrySelects();
+            } catch (error) {
+                console.error('Failed to load countries:', error);
+            }
+        },
+
+        populateCountrySelects() {
+            const selects = this.container.querySelectorAll('.country-select');
+            selects.forEach(select => {
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">Select country...</option>';
+                this.countries.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country.id;
+                    option.textContent = country.name;
+                    if (String(country.id) === String(currentValue)) option.selected = true;
+                    select.appendChild(option);
+                });
+            });
+        },
+
+        async handleCountryChange(select) {
+            const index = select.dataset.index;
+            const countryId = select.value;
+            const stateSelect = this.container.querySelector(`.state-select[data-index="${index}"]`);
+            const citySelect = this.container.querySelector(`.city-select[data-index="${index}"]`);
+
+            if (!stateSelect) return;
+            stateSelect.innerHTML = '<option value="">Select State...</option>';
+            stateSelect.disabled = true;
+            if (citySelect) {
+                citySelect.innerHTML = '<option value="">Select city...</option>';
+                citySelect.disabled = true;
+            }
+
+            if (!countryId) return;
+
+            try {
+                const result = await apiRequest(`${API_BASE}/states/${countryId}/countries`);
+                const states = result.data?.states || result.states || [];
+                states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.id;
+                    option.textContent = state.name;
+                    stateSelect.appendChild(option);
+                });
+                stateSelect.disabled = false;
+            } catch (error) {
+                console.error('Failed to load states:', error);
+            }
+        },
+
+        async handleStateChange(select) {
+            const index = select.dataset.index;
+            const stateId = select.value;
+            const citySelect = this.container.querySelector(`.city-select[data-index="${index}"]`);
+
+            if (!citySelect) return;
+            citySelect.innerHTML = '<option value="">Select city...</option>';
+            citySelect.disabled = true;
+
+            if (!stateId) return;
+
+            try {
+                const result = await apiRequest(`${API_BASE}/cities/${stateId}/states`);
+                const cities = result.data?.cities || result.cities || [];
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city.id;
+                    option.textContent = city.name;
+                    citySelect.appendChild(option);
+                });
+                citySelect.disabled = false;
+            } catch (error) {
+                console.error('Failed to load cities:', error);
+            }
+        }
+    };
+
+    // ─── INITIALIZATION ───────────────────────────────────────────────────────
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => AddressesManager.init());
+    } else {
+        AddressesManager.init();
+    }
+})();
+</script>
 {% endblock content %}

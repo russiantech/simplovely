@@ -1,0 +1,513 @@
+{% extends "incs/base.html" %}
+{% block title %} Volume Usage Logs — Laundry & Fashion {% endblock title %}
+
+{% block content %}
+<style>
+/* ─── usage.css ──────────────────────────────────────────────────── */
+@media (max-width: 991.98px) {
+    .content-wrapper .row > .col-lg-9 { min-width: 0; overflow-x: auto; }
+}
+.content-wrapper .row { flex-wrap: wrap; }
+.content-wrapper .col-lg-9 { min-width: 0; }
+.table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Progress bars */
+.progress-thin { height: 6px; border-radius: 100px; }
+.progress-bar  { transition: width 0.7s cubic-bezier(.4,0,.2,1); }
+
+/* Stat card */
+.stat-card {
+    border: 1px solid #e9ecef;
+    border-radius: 0.875rem;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.stat-card:hover { box-shadow: 0 0.35rem 1rem rgba(0,0,0,.08); transform: translateY(-2px); }
+
+/* Usage bar cell */
+.bar-cell { min-width: 100px; }
+
+/* Admin record form */
+#inline-record-form {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.75rem;
+    padding: 1rem;
+}
+
+/* Empty state */
+.empty-state { text-align: center; padding: 4rem 1rem; }
+.empty-icon  { font-size: 2.5rem; color: #dee2e6; margin-bottom: 0.75rem; }
+
+/* Row detail expand */
+.detail-row td { background: #f8f9fa; font-size: 0.8125rem; }
+</style>
+
+<main class="content-wrapper">
+    <div class="container pt-4 pt-lg-5 pb-5">
+        <div class="row pt-sm-2 pt-md-3 pt-lg-0 pb-2 pb-sm-3 pb-md-4 pb-lg-5">
+            {% include 'incs/user_pages/sidebar.html' %}
+
+            <div class="col-lg-9 pt-2 pt-xl-3">
+
+                <!-- Page header -->
+                <div class="d-flex align-items-center justify-content-between gap-3 pb-3 mb-2 flex-wrap">
+                    <h1 class="h2 mb-0">Volume Usage Logs</h1>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="./plans" class="btn btn-sm btn-outline-dark rounded-pill">
+                            <i class="ci-plus fs-sm me-1"></i>Recharge
+                        </a>
+                        <button id="recordUsageBtn" class="btn btn-sm btn-dark rounded-pill d-none">
+                            <i class="ci-plus fs-sm me-1"></i>Record Usage
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Usage Statistics Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card">
+                            <div class="h4 mb-1 fw-bold text-dark" id="stat-used">—</div>
+                            <div class="fs-xs text-muted">Units Used</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card">
+                            <div class="h4 mb-1 fw-bold text-primary" id="stat-remaining">—</div>
+                            <div class="fs-xs text-muted">Remaining</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card">
+                            <div class="h4 mb-1 fw-bold text-secondary" id="stat-total">—</div>
+                            <div class="fs-xs text-muted">Total Capacity</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card">
+                            <div class="h4 mb-1 fw-bold text-info" id="stat-pct">—%</div>
+                            <div class="fs-xs text-muted">Volume Used</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overall progress bar -->
+                <div class="border rounded-4 p-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2 fs-sm">
+                        <span class="fw-medium">Overall Volume Utilisation</span>
+                        <span id="prog-label" class="text-muted">0 / 0</span>
+                    </div>
+                    <div class="progress progress-thin" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-bar bg-dark" id="usage-bar" style="width:0%"></div>
+                    </div>
+                    <div id="low-units-alert" class="alert alert-warning fs-xs mt-3 mb-0 py-2 d-none">
+                        <i class="ci-alert-triangle me-1"></i>
+                        Your remaining units are low. <a href="./plans" class="alert-link">Recharge now →</a>
+                    </div>
+                </div>
+
+                <!-- Admin inline record form (hidden by default) -->
+                <div id="inline-record-form" class="mb-4 d-none">
+                    <h6 class="mb-3 fw-semibold">Record New Usage</h6>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-sm-4">
+                            <label class="form-label small mb-1">User</label>
+                            <select id="rec-user-sel" class="form-select form-select-sm">
+                                <option value="">Select user…</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-3">
+                            <label class="form-label small mb-1">Units Used</label>
+                            <input type="number" id="rec-units-input" class="form-control form-control-sm"
+                                placeholder="e.g. 5" min="1" step="1">
+                        </div>
+                        <div class="col-sm-5">
+                            <button id="rec-submit-btn" class="btn btn-dark btn-sm px-3">
+                                Save Record
+                            </button>
+                            <button id="rec-cancel-btn" class="btn btn-secondary btn-sm ms-1">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Usage Logs Table -->
+                <div class="border rounded-4 py-4 px-3 px-sm-4 mb-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                        <h2 class="h5 mb-0">Log Entries</h2>
+                        <div class="d-flex align-items-center gap-2">
+                            <span id="usage-count" class="badge bg-secondary rounded-pill">0 entries</span>
+                            <select id="usage-per-page" class="form-select form-select-sm" style="width:auto;">
+                                <option value="10" selected>10 / page</option>
+                                <option value="25">25 / page</option>
+                                <option value="50">50 / page</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table align-middle fs-sm mb-0 table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">User</th>
+                                    <th scope="col">Date</th>
+                                    <th scope="col" class="d-none d-sm-table-cell">Status</th>
+                                    <th scope="col">Used</th>
+                                    <th scope="col" class="d-none d-md-table-cell bar-cell">Utilisation</th>
+                                    <th scope="col" class="d-none d-sm-table-cell">Remaining</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usage-table-body">
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                        Loading usage records…
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav id="usage-pagination" class="d-flex justify-content-center mt-3"></nav>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+/* ─── usage.js — Volume Usage Logs Page ───────────────────────────── */
+(function () {
+    "use strict";
+
+    function getApiUrl() {
+        return window.location.hostname === 'simplylovely.ng'
+            ? 'https://api.simplylovely.ng/api'
+            : 'http://localhost:5001/api';
+    }
+    const API_BASE  = getApiUrl();
+    const TOKEN_KEY = 'access_token';
+    const LOW_THRESHOLD = 20;
+
+    /* ── Utils ──────────────────────────────────────────────────────── */
+    const Utils = {
+        el: id => document.getElementById(id),
+        getToken: () => localStorage.getItem(TOKEN_KEY),
+        authHeaders() {
+            const t = this.getToken();
+            return t ? { Authorization: `Bearer ${t}` } : {};
+        },
+        decodeJwt(token) {
+            try {
+                if (!token) return null;
+                const p = token.split('.');
+                return p.length === 3 ? JSON.parse(atob(p[1])) : null;
+            } catch (_) { return null; }
+        },
+        isAdmin() {
+            const p = this.decodeJwt(this.getToken());
+            return Array.isArray(p?.roles) && p.roles.some(r => r === 'admin' || r === 'dev');
+        },
+        formatDate(d) {
+            if (!d) return '—';
+            try { return new Date(d).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' }); }
+            catch (_) { return d; }
+        },
+        escape(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+        },
+        toast(msg, type = 'info') {
+            if (typeof window.response_modal === 'function') { window.response_modal(msg, type); return; }
+            let c = document.getElementById('_usage_toasts');
+            if (!c) {
+                c = document.createElement('div');
+                c.id = '_usage_toasts';
+                c.className = 'toast-container position-fixed top-0 end-0 p-3';
+                c.style.zIndex = '9999';
+                document.body.appendChild(c);
+            }
+            const bg = type === 'success' ? 'bg-success' : type === 'danger' ? 'bg-danger' :
+                       type === 'warning' ? 'bg-warning text-dark' : 'bg-info';
+            const id = 'ut_' + Date.now();
+            c.insertAdjacentHTML('beforeend', `
+                <div id="${id}" class="toast align-items-center ${bg} text-white border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${this.escape(msg)}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>`);
+            const el = document.getElementById(id);
+            new bootstrap.Toast(el, { delay: 5000 }).show();
+            el.addEventListener('hidden.bs.toast', () => el.remove());
+        },
+        redirectIfNoAuth() {
+            if (!this.getToken()) { window.location.href = '/signin'; return false; }
+            return true;
+        }
+    };
+
+    /* ── Pagination ─────────────────────────────────────────────────── */
+    const Pagination = {
+        render(container, cur, total, onPage) {
+            if (!container || total <= 1) { if (container) container.innerHTML = ''; return; }
+            const max = 5;
+            let s = Math.max(1, cur - Math.floor(max/2)), e = Math.min(total, s + max - 1);
+            if (e - s < max - 1) s = Math.max(1, e - max + 1);
+            let h = '<ul class="pagination pagination-sm mb-0">';
+            h += `<li class="page-item ${cur===1?'disabled':''}"><a class="page-link" href="#" data-page="${cur-1}">‹</a></li>`;
+            if (s > 1) h += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>${s>2?'<li class="page-item disabled"><span class="page-link">…</span></li>':''}`;
+            for (let i = s; i <= e; i++) h += `<li class="page-item ${i===cur?'active':''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+            if (e < total) h += `${e<total-1?'<li class="page-item disabled"><span class="page-link">…</span></li>':''}<li class="page-item"><a class="page-link" href="#" data-page="${total}">${total}</a></li>`;
+            h += `<li class="page-item ${cur===total?'disabled':''}"><a class="page-link" href="#" data-page="${cur+1}">›</a></li></ul>`;
+            container.innerHTML = h;
+            container.querySelectorAll('[data-page]').forEach(a => {
+                a.addEventListener('click', ev => {
+                    ev.preventDefault();
+                    const p = parseInt(a.dataset.page);
+                    if (p && p !== cur && p >= 1 && p <= total) onPage(p);
+                });
+            });
+        }
+    };
+
+    /* ── Stats Panel ────────────────────────────────────────────────── */
+    const StatsPanel = {
+        async fetch() {
+            try {
+                const res = await fetch(`${API_BASE}/usage/statistics`, {
+                    headers: Utils.authHeaders(), cache: 'no-store'
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const json = await res.json();
+                this.render(json?.data || json || {});
+            } catch (e) {
+                console.warn('Stats error:', e);
+                this.render({});
+            }
+        },
+        render(d) {
+            const used      = d.units_used      || 0;
+            const remaining = d.remaining_units || 0;
+            const total     = d.total_units     || 0;
+            const pct       = Math.max(0, Math.min(100, Math.round((d.usage_percentage || 0) * 100) / 100));
+
+            const set = (id, v) => { const el = Utils.el(id); if (el) el.textContent = v; };
+            set('stat-used',      used);
+            set('stat-remaining', remaining);
+            set('stat-total',     total);
+            set('stat-pct',       pct + '%');
+            set('prog-label',     `${used} / ${total} units`);
+
+            const bar = Utils.el('usage-bar');
+            if (bar) { bar.style.width = `${pct}%`; bar.setAttribute('aria-valuenow', pct); }
+
+            const alert = Utils.el('low-units-alert');
+            if (alert) alert.classList.toggle('d-none', remaining > LOW_THRESHOLD);
+        }
+    };
+
+    /* ── Usage Log Manager ──────────────────────────────────────────── */
+    const UsageLog = {
+        tableBody:    null,
+        paginationEl: null,
+        countEl:      null,
+        curPage:      1,
+        perPage:      10,
+        totPages:     1,
+        loading:      false,
+
+        init() {
+            this.tableBody    = Utils.el('usage-table-body');
+            this.paginationEl = Utils.el('usage-pagination');
+            this.countEl      = Utils.el('usage-count');
+
+            Utils.el('usage-per-page')?.addEventListener('change', e => {
+                this.perPage = parseInt(e.target.value);
+                this.fetch(1);
+            });
+
+            /* Admin: show record button */
+            const recBtn = Utils.el('recordUsageBtn');
+            if (recBtn && Utils.isAdmin()) {
+                recBtn.classList.remove('d-none');
+                recBtn.addEventListener('click', () => this._toggleRecordForm());
+            }
+
+            this.fetch(1);
+        },
+
+        async fetch(page = 1) {
+            if (this.loading) return;
+            this.loading = true;
+            this.curPage = page;
+            if (this.tableBody) this.tableBody.innerHTML = `
+                <tr><td colspan="7" class="text-center py-5 text-muted">
+                    <div class="spinner-border spinner-border-sm me-2"></div>Loading…
+                </td></tr>`;
+            try {
+                const res = await fetch(
+                    `${API_BASE}/usage?include_user=1&page=${page}&per_size=${this.perPage}`,
+                    { headers: Utils.authHeaders(), cache: 'no-store' }
+                );
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const json = await res.json();
+                const data = json.data || json;
+
+                // Normalise: backend may return { usage: [...] } or { usage: {usage:[...]} }
+                let records = data?.usage || data?.records || (Array.isArray(data) ? data : []);
+                if (records && !Array.isArray(records) && records.usage) records = records.usage;
+                if (!Array.isArray(records)) records = [];
+
+                const meta = data?.pagination || {};
+                this.totPages = meta.total_pages || Math.ceil((meta.total || records.length) / this.perPage) || 1;
+
+                if (this.countEl) {
+                    const n = meta.total || records.length;
+                    this.countEl.textContent = `${n} entr${n === 1 ? 'y' : 'ies'}`;
+                }
+
+                this._renderRows(records);
+                Pagination.render(this.paginationEl, this.curPage, this.totPages, p => this.fetch(p));
+            } catch (err) {
+                console.error('Usage fetch error:', err);
+                this._renderEmpty('Error loading usage logs. Please try again.');
+            } finally { this.loading = false; }
+        },
+
+        _renderRows(records) {
+            if (!this.tableBody) return;
+            if (!records?.length) { this._renderEmpty(); return; }
+            this.tableBody.innerHTML = '';
+            records.forEach((item, i) => {
+                const n       = (this.curPage - 1) * this.perPage + i + 1;
+                const user    = Utils.escape(item.user?.username || item.user?.name || 'N/A');
+                const used    = item.units_used    || 0;
+                const total   = item.total_units   || 0;
+                const rem     = item.remaining_units || 0;
+                const pct     = total > 0 ? Math.min(100, Math.round(used / total * 100)) : 0;
+                const status  = item.status || 'active';
+                const color   = status === 'active' ? 'success' : 'secondary';
+                const barCls  = pct >= 90 ? 'bg-danger' : pct >= 60 ? 'bg-warning' : 'bg-success';
+                const tr      = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="text-muted fs-xs">${n}</td>
+                    <td class="fw-medium">${user}</td>
+                    <td class="text-nowrap">${Utils.formatDate(item.created_at)}</td>
+                    <td class="d-none d-sm-table-cell">
+                        <span class="badge bg-${color}-subtle text-${color} rounded-pill">${Utils.escape(status)}</span>
+                    </td>
+                    <td class="fw-semibold">${used}</td>
+                    <td class="d-none d-md-table-cell bar-cell">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress progress-thin flex-grow-1" style="width:80px">
+                                <div class="progress-bar ${barCls}" style="width:${pct}%"></div>
+                            </div>
+                            <span class="fs-xs text-muted">${pct}%</span>
+                        </div>
+                    </td>
+                    <td class="d-none d-sm-table-cell">${rem}</td>
+                `;
+                this.tableBody.appendChild(tr);
+            });
+        },
+
+        _renderEmpty(msg) {
+            if (!this.tableBody) return;
+            this.tableBody.innerHTML = `
+                <tr><td colspan="7" class="empty-state">
+                    <div class="empty-icon">📊</div>
+                    <p class="text-muted mb-1 mt-2">${msg || 'No usage records yet.'}</p>
+                    <small class="text-muted">Usage will be logged here once your subscription is active and volume is consumed.</small>
+                </td></tr>`;
+            if (this.paginationEl) this.paginationEl.innerHTML = '';
+        },
+
+        /* ── Inline record form (admin) ── */
+        _toggleRecordForm() {
+            const form = Utils.el('inline-record-form');
+            if (!form) return;
+            const hidden = form.classList.contains('d-none');
+            form.classList.toggle('d-none', !hidden);
+            if (hidden) this._loadUsersIntoSelect();
+        },
+
+        async _loadUsersIntoSelect() {
+            const sel = Utils.el('rec-user-sel');
+            if (!sel || sel.options.length > 1) return;  // already loaded
+            try {
+                const res = await fetch(`${API_BASE}/users?page_size=100`, {
+                    headers: Utils.authHeaders(), cache: 'no-store'
+                });
+                const json = await res.json();
+                const users = json.data?.users || json.users || [];
+                users.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u.id;
+                    opt.textContent = `${u.username || u.name} (${u.email})`;
+                    sel.appendChild(opt);
+                });
+            } catch (e) { console.warn('Load users error:', e); }
+        },
+
+        _attachFormEvents() {
+            Utils.el('rec-cancel-btn')?.addEventListener('click', () => {
+                Utils.el('inline-record-form')?.classList.add('d-none');
+            });
+            Utils.el('rec-submit-btn')?.addEventListener('click', () => this._submitRecord());
+        },
+
+        async _submitRecord() {
+            const userId = Utils.el('rec-user-sel')?.value;
+            const units  = parseInt(Utils.el('rec-units-input')?.value || 0);
+            if (!userId) { Utils.toast('Please select a user.', 'warning'); return; }
+            if (!units || units <= 0) { Utils.toast('Enter a valid number of units.', 'warning'); return; }
+
+            const btn = Utils.el('rec-submit-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            try {
+                const res = await fetch(`${API_BASE}/usage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...Utils.authHeaders() },
+                    body: JSON.stringify({ user_id: parseInt(userId), units_used: units })
+                });
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.error || json.message || 'Failed');
+                Utils.toast(json.message || 'Usage recorded!', 'success');
+                Utils.el('inline-record-form')?.classList.add('d-none');
+                if (Utils.el('rec-units-input')) Utils.el('rec-units-input').value = '';
+                if (Utils.el('rec-user-sel')) Utils.el('rec-user-sel').value = '';
+                await this.fetch(1);
+                await StatsPanel.fetch();
+            } catch (err) {
+                Utils.toast(`Error: ${err.message}`, 'danger');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Record';
+            }
+        }
+    };
+
+    /* ── Bootstrap ──────────────────────────────────────────────────── */
+    async function init() {
+        if (!Utils.redirectIfNoAuth()) return;
+        await StatsPanel.fetch();
+        UsageLog.init();
+        UsageLog._attachFormEvents();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+{% endblock content %}
+

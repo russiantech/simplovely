@@ -7,15 +7,15 @@ from . import products
 # from . import pages
 from . import index
 from . import users
-from . import baskets
+# from . import baskets
 from . import orders
-from . import addresses
+# from . import addresses
 from . import favorites
 from . import comments
 from . import roles
-from . import tags 
+# from . import tags 
 # from .tags import Tag, ProductTag, products_tags
-from . import chats
+# from . import chats
 # from .categories import Category, products_categories
 from . import categories
 # from .transactions import Transaction
