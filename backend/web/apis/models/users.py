@@ -71,27 +71,47 @@ class User(db.Model):
     # transactions = db.relationship('Transaction', foreign_keys='Comment.user_id', back_populates='user', lazy='dynamic')
     transactions = db.relationship('Transaction', back_populates='user', lazy='dynamic')
     
+    # @staticmethod
+    # def get_user(username: str):
+    #     """
+    #     Static method to fetch a user from the database by username or user ID.
+        
+    #     Args:
+    #         username (str): The username or user ID to search for.
+        
+    #     Returns:
+    #         User: The user object if found, otherwise None.
+        
+    #     Raises:
+    #         ValueError: If the username is empty.
+    #     """
+    #     if not username:
+    #         raise ValueError("Username cannot be empty")
+        
+    #     # Attempt to fetch the user by either username or user ID
+    #     user = db.session.query(User).filter(or_(User.username == username, User.email == username, User.id == username)).first()
+        
+    #     return user
+
+    # v2
     @staticmethod
-    def get_user(username: str):
-        """
-        Static method to fetch a user from the database by username or user ID.
-        
-        Args:
-            username (str): The username or user ID to search for.
-        
-        Returns:
-            User: The user object if found, otherwise None.
-        
-        Raises:
-            ValueError: If the username is empty.
-        """
-        if not username:
-            raise ValueError("Username cannot be empty")
-        
-        # Attempt to fetch the user by either username or user ID
-        user = db.session.query(User).filter(or_(User.username == username, User.email == username, User.id == username)).first()
-        
-        return user
+    def get_user(
+        user_id=None,
+        username=None,
+        email=None
+    ):
+        query = User.query
+
+        if user_id is not None:
+            return query.filter_by(id=user_id).first()
+
+        if username is not None:
+            return query.filter_by(username=username).first()
+
+        if email is not None:
+            return query.filter_by(email=email).first()
+
+        return None
 
     def set_password(self, password: str) -> None:
         """Hashes the password using bcrypt/scrypt and stores it."""
@@ -121,66 +141,95 @@ class User(db.Model):
     from datetime import datetime, timedelta, timezone
     from flask_jwt_extended import create_access_token, create_refresh_token
 
-    def make_token(self, token_type: str = "access") -> str:
-        """
-        Generate a JWT token for the specified token type (e.g., access or refresh).
-        - The access token expires in 15 minutes.
-        - The refresh token expires in 30 days.
+    # def make_token(self, token_type: str = "access") -> str:
+    #     """
+    #     Generate a JWT token for the specified token type (e.g., access or refresh).
+    #     - The access token expires in 15 minutes.
+    #     - The refresh token expires in 30 days.
 
-        Args:
-            token_type (str): The type of token to create ("access" or "refresh").
+    #     Args:
+    #         token_type (str): The type of token to create ("access" or "refresh").
         
-        Returns:
-            str: The generated JWT token.
-        """
-        try:
-            # Prepare the additional claims (user summary data)
-            additional_claims = self.get_summary(include_roles=True)
+    #     Returns:
+    #         str: The generated JWT token.
+    #     """
+    #     try:
+    #         # Prepare the additional claims (user summary data)
+    #         additional_claims = self.get_summary(include_roles=True)
 
-            # Add the token type to the claims
-            additional_claims["token_type"] = token_type
+    #         # Add the token type to the claims
+    #         additional_claims["token_type"] = token_type
 
-            # Set expiration based on token type
-            if token_type == "access":
-                expiration_time = timedelta(days=10)  # Access token expires in 10 days
-            elif token_type == "refresh":
-                expiration_time = timedelta(days=30)  # Refresh token expires in 30 days
-            elif token_type in ("reset_password", "verify_email"):
-                expiration_time = timedelta(days=7)  # this token expires in 7 days
-            else:
-                raise ValueError(f"Invalid token type: {token_type}")
+    #         # Set expiration based on token type
+    #         if token_type == "access":
+    #             expiration_time = timedelta(days=10)  # Access token expires in 10 days
+    #         elif token_type == "refresh":
+    #             expiration_time = timedelta(days=30)  # Refresh token expires in 30 days
+    #         elif token_type in ("reset_password", "verify_email"):
+    #             expiration_time = timedelta(days=7)  # this token expires in 7 days
+    #         else:
+    #             raise ValueError(f"Invalid token type: {token_type}")
 
-            # Add expiration claim to additional claims
-            additional_claims["exp"] = datetime.now(timezone.utc) + expiration_time
+    #         # Add expiration claim to additional claims
+    #         additional_claims["exp"] = datetime.now(timezone.utc) + expiration_time
 
-            # Use the user's email as the 'sub' claim (subject)
-            additional_claims['sub'] = str(self.email)  # Ensure 'sub' is a string
+    #         # Use the user's email as the 'sub' claim (subject)
+    #         additional_claims['sub'] = str(self.email)  # Ensure 'sub' is a string
 
-            if token_type == "access":
-                # Create the access token with the provided claims
-                token = create_access_token(identity=str(self.email), additional_claims=additional_claims)
-            elif token_type == "refresh":
-                # Create the refresh token with a longer expiration time
-                token = create_refresh_token(identity=str(self.email), additional_claims=additional_claims)
-            elif token_type in ("reset_password", "verify_email"):
-                # create reset/verify token for passwords using jwt.
-                token = create_access_token(identity=str(self.email), additional_claims=additional_claims)
-            else:
-                token = None
+    #         if token_type == "access":
+    #             # Create the access token with the provided claims
+    #             token = create_access_token(identity=str(self.email), additional_claims=additional_claims)
+    #         elif token_type == "refresh":
+    #             # Create the refresh token with a longer expiration time
+    #             token = create_refresh_token(identity=str(self.email), additional_claims=additional_claims)
+    #         elif token_type in ("reset_password", "verify_email"):
+    #             # create reset/verify token for passwords using jwt.
+    #             token = create_access_token(identity=str(self.email), additional_claims=additional_claims)
+    #         else:
+    #             token = None
                 
-            # Inspect and print token contents
-            decoded_token = self.check_token(token)  # Disable signature verification
-            # print(f"Generated {token_type} token: {decoded_token}")
-            # logging.info(f"Generated {token_type} token: {decoded_token}")
-            # decoded_token = decode(token, options={"verify_signature": False})  # Disable signature verification
-            # logging.info(f"Generated {token_type} token: {decoded_token}")
+    #         # Inspect and print token contents
+    #         decoded_token = self.check_token(token)  # Disable signature verification
+    #         # print(f"Generated {token_type} token: {decoded_token}")
+    #         # logging.info(f"Generated {token_type} token: {decoded_token}")
+    #         # decoded_token = decode(token, options={"verify_signature": False})  # Disable signature verification
+    #         # logging.info(f"Generated {token_type} token: {decoded_token}")
 
-            return token
+    #         return token
 
-        except Exception as e:
-            # Log the exception (optional)
-            traceback.print_exc()
-            return None  # Return None in case of any error
+    #     except Exception as e:
+    #         # Log the exception (optional)
+    #         traceback.print_exc()
+    #         return None  # Return None in case of any error
+
+    # v2
+    def make_token(self, token_type="access"):
+        claims = {
+            "token_type": token_type
+        }
+
+        if token_type == "access":
+            return create_access_token(
+                identity=self.email,
+                additional_claims=claims,
+                expires_delta=timedelta(minutes=15)
+            )
+
+        if token_type == "refresh":
+            return create_refresh_token(
+                identity=self.email,
+                additional_claims=claims,
+                expires_delta=timedelta(days=30)
+            )
+
+        if token_type in ("verify_email", "reset_password"):
+            return create_access_token(
+                identity=self.email,
+                additional_claims=claims,
+                expires_delta=timedelta(hours=1)
+            )
+
+        raise ValueError(f"Unknown token type: {token_type}")
 
     @staticmethod
     def check_token(token: str) -> dict:
@@ -249,25 +298,46 @@ class User(db.Model):
 
 # Register a callback function that takes whatever object is passed in as the
 # identity when creating JWTs and converts it to a JSON serializable format.
+# @jwt.user_identity_loader
+# def user_identity_lookup(user):
+#     try:
+#         user = user.get('email', user['id'])
+#         return user.get('email', user)
+#     except Exception:
+#         return None
+    
 @jwt.user_identity_loader
-def user_identity_lookup(user):
-    try:
-        user = user.get('email', user['id'])
-        return user.get('email', user)
-    except Exception:
-        return None
+def user_identity_lookup(identity):
+    return str(identity)
 
 # Register a callback function that loads a user from your database whenever
 # a protected route is accessed. This should return any python object on a
 # successful lookup, or None if the lookup failed for any reason (for example
 # if the user has been deleted from the database).
+# @jwt.user_lookup_loader
+# def user_lookup_callback(_jwt_header, jwt_data):
+#     identity = jwt_data["sub"]
+#     # return User.query.filter_by(or_(email=identity, id=identity)).one_or_none()
+#     return User.query.filter(
+#         or_(User.email == identity, User.id == identity)
+#     ).one_or_none()
+
+# v2
 @jwt.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
     identity = jwt_data["sub"]
-    # return User.query.filter_by(or_(email=identity, id=identity)).one_or_none()
-    return User.query.filter(
-        or_(User.email == identity, User.id == identity)
-    ).one_or_none()
+
+    query = User.query.filter(User.email == identity)
+
+    if str(identity).isdigit():
+        query = User.query.filter(
+            or_(
+                User.email == identity,
+                User.id == int(identity)
+            )
+        )
+
+    return query.one_or_none()
 
 
 # Callback function to check if a JWT exists in the database blocklist
@@ -286,7 +356,7 @@ def user_lookup_callback(_jwt_header, jwt_data):
 # Import the unified Redis/memory interface
 from web.extensions import get_redis_or_memory
 
-
+@jwt.token_in_blocklist_loader
 def check_if_token_revoked(jwt_header, jwt_data):
     """
     Check if a JWT token has been revoked/blacklisted.
@@ -322,6 +392,7 @@ def expired_token_callback(jwt_header, jwt_payload):
 def fresh_token_required_response():
     return error_response('fresh token required', status_code=401)
 
-@jwt.invalid_token_loader
-def invalid_token_callback(error):
-    return error_response(f'{error} Invalid token. Signature verification failed.', status_code=401)
+# @jwt.invalid_token_loader
+# def invalid_token_callback(error):
+#     return error_response(f'{error} Invalid token. Signature verification failed.', status_code=401)
+

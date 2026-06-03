@@ -24,7 +24,6 @@ const AppConfig = Object.freeze({
     PROD_API:        'https://api.simplylovely.ng/api',
     DEV_API:         'http://localhost:5001/api',
     MODAL_Z_INDEX:   1058,
-    LOGIN_PATH:      '/signin',
     TOKEN_KEYS: {
         ACCESS:  'access_token',
         REFRESH: 'refresh_token',
@@ -45,13 +44,6 @@ const Utils = {
             if (parts.length === 2) return parts.pop().split(';').shift();
         } catch (_) {}
         return null;
-    },
-
-    /** Remove a cookie by name (works for non-HttpOnly cookies) */
-    removeCookie(name, path = '/') {
-        try {
-            document.cookie = `${name}=; Max-Age=0; path=${path};`;
-        } catch (_) {}
     },
 
     getStorage(key) {
@@ -88,36 +80,6 @@ const Utils = {
 
     isValidString(v) {
         return typeof v === 'string' && v.trim().length > 0;
-    },
-
-    /**
-     * Strict JWT format validator.
-     * A JWT must be three Base64url-encoded parts separated by dots.
-     * Rejects "null", "undefined", "", "Bearer ", etc.
-     */
-    isValidJwt(token) {
-        if (!this.isValidString(token)) return false;
-        const parts = token.split('.');
-        if (parts.length !== 3) return false;
-        // Each part must be non-empty and contain only Base64url chars
-        const b64urlRe = /^[A-Za-z0-9_-]+$/;
-        return parts.every(p => p.length > 0 && b64urlRe.test(p));
-    },
-
-    /** Extract pathname from URL (handles absolute or relative) */
-    getPathFromUrl(url) {
-        try {
-            return new URL(url).pathname;
-        } catch (_) {
-            return url; // relative
-        }
-    },
-
-    /** Best-effort CSRF token extraction from common cookie names */
-    getCsrfToken() {
-        return this.getCookie('csrf_token')
-            || this.getCookie('XSRF-TOKEN')
-            || this.getCookie('csrftoken');
     },
 
     /** Human-readable error from a failed fetch/API call */
@@ -176,45 +138,24 @@ const TokenManager = {
     },
 
     setTokens(access, refresh) {
-        if (Utils.isValidJwt(access))  Utils.setStorage(AppConfig.TOKEN_KEYS.ACCESS,  access);
-        if (Utils.isValidJwt(refresh)) Utils.setStorage(AppConfig.TOKEN_KEYS.REFRESH, refresh);
+        if (Utils.isValidString(access))  Utils.setStorage(AppConfig.TOKEN_KEYS.ACCESS,  access);
+        if (Utils.isValidString(refresh)) Utils.setStorage(AppConfig.TOKEN_KEYS.REFRESH, refresh);
     },
 
     clear() {
         Utils.removeStorage(AppConfig.TOKEN_KEYS.ACCESS);
         Utils.removeStorage(AppConfig.TOKEN_KEYS.REFRESH);
-        // Also clear any cookie the backend may have set (best-effort)
-        Utils.removeCookie(AppConfig.TOKEN_KEYS.ACCESS);
-        Utils.removeCookie(AppConfig.TOKEN_KEYS.REFRESH);
-    },
-
-    /** Return true if either access or refresh token is present and looks valid */
-    hasToken() {
-        return Utils.isValidJwt(this.getAccess()) || Utils.isValidJwt(this.getRefresh());
-    },
-
-    /** Full logout: wipe storage + redirect to login (unless already there) */
-    logout(redirectUrl = AppConfig.LOGIN_PATH) {
-        this.clear();
-        const current = window.location.pathname;
-        if (!current.includes('signin') && !current.includes('login')) {
-            window.location.href = redirectUrl;
-        }
     },
 
     async refresh() {
         const rt = this.getRefresh();
-        if (!Utils.isValidJwt(rt)) return false;
+        if (!Utils.isValidString(rt)) return false;
 
         try {
-            // Use raw fetch (not HttpClient) to avoid infinite recursion.
-            // credentials: 'omit' prevents stale JWT cookies from triggering
-            // CSRF errors on the refresh endpoint.
             const res = await fetch(`${ApiConfig.get()}/users/refresh-token`, {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify({ refresh_token: rt }),
-                credentials: 'omit',
             });
             if (!res.ok) return false;
             const data = await res.json();
@@ -233,43 +174,31 @@ const HttpClient = {
     async request(url, options = {}) {
         if (!url) throw new Error('URL is required');
 
-        const path = Utils.getPathFromUrl(url);
-        const isAuthEndpoint = /\/(signin|signup|refresh-token)\b/.test(path);
+        // Auth endpoints must never carry a stale bearer token — doing so causes
+        // Flask-JWT's optional loader to fire a 401 before the route body runs.
+        const isAuthEndpoint = /\/(signin|signup|refresh-token)\b/.test(url);
 
-        // ── Auth header: only for non-auth endpoints AND only if JWT is well-formed ──
         const token   = isAuthEndpoint ? null : TokenManager.getAccess();
         const headers = {
             'Content-Type': 'application/json',
             ...options.headers,
         };
-        if (Utils.isValidJwt(token)) {
+        if (Utils.isValidString(token)) {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
-        // ── CSRF protection: best-effort header if cookie exists ──
-        // Helps when backend uses Flask-WTF CSRFProtect or similar.
-        const csrfToken = Utils.getCsrfToken();
-        if (csrfToken) {
-            headers['X-CSRFToken']  = csrfToken;
-            headers['X-XSRF-TOKEN'] = csrfToken;
-        }
-
-        // ── Credentials: NEVER send cookies on auth endpoints ──
-        // Sending stale JWT cookies to /signin causes Flask-JWT cookie+CSRF
-        // checks to fire a 401 BEFORE the route body ever runs.
-        const credentials = isAuthEndpoint ? 'omit' : (options.credentials || 'include');
-
-        const opts = {
-            ...options,
+        const opts = { 
+            ...options, 
             headers,
             mode: 'cors',
-            credentials,
+            credentials: 'include',
         };
 
         let res;
         try {
             res = await fetch(url, opts);
         } catch (networkErr) {
+            // Wrap the raw browser network error with a friendly message
             const friendly = Utils.friendlyError(networkErr);
             const err = new Error(friendly);
             err.isNetworkError = true;
@@ -277,33 +206,13 @@ const HttpClient = {
             throw err;
         }
 
-        // ── 401 handling ──
-        if (res.status === AppConfig.HTTP.UNAUTHORIZED) {
-            // Auth endpoints: do NOT attempt refresh — just surface the error
-            if (isAuthEndpoint) {
-                let errMsg = `Authentication failed (HTTP ${res.status})`;
-                try {
-                    const body = await res.json();
-                    errMsg = body.error || body.message || errMsg;
-                } catch (_) {}
-                throw new Error(errMsg);
-            }
-
-            // Non-auth endpoint: try silent refresh once
-            const hadTokenBefore = TokenManager.hasToken();
+        // Auto-refresh on 401 for non-auth endpoints only
+        if (res.status === AppConfig.HTTP.UNAUTHORIZED && !isAuthEndpoint) {
             const refreshed = await TokenManager.refresh();
             if (refreshed) {
                 const newToken = TokenManager.getAccess();
                 if (newToken) opts.headers['Authorization'] = `Bearer ${newToken}`;
                 return this.request(url, opts);
-            }
-
-            // Refresh failed → session is dead. Clear everything and redirect.
-            TokenManager.clear();
-            if (hadTokenBefore) {
-                // Only redirect if we actually had a session (avoid kicking
-                // logged-out visitors on public pages to login).
-                TokenManager.logout();
             }
             throw new Error('Your session has expired. Please sign in again.');
         }
@@ -366,6 +275,7 @@ const UIManager = {
     },
 
     showToast(message, type = 'success') {
+        // Lightweight inline toast fallback; upgrades gracefully when toast container exists
         const container = document.getElementById('toast-container')
                        || document.body;
         const id   = `toast-${Date.now()}`;
@@ -418,15 +328,15 @@ const FormHandler = {
         const apiUrl = ApiConfig.get();
 
         try {
+
             UIManager.toggleButton(btn, true);
 
-            const data = Object.fromEntries(new FormData(form).entries());
+            const data   = Object.fromEntries(new FormData(form).entries());
 
-            // Detect auth endpoints by the endpoint path (consistent with HttpClient)
-            const isAuthEndpoint = /(signin|signup|refresh-token)/.test(endpoint);
+            // 
+            const isAuthEndpoint = endpoint.includes('signin') || endpoint.includes('signup');
 
-            // Scrub stale tokens before hitting auth endpoints so we don't send
-            // a stale Bearer token that triggers a 401 before the route runs.
+            // Temporarily clear tokens for auth endpoints so we don't send stale auth
             if (isAuthEndpoint) {
                 TokenManager.clear();
             }
@@ -435,6 +345,19 @@ const FormHandler = {
                 method: form.method?.toUpperCase() || 'POST',
                 body: JSON.stringify(data),
             });
+
+            // If this was an auth endpoint but we got no token, restore previous tokens (if any)
+            // if (isAuthEndpoint && !result.access_token) {
+            //     const prevAccess  = TokenManager.getAccess();
+            //     const prevRefresh = TokenManager.getRefresh();
+            //     if (prevAccess)  Utils.setStorage(AppConfig.TOKEN_KEYS.ACCESS,  prevAccess);
+            //     if (prevRefresh) Utils.setStorage(AppConfig.TOKEN_KEYS.REFRESH, prevRefresh);
+            // }
+
+            // const result = await HttpClient.request(`${apiUrl}/${endpoint}`, {
+            //     method: form.method?.toUpperCase() || 'POST',
+            //     body:   JSON.stringify(data),
+            // });
 
             if (result.success || result.id || result.message) {
                 if (typeof onSuccess === 'function') {
@@ -465,6 +388,7 @@ const FormHandler = {
             'success'
         );
         form.reset();
+        // Close the modal after a brief delay
         setTimeout(() => {
             const modalEl = form.closest('.modal');
             if (modalEl) {
@@ -491,7 +415,6 @@ const OAuthHandler = {
                     'Client-Callback-Url': window.location.href,
                     'Content-Type':        'application/json',
                 },
-                credentials: 'omit',
             });
             const data = await res.json();
             if (res.ok && data.redirect) {
@@ -534,9 +457,7 @@ const UserDataManager = {
             const data = await HttpClient.request(`${ApiConfig.get()}/users/current`);
             if (data) this._render(data);
         } catch (_) {
-            // Non-fatal — user might simply not be logged in.
-            // If they had a stale token, HttpClient already cleared it
-            // and redirected; if they had no token, we silently ignore.
+            // Non-fatal — user might simply not be logged in
         }
     },
 
@@ -565,6 +486,8 @@ const UserDataManager = {
 const App = {
     async init() {
         try {
+            // ApiConfig.init() and window.* globals are already set at module
+            // parse time (below). This handler is for DOM-dependent setup only.
             UIManager.setActiveNavigation();
             FormHandler.init();
             OAuthHandler.init();
@@ -580,10 +503,12 @@ const App = {
 
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
+// Expose globals IMMEDIATELY (before DOMContentLoaded) so inline scripts and
+// other DOMContentLoaded listeners can safely call window.toggleButton etc.
+// regardless of listener registration order.
 ApiConfig.init();
 window.make_request     = (url, opts)    => HttpClient.request(url, opts);
 window.refresh_token    = ()             => TokenManager.refresh();
-window.logout           = ()             => TokenManager.logout();
 window.response_modal   = (msg, type)    => UIManager.showModal(msg, type);
 window.toggleButton     = (btn, disable) => UIManager.toggleButton(btn, disable);
 window.handleFormSubmit = (id, endpoint) => FormHandler.submit(id, endpoint);

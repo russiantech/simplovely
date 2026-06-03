@@ -253,6 +253,7 @@ def init_ext(app) -> None:
     # CORS
     CORS(
         app,
+        supports_credentials=True,
         resources={
             r"/api/*": {
                 "origins": [
