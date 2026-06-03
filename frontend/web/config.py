@@ -2,7 +2,7 @@
 from datetime import timedelta
 from os import getenv, path
 
-from web.apis.utils.helpers import strtobool_custom
+from web.views.utils.helpers import strtobool_custom
 
 class Config:
     

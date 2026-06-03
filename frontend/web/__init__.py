@@ -13,11 +13,11 @@ def create_app(config_name=None):
         app.context_processor(make_available) # make some-data available in the context through-out
         
         # Register Blueprints(front-pages)
-        from web.apis import api_bp
+        from web.views import api_bp
         app.register_blueprint(api_bp)
         
         # error-bp
-        from web.apis.errors.handlers import error_bp
+        from web.views.errors.handlers import error_bp
         app.register_blueprint(error_bp)
 
         return app

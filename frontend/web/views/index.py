@@ -1,8 +1,8 @@
 
 from flask import render_template
 import traceback
-from web.apis.utils.serializers import error_response
-from web.apis import api_bp as index_bp
+from web.views.utils.serializers import error_response
+from web.views import api_bp as index_bp
 
 
 @index_bp.route('/')

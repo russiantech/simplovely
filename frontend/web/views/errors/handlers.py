@@ -1,6 +1,6 @@
 from flask import Blueprint
 
-from web.apis.utils.serializers import error_response
+from web.views.utils.serializers import error_response
 
 error_bp = Blueprint('errors', __name__)
 # from web.extensions import bp as error_bp

@@ -4,14 +4,14 @@ import traceback, requests, secrets
 from flask import current_app, request, url_for
 from web.apis.models.plans import Subscription
 from web.apis.models.plans import Plan
-from web.apis.utils.serializers import error_response, success_response
+from web.views.utils.serializers import error_response, success_response
 from web.apis.models.transactions import Transaction
 from requests.exceptions import ConnectionError, Timeout, RequestException
 from sqlalchemy.exc import IntegrityError
 from web.extensions import db, csrf, limiter
 from web.apis.models.users import User
-from web.apis.utils.helpers import generate_ref
-from web.apis import api_bp as transact_bp
+from web.views.utils.helpers import generate_ref
+from web.views import api_bp as transact_bp
 
 
 @transact_bp.route('/payment/<int:plan_id>/paystack', methods=['POST'])

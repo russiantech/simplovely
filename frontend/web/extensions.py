@@ -1,5 +1,5 @@
 
-from web.apis.utils.services import *
+from web.views.utils.services import *
 
 # Load environment variables
 from dotenv import load_dotenv

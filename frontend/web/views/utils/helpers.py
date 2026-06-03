@@ -73,7 +73,7 @@ def validate_file_upload(filename):
 
 from flask_jwt_extended import decode_token
 from jwt import ExpiredSignatureError, InvalidTokenError
-from web.apis.utils.serializers import error_response
+from web.views.utils.serializers import error_response
 def extract_and_verify_jwt_ws(data, connection_manager, event_name):
     """
     Extract and verify a JWT token from WebSocket request data.

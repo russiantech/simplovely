@@ -1,6 +1,6 @@
 from functools import wraps
 from flask_jwt_extended import current_user, jwt_required
-from web.apis.utils.serializers import error_response
+from web.views.utils.serializers import error_response
 
 def confirm_email(func):
     """Check if email has been confirmed"""

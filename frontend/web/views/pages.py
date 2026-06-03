@@ -5,7 +5,7 @@ from web.models import Plan, db, User, Transaction
 from web.extensions import csrf
 from requests.exceptions import ConnectionError, Timeout, RequestException
 from jsonschema import validate, ValidationError
-from web.apis.utils.helpers import success_response, error_response, generate_random_id
+from web.views.utils.helpers import success_response, error_response, generate_random_id
 from web.apis.schemas.pay import pay_schema
 from sqlalchemy.exc import IntegrityError
 

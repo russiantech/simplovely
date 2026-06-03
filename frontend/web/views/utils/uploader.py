@@ -5,7 +5,7 @@ import numpy as np
 from werkzeug.utils import secure_filename
 from flask import jsonify, current_app, request
 
-from web.apis.utils.serializers import error_response
+from web.views.utils.serializers import error_response
 
 # Define a regular expression pattern for valid filenames (excluding illegal characters)
 valid_filename_pattern = re.compile(r'^[a-zA-Z0-9_.]+$')

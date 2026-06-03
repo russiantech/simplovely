@@ -1,7 +1,7 @@
 # Helper function to handle email verification
 import traceback
 from jsonschema import ValidationError, validate
-from web.apis.utils.serializers import success_response, error_response
+from web.views.utils.serializers import success_response, error_response
 from web.extensions import db
 from web.apis.schemas.user import validTokenSchema
 

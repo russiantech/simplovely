@@ -1,8 +1,8 @@
 
 from flask import render_template
 import traceback
-from web.apis.utils.serializers import error_response
-from web.apis import api_bp as favorites_bp
+from web.views.utils.serializers import error_response
+from web.views import api_bp as favorites_bp
 
 @favorites_bp.route('/favorite')
 def favorite():
