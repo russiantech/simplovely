@@ -258,7 +258,7 @@ def init_ext(app) -> None:
                 "origins": [
                     "https://simplylovely.ng",
                     "https://www.simplylovely.ng",
-                    "http://localhost:5000",
+                    "http://localhost:5002",
                     "http://localhost:5001",
                 ],
                 "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
