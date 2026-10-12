@@ -107,6 +107,7 @@ testRedis.py
 redisTest.py
 test_api.py
 test_api.sh
+*.zip
 
 # Spyder project settings
 .spyderproject
