@@ -1,94 +1,36 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>{% block title %} Forgot . Russsian Developers {% endblock title %}</title>
-    {% include('incs/metas.html') %}
-    <style>
-        div.error{
-            color:brown;
-            top: -48px !important;
-            bottom: initial
-        }
-    </style>
-</head>
-
-<body class="h-100">
-    <div id="root" class="h-100">
-        <div class="fixed-background"></div>
-        <div class="container-fluid p-0 h-100 position-relative">
-            <div class="row g-0 h-100">
-                <div class="offset-0 col-12 d-none d-lg-flex offset-md-1 col-lg h-lg-100">
-                    <div class="min-h-100 d-flex align-items-center">
-                        <div class="w-100 w-lg-75 w-xxl-50">
-                            <div>
-                                <div class="mb-5">
-                                    <h1 class="display-3 text-white">Techa</h1>
-                                    <h1 class="display-3 text-white">Advanced Technologies...</h1>
-                                </div>
-                                <p class="h6 text-white lh-1-5 mb-5">
-                                    Building experiences . Making lives easy . Businesses profitable
-                                    The Russian Developers Program is simply to empower people and also
-                                    power businesses.
-                                    russian.techa.com...
-                                </p>
-                                <div class="mb-5">
-                                    <a class="btn btn-lg btn-outline-white" href="{{url_for('main.us')}}">Learn More</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-lg-auto h-100 pb-4 px-4 pt-0 p-lg-0">
-                    <div class="sw-lg-70 min-h-100 bg-foreground d-flex justify-content-center align-items-center shadow-deep 
-                        py-5 full-page-content-right-border">
-                        <div class="sw-lg-50 px-5">
-                            <div class="sh-11"> <a href="{{url_for('main.welcome')}}"><div class="logo-default"></div> </a> </div>
-
-                            <div class="sh-7">
-                                <h2 class="cta-1 text-primary">Oh I remember! <a href="{{url_for('auth.signin')}}" class="text-alternate"> login here</a> .</h2>
-                            </div>
-                            <div class="mt-5">
-                                <h5 class="text-danger"> {% include('incs/alerts.html') %}</h5>
-                                <form class="tooltip-end-bottom" method="post" action="">
-                                    {{ form.hidden_tag() }}
-                                    <i data-ac></i>
-                                    <div class="mb-3 filled form-group tooltip-end-top">
-                                        <i data-acorn-icon="email" class="text-primary" data-icon-size="20"></i>
-
-                                        {{ form.email(class="form-control", placeholder="email address" ) }}
-                                        {% if form.email.errors %}
-                                        {% for error in form.email.errors %}<div class="error">{{ error }} !</div> {% endfor %}
-                                        {% endif %}
-                                    </div>
-                                    {{ form.submit(class="btn btn-lg col-md-12 btn-primary") }}
-                                </form>
-
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="{{url_for('static', filename='js/vendor/jquery-3.5.1.min.js')}}"></script>
-    <script src="{{url_for('static', filename='js/vendor/bootstrap.bundle.min.js')}}"></script>
-    <script src="{{url_for('static', filename='js/vendor/OverlayScrollbars.min.js')}}"></script>
-    <script src="{{url_for('static', filename='js/vendor/autoComplete.min.js')}}"></script>
-    <script src="{{url_for('static', filename='js/vendor/clamp.min.js')}}"></script>
-    <script src="{{url_for('static', filename='icon/acorn-icons.js')}}"></script>
-    <script src="{{url_for('static', filename='icon/acorn-icons-interface.js')}}"></script>
-    <script src="{{url_for('static', filename='js/vendor/jquery.validate/jquery.validate.min.js')}}"></script>
-    <script src="{{url_for('static', filename='js/vendor/jquery.validate/additional-methods.min.js')}}"></script>
-    <script src="{{url_for('static', filename='js/base/helpers.js')}}"></script>
-    <script src="{{url_for('static', filename='js/base/globals.js')}}"></script>
-    <script src="{{url_for('static', filename='js/base/nav.js')}}"></script>
-    <script src="{{url_for('static', filename='js/base/search.js')}}"></script>
-    <script src="{{url_for('static', filename='js/base/settings.js')}}"></script>
-    <script src="{{url_for('static', filename='js/pages/auth.register.js')}}"></script>
-    <script src="{{url_for('static', filename='js/common.js')}}"></script>
-    <script src="{{url_for('static', filename='js/scripts.js')}}"></script>
-
-</body>
-
-</html>
+{% extends "auth/_layout.html" %}
+{% block title %}Forgot password - Simply Lovely{% endblock %}
+{% block body %}
+<h1 class="h2">Forgot your password?</h1>
+<p class="fs-sm mb-4">Enter the email on your account and we'll send you a link to choose a new one.</p>
+<form class="needs-validation" id="forgot_form" novalidate>
+  <div class="position-relative mb-4">
+    <input type="email" id="forgot_email" class="form-control form-control-lg" placeholder="Email address" autocomplete="email" required>
+    <div class="invalid-tooltip bg-transparent py-0">Please enter a valid email.</div>
+  </div>
+  <button type="submit" id="forgot_btn" class="btn btn-lg btn-primary w-100 mb-4">Send reset link</button>
+</form>
+<p class="fs-sm mb-0">Remembered it? <a href="./signin" class="text-decoration-underline">Back to sign in</a></p>
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('forgot_form'), btn = document.getElementById('forgot_btn');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    form.classList.add('was-validated');
+    if (!form.checkValidity()) return;
+    window.toggleButton(btn, true);
+    try {
+      const r = await window.make_request(`${window.apiUrl}/users/reset-password`, {
+        method: 'POST', body: JSON.stringify({ email: document.getElementById('forgot_email').value.trim() }),
+        headers: { 'Client-Callback-Url': window.location.origin + '/reset-password' },
+      });
+      window.response_modal(r.message, 'success');
+      form.reset(); form.classList.remove('was-validated');
+    } catch (err) { window.response_modal(Utils.friendlyError(err), 'danger'); }
+    finally { window.toggleButton(btn, false); }
+  });
+});
+</script>
+{% endblock %}

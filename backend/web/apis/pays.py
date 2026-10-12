@@ -1,547 +1,201 @@
-# from os import getenv
-# from flask_jwt_extended import current_user, jwt_required
-# import traceback, requests, secrets
-# from flask import current_app, request, url_for
-# from web.apis.models.plans import Subscription
-# from web.apis.models.plans import Plan
-# from web.apis.utils.serializers import error_response, success_response
-# from web.apis.models.transactions import Transaction
-# from requests.exceptions import ConnectionError, Timeout, RequestException
-# from sqlalchemy.exc import IntegrityError
-# # from jsonschema import validate, ValidationError
-# # from web.apis.schemas.transactions import pay_schema
-# from web.extensions import db, csrf, limiter
-# from web.apis.models.users import User
-# # from web.apis.models.orders import Order
-# from web.apis.utils.helpers import generate_ref
-# # from web.apis.transactions import save_transaction, transact_bp
-# from web.apis import api_bp as transact_bp
+"""Paystack payments: initialise, verify (redirect/popup return) and webhook.
 
-# # PAYSTACK_SK = getenv('PAYSTACK_SK')
-# # print('PAYSTACK_SK', PAYSTACK_SK)
+All three settlement paths end in ``settle()``, which is idempotent: a transaction credits the
+customer's units exactly once no matter how many times (or how concurrently) it is verified.
+"""
+import hashlib
+import hmac
+import logging
 
-# @transact_bp.route('/payment/<int:plan_id>/paystack', methods=['POST'])
-# @csrf.exempt
-# @limiter.exempt
-# @jwt_required(optional=True)
-# def initiate_paystack(plan_id):
-#     try:
-#         data = request.get_json() if request.content_type == 'application/json' else request.form.to_dict()
-        
-#         print("Received payment initiation request with data:", data)
-        
-#         if not data and not current_user:
-#             return error_response(f"No data received to process transactions.")
-
-#         # Validate input data
-#         # validate(instance=data, schema=pay_schema)
-
-#         client_callback_url = request.headers.get('Client-Callback-Url')
-
-#         plan_id = plan_id or data['plan_id']
-#         # plan = Plan.get_plan(plan_id)
-#         plan = Plan.query.get(plan_id)
-#         if not plan:
-#             return error_response(f"Plan <{plan_id}> not found!")
-
-#         email = data.get('email') or current_user.email if current_user else None
-#         if not email:
-#             return error_response(f"A valid email address is required.")
-
-#         headers = {
-#             "accept": "application/json",
-#             "Authorization": f"Bearer {current_app.config['PAYSTACK_SK']}",
-#             # "Authorization": f"Bearer {PAYSTACK_SK}",
-#             "Content-Type": "application/json"
-#         }
-
-#         payment_url = "https://api.paystack.co/transaction/initialize"
-#         reference = generate_ref(prefix="LND", num_digits=4, letters="???")
-
-#         payload = {
-#             "email": email,
-#             "amount": plan.amount * 100,  # Convert to kobo
-#             "currency": "NGN",
-#             "callback_url": client_callback_url,
-#             "reference": reference,
-#             "metadata": {
-#                 "plan_id": plan.id,
-#                 "reference": reference,
-#                 "cancel_action": str(client_callback_url + "?reference=" + reference),
-#             }
-#         }
-
-#         # print(payload)
-
-#         payment_response = requests.post(payment_url, json=payload, headers=headers)
-#         payment_data = payment_response.json()
-#         # print(payment_data)
-#         payment_link = payment_data.get("data", {}).get("authorization_url")
-
-#         if not payment_link:
-#             error = payment_data.get('message', '')
-#             return error_response(f"Failed to retrieve payment link, due to {error} .")
-
-#         # Create a pending transaction
-#         user = User.get_user(email)
-#         if not user:
-#             # return error_response("Not user")
-#             user = User(username=email.split('@')[0], email=email, is_guest=True)
-#             user.set_password(generate_ref())
-#             db.session.add(user)
-#             db.session.commit()
-
-#         transaction = Transaction( 
-#             plan_id=plan.id,
-#             # service_id=plan.id,
-#             user_id=user.id,
-#             amount=plan.amount,
-#             currency='NGN',
-#             payment_method='paystack',
-#             reference=reference,
-#             status='pending'
-#         )
-#         db.session.add(transaction)
-#         db.session.commit()
-        
-#         return success_response("Continue to pay securely..", data={"redirect": payment_link})
-
-#     except ConnectionError:
-#         return error_response("No internet connection. Please check your network and try again.")
-
-#     except Timeout:
-#         return error_response("The request timed out. Please try again later.")
-
-#     except RequestException as e:
-#         # print(f"RequestException: {e}")
-#         return error_response(f"error: {str(e)}")
-
-#     except IntegrityError as e:
-#         db.session.rollback()  # Rollback the session on error
-#         traceback.print_exc()
-#         return error_response(f"Payment integrity glitch {e}", status_code=500)
-    
-#     except Exception as e:
-#         db.session.rollback()
-#         traceback.print_exc()
-#         return error_response(f"error: {str(e)}", status_code=500)
-
-# @transact_bp.route('/payment/callback/paystack', methods=['GET'])
-# @jwt_required(optional=True)
-# @limiter.exempt
-# def callback_paystack():
-#     try:
-#         reference = request.args.get('reference') or request.args.get('trxref')
-#         transaction = Transaction.get_transaction(reference)
-
-#         if not transaction:
-#             return error_response('Transaction not found', status_code=404)
-
-#         if transaction.status == "success" or transaction.status == "successful":
-#             return success_response('Transaction verified and subscription activated already.')
-        
-#         headers = {
-#             "accept": "application/json",
-#             "Authorization": f"Bearer {current_app.config['PAYSTACK_SK']}",
-#             # "Authorization": f"Bearer {PAYSTACK_SK}",
-#             "Content-Type": "application/json"
-#         }
-
-#         verify_endpoint = f"https://api.paystack.co/transaction/verify/{reference}"
-#         response = requests.get(verify_endpoint, headers=headers)
-
-#         if response.status_code == 200:
-#             """
-#             response_data = response.json().get('data', {})
-#             if (
-#                 response_data.get('status') == "success"
-#                 and response_data.get('amount') >= transaction.amount * 100  # Amount in kobo
-#                 and response_data.get('currency') == transaction.currency
-#             ):
-#                 transaction.status = response_data['status']
-
-#                 # Create subscription upon successful payment
-#                 subscription = Subscription(
-#                     user_id=transaction.user_id,
-#                     plan_id=response_data['metadata']['plan_id'],
-#                     total_units=Plan.query.get(response_data['metadata']['plan_id']).units,
-#                     status='active'
-#                 )
-                
-#                 db.session.add(subscription)
-#                 db.session.commit()
-
-#                 return success_response('Transaction verified and subscription activated.', data=response_data)
-#                 """
-#             response_data = response.json().get('data', {})
-#             if (
-#                 response_data.get('status') == "success"
-#                 and response_data.get('amount') >= transaction.amount * 100  # Amount in kobo
-#                 and response_data.get('currency') == transaction.currency
-#             ):
-#                 transaction.status = response_data['status']
-
-#                 # Check for existing active subscription
-#                 existing_subscription = Subscription.query.filter_by(user_id=transaction.user_id).first()
-#                 units = Plan.query.get(response_data['metadata']['plan_id']).units
-                
-#                 if existing_subscription:
-#                     # Update existing subscription plan and add new units
-#                     existing_subscription.plan_id = response_data['metadata']['plan_id']
-#                     new_units = units
-                    
-#                     # Increment total units
-#                     existing_subscription.total_units += new_units
-                    
-#                     db.session.commit()
-
-#                     return success_response('Transaction verified and existing subscription updated with new plan and units.', data=response_data)
-#                 else:
-#                     # Create new subscription upon successful payment
-#                     subscription = Subscription(
-#                         user_id=transaction.user_id,
-#                         plan_id=response_data['metadata']['plan_id'],
-#                         total_units=units,
-#                         status='active'
-#                     )
-                    
-#                     db.session.add(subscription)
-#                     db.session.commit()
-
-#                     return success_response('Transaction verified and subscription activated.', data=response_data)
-
-#             else:
-#                 transaction.status = response_data['status']
-#                 db.session.commit()
-#                 return error_response(f'Transaction verification failed.')
-#         else:
-#             return error_response('Failed to verify transaction')
-
-#     except Exception as e:
-#         db.session.rollback()
-#         return error_response(str(e))
-
-
-
-# v2
-
-
-# v3
-
-# Fix pays.py - return reference and access_code in the response
-# Also fix the callback to use the upsert pattern (not just update existing)
-
-from flask_jwt_extended import current_user, jwt_required
-import traceback, requests
+import requests
 from flask import current_app, request
-from web.apis.models.plans import Subscription
-from web.apis.models.plans import Plan
-from web.apis.utils.serializers import error_response, success_response
-from web.apis.models.transactions import Transaction
-from requests.exceptions import ConnectionError, Timeout, RequestException
-from sqlalchemy.exc import IntegrityError
-from web.extensions import db, csrf, limiter
-from web.apis.models.users import User
+from flask_jwt_extended import current_user, jwt_required
+
+from web.apis import api_bp as pay_bp
+from web.apis.models.plans import Plan, Subscription
+from web.apis.models.transactions import ABANDONED, FAILED, PENDING, SUCCESS, Transaction
+from web.apis.utils import oauth as oauth_utils
 from web.apis.utils.helpers import generate_ref
-from web.apis import api_bp as transact_bp
+from web.apis.utils.serializers import error_response, success_response
+from web.extensions import db, limiter
 
-@transact_bp.route('/payment/<int:plan_id>/paystack', methods=['POST'])
-@csrf.exempt
-@limiter.exempt
-@jwt_required(optional=True)
-def initiate_paystack(plan_id):
-    """Initialize a Paystack transaction and return access details for inline/popup checkout."""
+log = logging.getLogger("web")
+
+
+class PaymentError(Exception):
+    def __init__(self, message, status=502):
+        super().__init__(message)
+        self.status = status
+
+
+def _paystack(method, path, **kwargs):
+    secret = current_app.config.get("PAYSTACK_SK")
+    if not secret:
+        log.error("PAYSTACK_SK is not configured")
+        raise PaymentError("Payments are temporarily unavailable. Please try again later.", 503)
     try:
-        data = request.get_json() if request.content_type == 'application/json' else request.form.to_dict()
-        print("Received payment initiation request with data:", data)
-        
-        if not data and not current_user:
-            return error_response("No data received to process transactions.")
-
-        client_callback_url = request.headers.get('Client-Callback-Url') or request.headers.get('Referer') or ''
-
-        plan = Plan.query.get(plan_id)
-        if not plan:
-            return error_response(f"Plan <{plan_id}> not found!")
-
-        email = data.get('email') or (current_user.email if current_user else None)
-        if not email:
-            return error_response("A valid email address is required.")
-
-        headers = {
-            "accept": "application/json",
-            "Authorization": f"Bearer {current_app.config['PAYSTACK_SK']}",
-            "Content-Type": "application/json"
-        }
-
-        payment_url = "https://api.paystack.co/transaction/initialize"
-        reference = generate_ref(prefix="LND", num_digits=4, letters="???")
-
-        payload = {
-            "email": email,
-            "amount": int(plan.amount * 100),  # Convert to kobo
-            "currency": "NGN",
-            "callback_url": client_callback_url,
-            "reference": reference,
-            "metadata": {
-                "plan_id": plan.id,
-                "reference": reference,
-                "cancel_action": str(client_callback_url + "?reference=" + reference),
-            }
-        }
-
-        payment_response = requests.post(payment_url, json=payload, headers=headers)
-        payment_data = payment_response.json()
-        print("Paystack init response:", payment_data)
-
-        if not payment_data.get("status"):
-            error = payment_data.get('message', 'Unknown error from Paystack')
-            return error_response(f"Paystack initialization failed: {error}")
-
-        paystack_data = payment_data.get("data", {})
-        authorization_url = paystack_data.get("authorization_url")
-        access_code = paystack_data.get("access_code")
-
-        if not authorization_url:
-            return error_response("Failed to retrieve payment authorization URL from Paystack.")
-
-        # Create a pending transaction
-        user = User.get_user(email)
-        if not user:
-            user = User(username=email.split('@')[0], email=email, is_guest=True)
-            user.set_password(generate_ref())
-            db.session.add(user)
-            db.session.commit()
-
-        transaction = Transaction(
-            plan_id=plan.id,
-            user_id=user.id,
-            amount=plan.amount,
-            currency='NGN',
-            payment_method='paystack',
-            reference=reference,
-            status='pending'
+        resp = requests.request(
+            method,
+            f"{current_app.config['PAYSTACK_API']}{path}",
+            headers={"Authorization": f"Bearer {secret}", "Accept": "application/json"},
+            timeout=current_app.config["HTTP_TIMEOUT"],
+            **kwargs,
         )
-        db.session.add(transaction)
-        db.session.commit()
-        
-        # Return everything needed for both popup (access_code) and redirect (authorization_url) flows
-        return success_response("Payment initialized successfully.", data={
-            "redirect": authorization_url,
-            "access_code": access_code,
-            "reference": reference,
-            "amount": plan.amount,
-            "email": email
-        })
-
-    except ConnectionError:
-        return error_response("No internet connection. Please check your network and try again.")
-    except Timeout:
-        return error_response("The request timed out. Please try again later.")
-    except RequestException as e:
-        return error_response(f"Network error: {str(e)}")
-    except IntegrityError as e:
-        db.session.rollback()
-        traceback.print_exc()
-        return error_response(f"Payment integrity error: {e}", status_code=500)
-    except Exception as e:
-        db.session.rollback()
-        traceback.print_exc()
-        return error_response(f"Error: {str(e)}", status_code=500)
+        body = resp.json()
+    except requests.Timeout:
+        raise PaymentError("The payment provider timed out. Please try again.", 504)
+    except (requests.RequestException, ValueError):
+        log.exception("Paystack request %s %s failed", method, path)
+        raise PaymentError("Could not reach the payment provider. Please try again.", 502)
+    if not resp.ok or not body.get("status"):
+        log.warning("Paystack %s %s -> %s %s", method, path, resp.status_code, body.get("message"))
+        raise PaymentError(body.get("message") or "The payment provider rejected the request.", 502)
+    return body.get("data") or {}
 
 
-# @transact_bp.route('/payment/callback/paystack', methods=['GET'])
-# @jwt_required(optional=True)
-# @limiter.exempt
-# def callback_paystack():
-#     """Verify a Paystack transaction and activate/up-sert the user's subscription."""
-#     try:
-#         reference = request.args.get('reference') or request.args.get('trxref')
-#         if not reference:
-#             return error_response('Transaction reference is required.', status_code=400)
+# --------------------------------------------------------------- initialise
+@pay_bp.post("/payment/<int:plan_id>/paystack")
+@limiter.limit("50 per minute")
+@jwt_required()
+def initiate_paystack(plan_id):
+    plan = Plan.query.filter_by(id=plan_id, is_deleted=False).first()
+    if not plan or plan.amount_naira <= 0 or plan.units <= 0:
+        return error_response("This plan is not available.", 404)
 
-#         transaction = Transaction.get_transaction(reference)
-#         if not transaction:
-#             return error_response('Transaction not found', status_code=404)
+    # Record intent first so every Paystack attempt is traceable; the amount is frozen here.
+    txn = Transaction(
+        user_id=current_user.id, plan_id=plan.id, amount=plan.amount_naira, currency=current_app.config["PAYMENT_CURRENCY"],
+        payment_method="paystack", reference=generate_ref("LND"), status=PENDING, description=f"{plan.name} plan",
+    )
+    db.session.add(txn)
+    db.session.commit()
 
-#         if transaction.status in ("success", "successful"):
-#             return success_response('Transaction already verified and subscription activated.')
-        
-#         headers = {
-#             "accept": "application/json",
-#             "Authorization": f"Bearer {current_app.config['PAYSTACK_SK']}",
-#             "Content-Type": "application/json"
-#         }
-
-#         verify_endpoint = f"https://api.paystack.co/transaction/verify/{reference}"
-#         response = requests.get(verify_endpoint, headers=headers)
-
-#         if response.status_code != 200:
-#             return error_response('Failed to verify transaction with Paystack.')
-
-#         response_data = response.json().get('data', {})
-        
-#         if (
-#             response_data.get('status') == "success"
-#             and response_data.get('amount') >= transaction.amount * 100
-#             and response_data.get('currency') == transaction.currency
-#         ):
-#             transaction.status = response_data['status']
-#             db.session.commit()
-
-#             plan_id = response_data.get('metadata', {}).get('plan_id') or transaction.plan_id
-#             user_id = transaction.user_id
-#             plan = Plan.query.get(plan_id)
-#             units = plan.units if plan else 0
-
-#             # ─── UPSERT SUBSCRIPTION (same pattern as admin assignment) ─────
-#             existing = Subscription.query.filter_by(
-#                 user_id=user_id,
-#                 plan_id=plan_id
-#             ).first()
-
-#             if existing:
-#                 # Reactivate soft-deleted, add volume
-#                 if getattr(existing, 'is_deleted', False):
-#                     existing.is_deleted = False
-#                 existing.total_units += units
-#                 existing.status = 'active'
-#                 db.session.commit()
-#                 return success_response(
-#                     'Payment successful! Your subscription has been topped up.',
-#                     data={
-#                         'reference': reference,
-#                         'plan_name': plan.name if plan else None,
-#                         'units_added': units,
-#                         'total_units': existing.total_units
-#                     }
-#                 )
-#             else:
-#                 # Create new subscription
-#                 subscription = Subscription(
-#                     user_id=user_id,
-#                     plan_id=plan_id,
-#                     total_units=units,
-#                     status='active'
-#                 )
-#                 db.session.add(subscription)
-#                 db.session.commit()
-#                 return success_response(
-#                     'Payment successful! Your subscription is now active.',
-#                     data={
-#                         'reference': reference,
-#                         'plan_name': plan.name if plan else None,
-#                         'units': units
-#                     }
-#                 )
-#         else:
-#             transaction.status = response_data.get('status', 'failed')
-#             db.session.commit()
-#             return error_response(
-#                 f"Transaction verification failed. Status: {response_data.get('status', 'unknown')}",
-#                 data={'reference': reference, 'status': transaction.status}
-#             )
-
-#     except Exception as e:
-#         db.session.rollback()
-#         traceback.print_exc()
-#         return error_response(str(e))
-
-
-# v2
-@transact_bp.route('/payment/callback/paystack', methods=['GET'])
-@jwt_required(optional=True)
-@limiter.exempt
-def callback_paystack():
-    """Verify a Paystack transaction and upsert the user's subscription."""
+    callback = oauth_utils.frontend_url("plans", request.headers.get("Client-Callback-Url"))
     try:
-        reference = request.args.get('reference') or request.args.get('trxref')
-        if not reference:
-            return error_response('Transaction reference is required.', status_code=400)
+        data = _paystack(
+            "POST", "/transaction/initialize",
+            json={
+                "email": current_user.email,
+                "amount": txn.amount * 100,  # kobo
+                "currency": txn.currency,
+                "reference": txn.reference,
+                "callback_url": callback,
+                "metadata": {"plan_id": plan.id, "user_id": current_user.id, "cancel_action": f"{callback}?reference={txn.reference}"},
+            },
+        )
+    except PaymentError as exc:
+        txn.status, txn.description = FAILED, f"Initialisation failed: {exc}"[:255]
+        db.session.commit()
+        return error_response(str(exc), exc.status)
 
-        transaction = Transaction.get_transaction(reference)
-        if not transaction:
-            return error_response('Transaction not found', status_code=404)
+    return success_response(
+        "Payment initialized successfully.",
+        data={
+            "redirect": data.get("authorization_url"),
+            "access_code": data.get("access_code"),
+            "reference": txn.reference,
+            "amount": txn.amount,
+            "email": current_user.email,
+            "public_key": current_app.config.get("PAYSTACK_PK"),
+        },
+    )
 
-        if transaction.status in ("success", "successful"):
-            return success_response('Transaction already verified and subscription activated.')
-        
-        headers = {
-            "accept": "application/json",
-            "Authorization": f"Bearer {current_app.config['PAYSTACK_SK']}",
-            "Content-Type": "application/json"
-        }
 
-        verify_endpoint = f"https://api.paystack.co/transaction/verify/{reference}"
-        response = requests.get(verify_endpoint, headers=headers)
+# ------------------------------------------------------------------ settle
+def settle(reference):
+    """Verify ``reference`` with Paystack and apply the result once.
 
-        if response.status_code != 200:
-            return error_response('Failed to verify transaction with Paystack.')
+    Returns ``(transaction, outcome)`` where outcome is one of
+    ``success | already | pending | failed | not_found``.
+    """
+    if not Transaction.get_by_reference(reference):
+        return None, "not_found"
+    data = _paystack("GET", f"/transaction/verify/{reference}")  # network call outside the DB lock
+    status = (data.get("status") or "").lower()
 
-        response_data = response.json().get('data', {})
-        
-        if (
-            response_data.get('status') == "success"
-            and response_data.get('amount') >= transaction.amount * 100
-            and response_data.get('currency') == transaction.currency
-        ):
-            transaction.status = response_data['status']
-            db.session.commit()
-
-            plan_id = response_data.get('metadata', {}).get('plan_id') or transaction.plan_id
-            user_id = transaction.user_id
-            plan = Plan.query.get(plan_id)
-            units = plan.units if plan else 0
-
-            # ─── FIX: look up by user_id ONLY because of UNIQUE(user_id) ─────
-            existing = Subscription.query.filter_by(user_id=user_id).first()
-
-            if existing:
-                # Update existing subscription (user can only have one row)
-                existing.plan_id = plan_id
-                existing.total_units += units
-                existing.status = 'active'
-                if hasattr(existing, 'is_deleted'):
-                    existing.is_deleted = False
-                db.session.commit()
-                return success_response(
-                    'Payment successful! Your subscription has been updated.',
-                    data={
-                        'reference': reference,
-                        'plan_name': plan.name if plan else None,
-                        'units_added': units,
-                        'total_units': existing.total_units
-                    }
-                )
-            else:
-                # Create first subscription for this user
-                subscription = Subscription(
-                    user_id=user_id,
-                    plan_id=plan_id,
-                    total_units=units,
-                    status='active'
-                )
-                db.session.add(subscription)
-                db.session.commit()
-                return success_response(
-                    'Payment successful! Your subscription is now active.',
-                    data={
-                        'reference': reference,
-                        'plan_name': plan.name if plan else None,
-                        'units': units
-                    }
-                )
-        else:
-            transaction.status = response_data.get('status', 'failed')
-            db.session.commit()
-            # return error_response(
-            return success_response(
-                f"Transaction verification failed. Status: {response_data.get('status', 'unknown')}",
-                data={'reference': reference, 'status': transaction.status}
-            )
-
-    except Exception as e:
+    txn = Transaction.get_by_reference(reference, lock=True)  # row lock: serialises concurrent settlements
+    if txn.is_success:
         db.session.rollback()
-        traceback.print_exc()
-        return error_response(str(e))
+        return txn, "already"
 
+    if status == "success":
+        valid = (
+            data.get("reference") == txn.reference
+            and data.get("currency") == txn.currency
+            and int(data.get("amount") or 0) >= txn.amount * 100
+        )
+        if not valid:
+            log.error("Paystack amount/reference mismatch for %s: %s", reference, {k: data.get(k) for k in ("reference", "currency", "amount")})
+            txn.status, txn.description = FAILED, "Verification mismatch - flagged for manual review."
+            db.session.commit()
+            return txn, "failed"
+        plan = db.session.get(Plan, txn.plan_id) if txn.plan_id else None
+        if plan is None:
+            log.error("Transaction %s paid but its plan %s no longer exists", reference, txn.plan_id)
+            txn.status, txn.description = SUCCESS, "Paid, but plan missing - credit manually."
+        else:
+            Subscription.credit(txn.user_id, plan)
+            txn.status = SUCCESS
+        db.session.commit()
+        return txn, "success"
+
+    if status in ("failed", "reversed"):
+        txn.status = FAILED
+    elif status == "abandoned":
+        txn.status = ABANDONED
+    else:  # pending / ongoing / queued: keep waiting
+        db.session.rollback()
+        return txn, "pending"
+    db.session.commit()
+    return txn, "failed"
+
+
+@pay_bp.get("/payment/callback/paystack")
+@limiter.limit("60 per minute")
+@jwt_required(optional=True)
+def callback_paystack():
+    reference = request.args.get("reference") or request.args.get("trxref")
+    if not reference:
+        return error_response("Transaction reference is required.")
+    existing = Transaction.get_by_reference(reference)
+    if existing and current_user and existing.user_id != current_user.id and not current_user.is_admin:
+        return error_response("Transaction not found.", 404)
+    try:
+        txn, outcome = settle(reference)
+    except PaymentError as exc:
+        return error_response(str(exc), exc.status)
+
+    if outcome == "not_found":
+        return error_response("Transaction not found.", 404)
+    plan = txn.plan
+    info = {"reference": reference, "status": txn.status, "plan_name": plan.name if plan else None, "units_added": plan.units if plan else 0}
+    if outcome in ("success", "already"):
+        sub = Subscription.query.filter_by(user_id=txn.user_id).first()
+        info["total_units"] = sub.total_units if sub else 0
+        msg = "Payment successful! Your subscription has been updated." if outcome == "success" else "This payment was already confirmed and credited."
+        return success_response(msg, data=info)
+    if outcome == "pending":
+        return error_response("Your payment is still being processed. We'll credit it automatically once confirmed.", 202, data=info)
+    return error_response("Payment was not completed. You have not been charged for this attempt.", 402, data=info)
+
+
+# ------------------------------------------------------------------ webhook
+@pay_bp.post("/payment/webhook/paystack")
+def paystack_webhook():
+    """Server-to-server confirmation: credits the customer even if they closed the browser."""
+    secret = current_app.config.get("PAYSTACK_SK") or ""
+    expected = hmac.new(secret.encode(), request.get_data(), hashlib.sha512).hexdigest()
+    if not secret or not hmac.compare_digest(expected, request.headers.get("x-paystack-signature", "")):
+        return error_response("Invalid signature.", 401)
+    event = request.get_json(force=True, silent=True) or {}
+    reference = (event.get("data") or {}).get("reference")
+    if event.get("event") == "charge.success" and reference:
+        try:
+            settle(reference)
+        except PaymentError:
+            return error_response("Temporary verification failure.", 503)  # Paystack will retry
+        except Exception:  # noqa: BLE001
+            log.exception("Webhook settlement failed for %s", reference)
+            db.session.rollback()
+            return error_response("Settlement failed.", 500)  # retried by Paystack
+    return success_response("ok")

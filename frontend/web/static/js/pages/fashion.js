@@ -4,22 +4,8 @@
  */
 
 
-// Set API base URL: use production if on production domain, else use local/dev
-// const apiURL = (
-//     window.location.hostname === "simplylovely.ng" ||
-//     window.location.hostname.endsWith(".simplylovely.ng")
-// )
-//         ? "https://api.simplylovely.ng/api"
-//         : (window.apiURL || "http://localhost:5001/api");
-
-// Set API base URL: use production if on production domain, else use local/dev
-const apiURL = (() => {
-    if (typeof window.apiURL !== 'undefined') return window.apiURL;
-    if (window.location.hostname === "simplylovely.ng" || window.location.hostname.endsWith(".simplylovely.ng")) {
-        return "https://api.simplylovely.ng/api";
-    }
-    return "http://localhost:5001/api";
-})();
+// API base URL: decided once on the server and injected by templates/incs/metas.html
+const apiURL = window.apiUrl;  // single source of truth: see templates/incs/metas.html
 
 class FashionProductsAPI {
     constructor(baseURL = apiURL) {

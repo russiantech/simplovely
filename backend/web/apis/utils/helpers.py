@@ -1,130 +1,43 @@
-
-class SequentialGenerator:
-    def __init__(self, start=1):
-        self.counter = start
-
-    def next(self):
-        current_value = self.counter
-        self.counter += 1
-        return current_value
-
-# Create an instance of the SequentialGenerator
-generator = SequentialGenerator(start=10)
-# version=generator.next()
-
-# Making slug
-from slugify import slugify
-
-def slugifie(title, id=0):
-    combined = f"{title}-{id}"
-    return slugify(combined.lower())
-
-import random
+"""Small, dependency-free helpers shared by the API modules."""
+import re
+import secrets
 import string
 
-def generate_random_id(k=8):
-    """Generate a random alphanumeric ID."""
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=k)).lower()
+from flask import current_app, request
 
-def make_slug(text):
-    """
-    Generate a slug from the given text with a random ID. 
-    usage:
-    text = "This is a long text with some characters."
-    slug = make_slug(text)
-    print(slug)  # Output example: 'This-is-a-long-text-q7ZwF9Xv'
-    """
-    # Generate a random ID
-    id = generate_random_id()
+_REF_ALPHABET = string.ascii_uppercase + string.digits
 
-    # Extract the first 50 characters of the text
-    text_prefix = text[:50]
-    
-    # Remove any non-alphanumeric characters and replace spaces with hyphens
-    cleaned_text = ''.join(c if c.isalnum() else '-' for c in text_prefix.strip()).strip('-')
-    
-    # Combine the cleaned text and the ID to create the slug
-    slug = f"{cleaned_text}-{id}"
-    
-    return slug.lower()
- 
-from flask import request
+
 def user_ip():
-    if request.environ.get('HTTP_X_FORWARDED_FOR') is None:
-        ip =  request.environ['REMOTE_ADDR']
-    else:
-        ip = request.environ['HTTP_X_FORWARDED_FOR'] # if behind a proxy
-    return ip
+    """Client IP (ProxyFix already resolved X-Forwarded-For when behind a proxy)."""
+    return request.remote_addr
 
 
-def strtobool_custom(value):
-    value = value.lower()
-    if value in ('y', 'yes', 'true', 't', '1'):
-        return True
-    elif value in ('n', 'no', 'false', 'f', '0'):
-        return False
-    else:
-        raise ValueError(f"Invalid boolean string: {value}")
+def generate_ref(prefix="TEC", length=12):
+    """Unguessable, collision-resistant payment reference, e.g. ``LND-7K2Q9XW4M1AB``."""
+    return f"{prefix}-" + "".join(secrets.choice(_REF_ALPHABET) for _ in range(length))
+
 
 def validate_file_upload(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ['png', 'jpeg', 'jpg', 'mp4']
-           
+    allowed = current_app.config.get("ALLOWED_EXTENSIONS", {"png", "jpg", "jpeg", "mp4"})
+    return bool(filename) and "." in filename and filename.rsplit(".", 1)[1].lower() in allowed
 
-from flask_jwt_extended import decode_token
-from jwt import ExpiredSignatureError, InvalidTokenError
-from web.apis.utils.serializers import error_response
-def extract_and_verify_jwt_ws(data, connection_manager, event_name):
-    """
-    Extract and verify a JWT token from WebSocket request data.
 
-    Parameters:
-        data (dict): The WebSocket request payload containing the token.
-        connection_manager (object): WebSocket connection manager for sending responses.
-        event_name (str): The event name to respond to in case of errors.
+_PHONE_RE = re.compile(r"^\+?\d{7,15}$")
 
-    Returns:
-        str: The current user's identifier (e.g., "sub") if authentication is successful.
-        None: If authentication fails, a response is sent via `connection_manager`.
 
-    Example Usage:
-        current_user = extract_and_verify_jwt(data, connection_manager, 'save_chat_response')
-        if not current_user:
-            # Authentication failed, response already sent
-            return
-    """
-    # Extract the token
-    token = data.get('jwt') or request.args.get('jwt')
-    if not token:
-        error, _ = error_response(f"Missing token. Please provide a valid token. {request.headers}")
-        connection_manager.notify(event_name, data=error)
+def normalize_phone(value):
+    """Strip separators; return ``None`` for empty input or ``False`` when invalid."""
+    if value is None or str(value).strip() == "":
         return None
-
-    # Verify the token
-    try:
-        decoded_token = decode_token(token)
-        current_user = decoded_token.get("sub")
-    except ExpiredSignatureError:
-        error, _ = error_response("Your session has expired. Please log in again.")
-        connection_manager.notify(event_name, data=error)
-        return None
-    except InvalidTokenError:
-        error, _ = error_response(f"Invalid token. Please log in again. {request.args.get('jwt')}")
-        connection_manager.notify(event_name, data=error)
-        return None
-
-    # Validate the user identity
-    if not current_user:
-        error, _ = error_response("Kindly sign in to enjoy a seamless chat experience.")
-        connection_manager.notify(event_name, data=error)
-        return None
-
-    return current_user
+    cleaned = re.sub(r"[\s().-]", "", str(value))
+    return cleaned if _PHONE_RE.match(cleaned) else False
 
 
-def generate_ref(prefix="TEC", num_digits=4, letters="???"):
-    """Generate a transaction reference."""
-    from web.extensions import fake
-    number_part = fake.random_number(digits=num_digits)
-    letter_part = fake.bothify(text=letters)
-    return f"{prefix}-{number_part}-{letter_part}"
+def to_bool(value, default=False):
+    """Parse form/JSON booleans safely (``bool("false")`` is True in Python)."""
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    return str(value).strip().lower() in {"1", "true", "t", "yes", "y", "on"}

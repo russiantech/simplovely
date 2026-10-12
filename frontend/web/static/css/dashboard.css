@@ -1,0 +1,17 @@
+/* Shared dashboard styles (same look as the usage / plans / transactions pages). */
+@media (max-width: 991.98px) { .content-wrapper .row > .col-lg-9 { min-width: 0; overflow-x: auto; } }
+.content-wrapper .row { flex-wrap: wrap; }
+.content-wrapper .col-lg-9 { min-width: 0; }
+.table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.stat-card { border: 1px solid #e9ecef; border-radius: .875rem; padding: 1.25rem 1rem; text-align: center; transition: box-shadow .2s, transform .2s; }
+.stat-card:hover { box-shadow: 0 .35rem 1rem rgba(0,0,0,.08); transform: translateY(-2px); }
+.empty-state { text-align: center; padding: 3rem 1rem; }
+.empty-icon { font-size: 2.5rem; color: #dee2e6; margin-bottom: .75rem; }
+.thumb { width: 48px; height: 48px; object-fit: cover; border-radius: .5rem; background: #f1f3f5; }
+.thumb-lg { width: 84px; height: 84px; }
+.img-chip { position: relative; display: inline-block; margin: 0 .5rem .5rem 0; }
+.img-chip .btn-close { position: absolute; top: -6px; right: -6px; background-color: #fff; border-radius: 50%; padding: .35rem; box-shadow: 0 0 0 1px #dee2e6; }
+.cat-check-list { max-height: 150px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: .5rem; padding: .5rem .75rem; }
+.nav-pills .nav-link { border-radius: 100px; }
+[data-bs-theme="dark"] .stat-card { border-color: #2f3b52; }
+[data-bs-theme="dark"] .thumb { background: #1f2632; }

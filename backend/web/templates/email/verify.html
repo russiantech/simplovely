@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Laundry And Fashion - Email Verification</title>
+    <title>SimplyLovely - Email Verification</title>
     <style>
         body {
             font-family: "Segoe UI", Arial, sans-serif;
@@ -78,23 +78,23 @@
 <body>
     <div class="container">
         <div class="header">
-            <img src="{{ url_for('static', filename='logo.png', _external=True) }}" alt="Laundry And Fashion Logo">
-            <h1>Laundry And Fashion</h1>
+            <img src="{{ logo_url }}" alt="SimplyLovely Logo">
+            <h1>SimplyLovely</h1>
         </div>
         <div class="content">
             <h2>Verify Your Email Address</h2>
             <p>Hello {{user.name or user.username}},</p>
-            <p>Thank you for registering with <strong>Laundry And Fashion</strong>! To complete your registration and access all our features, please verify your email address.</p>
+            <p>Thank you for registering with <strong>SimplyLovely</strong>! To complete your registration and access all our features, please verify your email address.</p>
             <div style="text-align: center;">
-                <a href="{{user.verification_url}}" class="button">Verify Email Address</a>
+                <a href="{{ link }}" class="button">Verify Email Address</a>
             </div>
             <p><strong>This link will expire in 24 hours.</strong></p>
             <p>If the button above doesn’t work, copy and paste this link into your browser:</p>
-            <p class="link">{{user.verification_url}}</p>
+            <p class="link">{{ link }}</p>
             <p>If you didn’t create an account with us, please ignore this email.</p>
         </div>
         <div class="footer">
-            <p>&copy; 2025 <strong>Laundry And Fashion</strong>. All rights reserved.</p>
+            <p>&copy; 2025 <strong>SimplyLovely</strong>. All rights reserved.</p>
             <p>Lagos, Nigeria</p>
         </div>
     </div>

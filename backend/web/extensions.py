@@ -1,331 +1,129 @@
-"""
-web/extensions.py
-
-Centralized Flask extensions and infrastructure services.
-"""
-
+"""Centralised Flask extensions and infrastructure helpers."""
 from __future__ import annotations
 
 import logging
+import re
 from os import getenv
-from typing import Optional, Set
-
-from dotenv import load_dotenv
 from pathlib import Path
 
-# ──────────────────────────────────────────────────────────────
-# Environment
-# ──────────────────────────────────────────────────────────────
+from dotenv import load_dotenv
 
+logger = logging.getLogger("web")
+
+# --------------------------------------------------------------------------
+# Environment loading
+# --------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
-ENV_PATH = BASE_DIR / ".env"
-load_dotenv(dotenv_path=ENV_PATH)
 
-logger = logging.getLogger(__name__)
 
-# ──────────────────────────────────────────────────────────────
-# Flask Extensions
-# ──────────────────────────────────────────────────────────────
+def load_environment() -> list[str]:
+    """Load .env files without ever overriding real environment variables.
 
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from flask_mail import Mail
-from flask_moment import Moment
-from flask_bcrypt import Bcrypt
-from flask_cors import CORS
-from flask_caching import Cache
-from flask_wtf.csrf import CSRFProtect
-from flask_jwt_extended import JWTManager
-from authlib.integrations.flask_client import OAuth
-from faker import Faker
+    Search order (first match for each variable wins):
+      $ENV_FILE, <root>/.env.production (production only), <root>/.env,
+      <root>/web/.env.production (production only), <root>/web/.env
+    Returns the list of files that were loaded (for the startup log).
+    """
+    production = (getenv("APP_ENV") or getenv("FLASK_ENV") or "production").lower() == "production"
+    candidates = []
+    if getenv("ENV_FILE"):
+        candidates.append(Path(getenv("ENV_FILE")))
+    for folder in (BASE_DIR, BASE_DIR / "web"):
+        if production:
+            candidates.append(folder / ".env.production")
+        candidates.append(folder / ".env")
+    loaded = []
+    for file in candidates:
+        if file.is_file():
+            load_dotenv(file, override=False)
+            loaded.append(str(file))
+    return loaded
+
+
+LOADED_ENV_FILES = load_environment()
+
+# --------------------------------------------------------------------------
+# Extensions
+# --------------------------------------------------------------------------
+from authlib.integrations.flask_client import OAuth  # noqa: E402
+from faker import Faker  # noqa: E402
+from flask import request  # noqa: E402
+from flask_bcrypt import Bcrypt  # noqa: E402
+from flask_cors import CORS  # noqa: E402
+from flask_jwt_extended import JWTManager  # noqa: E402
+from flask_limiter import Limiter  # noqa: E402
+from flask_limiter.util import get_remote_address  # noqa: E402
+from flask_mail import Mail  # noqa: E402
+from flask_migrate import Migrate  # noqa: E402
+from flask_sqlalchemy import SQLAlchemy  # noqa: E402
 
 db = SQLAlchemy()
 migrate = Migrate()
 mail = Mail()
-moment = Moment()
 bcrypt = Bcrypt()
-cors = CORS()
-cache = Cache()
-csrf = CSRFProtect()
 jwt = JWTManager()
 oauth = OAuth()
 fake = Faker()
 
-# ──────────────────────────────────────────────────────────────
-# In-Memory Token Blocklist (Fallback when Redis unavailable)
-# ──────────────────────────────────────────────────────────────
 
-class MemoryBlocklist:
-    """
-    Thread-safe(ish) in-memory token blocklist.
-    Falls back to this when Redis is not available.
-    """
-    def __init__(self):
-        self._blacklist: Set[str] = set()
-    
-    def sadd(self, key: str, *members) -> int:
-        """Add members to a set. Returns number added."""
-        if key != "blacklist":
-            return 0
-        added = 0
-        for member in members:
-            if member not in self._blacklist:
-                self._blacklist.add(member)
-                added += 1
-        return added
-    
-    def sismember(self, key: str, member: str) -> bool:
-        """Check if member is in set."""
-        if key != "blacklist":
-            return False
-        return member in self._blacklist
-    
-    def srem(self, key: str, *members) -> int:
-        """Remove members from set."""
-        if key != "blacklist":
-            return 0
-        removed = 0
-        for member in members:
-            if member in self._blacklist:
-                self._blacklist.discard(member)
-                removed += 1
-        return removed
-    
-    def scard(self, key: str) -> int:
-        """Get set cardinality."""
-        if key != "blacklist":
-            return 0
-        return len(self._blacklist)
-    
-    def setex(self, key: str, seconds: int, value: str) -> bool:
-        """Set key with expiry (no-op for memory, just store)."""
-        # Simple storage without expiry tracking
-        setattr(self, f"_store_{key}", value)
-        return True
-    
-    def get(self, key: str) -> Optional[str]:
-        """Get value by key."""
-        return getattr(self, f"_store_{key}", None)
-    
-    def delete(self, *keys) -> int:
-        """Delete keys."""
-        deleted = 0
-        for key in keys:
-            attr = f"_store_{key}"
-            if hasattr(self, attr):
-                delattr(self, attr)
-                deleted += 1
-        return deleted
+def _client_ip():
+    """Real client IP behind a proxy (ProxyFix has already normalised it)."""
+    return get_remote_address()
 
-
-# ──────────────────────────────────────────────────────────────
-# Redis Configuration with Graceful Fallback
-# ──────────────────────────────────────────────────────────────
-
-from redis import Redis
-from redis.exceptions import RedisError
-
-REDIS_URL = (
-    getenv("REDIS_URL")
-    or getenv("REDIS_URI")
-    or getenv("REDIS_CONNECTION_STRING")
-)
-
-redis_client: Optional[Redis] = None
-memory_blocklist = MemoryBlocklist()
-
-
-def create_redis_client() -> Optional[Redis]:
-    """
-    Create and validate Redis connection safely.
-    Falls back to in-memory blocklist if Redis is unavailable.
-    """
-
-    global redis_client
-
-    if redis_client is not None:
-        return redis_client
-
-    if not REDIS_URL:
-        logger.warning("Redis URL not configured. Using in-memory fallback.")
-        return None
-
-    try:
-        redis_client = Redis.from_url(
-            REDIS_URL,
-            decode_responses=True,
-            socket_connect_timeout=5,
-            socket_timeout=5,
-            retry_on_timeout=True,
-            health_check_interval=30,
-        )
-        redis_client.ping()
-        logger.info("Redis connected successfully.")
-        return redis_client
-
-    except RedisError as exc:
-        logger.warning(
-            "Redis unavailable. Using in-memory fallback. Error: %s",
-            exc,
-        )
-        redis_client = None
-        return None
-
-    except Exception as exc:
-        logger.exception(
-            "Unexpected Redis initialization error: %s",
-            exc,
-        )
-        redis_client = None
-        return None
-
-
-# Create Redis connection safely
-# redis = create_redis_client()
-
-# Unified interface: always returns a working client (Redis or memory fallback)
-def get_redis_or_memory():
-    """
-    Returns Redis client if available, otherwise in-memory fallback.
-    Use this for all Redis-like operations.
-    """
-    return redis_client if redis_client is not None else memory_blocklist
-
-redis = get_redis_or_memory()
-
-# ──────────────────────────────────────────────────────────────
-# Rate Limiting
-# ──────────────────────────────────────────────────────────────
-
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-
-limiter_storage_uri = REDIS_URL if REDIS_URL else "memory://"
 
 limiter = Limiter(
-    key_func=get_remote_address,
-    default_limits=[
-        "1 per second",
-        "5 per minute",
-    ],
-    storage_uri=limiter_storage_uri,
+    key_func=_client_ip,
+    default_limits_exempt_when=lambda: request.method == "OPTIONS",
     strategy="fixed-window",
+    # Never let a limiter storage outage take the API down.
+    swallow_errors=True,
+    in_memory_fallback_enabled=True,
 )
 
-# ──────────────────────────────────────────────────────────────
-# App Configuration
-# ──────────────────────────────────────────────────────────────
+
+def resolve_limiter_storage(uri: str | None) -> str:
+    """Use Redis only if it answers a PING; otherwise fall back to memory."""
+    if not uri or uri.startswith("memory"):
+        return "memory://"
+    try:
+        from redis import Redis
+
+        Redis.from_url(uri, socket_connect_timeout=2, socket_timeout=2).ping()
+        return uri
+    except Exception as exc:  # noqa: BLE001 - any failure means "no redis"
+        logger.warning("Redis unavailable (%s); rate limits use in-process memory.", exc)
+        return "memory://"
+
+
+def init_cors(app) -> None:
+    origins = list(app.config["CORS_ORIGINS"])
+    if app.config.get("CORS_ALLOW_LOCALHOST"):
+        origins.append(re.compile(r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"))
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": origins}},
+        supports_credentials=True,
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=r".*",  # echo whatever the browser asks for (incl. X-CSRFToken)
+        expose_headers=["Content-Type", "Retry-After", "X-Request-ID"],
+        max_age=3600,
+    )
 
 
 def config_app(app, config_name: str) -> None:
-    from web.config import app_config
+    from web.config import app_config, engine_options
+
     app.config.from_object(app_config[config_name])
-    logger.info("Application configured using '%s' config.", config_name)
-
-
-# ──────────────────────────────────────────────────────────────
-# Extension Initialization
-# ──────────────────────────────────────────────────────────────
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = engine_options(app.config.get("SQLALCHEMY_DATABASE_URI"))
+    app.config["RATELIMIT_STORAGE_URI"] = resolve_limiter_storage(app.config.get("RATELIMIT_STORAGE_URI"))
 
 
 def init_ext(app) -> None:
-    """
-    Initialize Flask extensions.
-    """
-    # Core
     db.init_app(app)
     migrate.init_app(app, db)
-
-    # Security/Auth
     bcrypt.init_app(app)
     jwt.init_app(app)
-    csrf.init_app(app)
-
-    # Utilities
     mail.init_app(app)
-    moment.init_app(app)
     oauth.init_app(app)
-    cache.init_app(app)
-
-    # Rate Limiting
     limiter.init_app(app)
-
-    # CORS
-    CORS(
-        app,
-        supports_credentials=True,
-        resources={
-            r"/api/*": {
-                "origins": [
-                    "https://simplylovely.ng/",
-                    "https://simplylovely.ng",
-                    "https://www.simplylovely.ng/",
-                    "https://www.simplylovely.ng",
-                    "http://localhost:5002",
-                    "http://localhost:5001",
-                ],
-                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-                "allow_headers": [
-                    "Content-Type",
-                    "Authorization",
-                    "Client-Callback-Url",
-                    "X-Requested-With",
-                    "Accept",
-                    "Origin",
-                ],
-                "expose_headers": ["Content-Type", "X-Request-ID"],
-                "supports_credentials": True,
-                "max_age": 86400,
-            }
-        },
-    )
-
-    logger.info("Flask extensions initialized successfully.")
-
-
-# ──────────────────────────────────────────────────────────────
-# Shared Metadata
-# ──────────────────────────────────────────────────────────────
-
-
-def make_available() -> dict:
-    products_links = {
-        "salesnet_link": "https://salesnet.techa.tech",
-        "barman_link": "https://barman.techa.tech",
-        "paysafe_link": "https://paysafe.techa.tech",
-        "intellect_link": "https://intellect.techa.tech",
-        "workforce_link": "https://workforce.techa.tech",
-    }
-
-    app_data = {
-        "app_name": "Salesnet",
-        "hype": "Your Digital Learning Companion.",
-        "app_desc": (
-            "Elite software engineering team with special interest "
-            "in artificial intelligence, data and cybersecurity."
-        ),
-        "app_desc_long": (
-            "Salesnet empowers people and businesses to stay "
-            "relevant with evolving technologies and innovation."
-        ),
-        "app_location": "Lekki, Lagos, Nigeria",
-        "app_email": "hi@techa.tech",
-        "app_logo": getenv("LOGO_URL"),
-        "site_logo": getenv("LOGO_URL"),
-        "site_link": "https://www.techa.tech",
-        "whatsapp_link": "https://www.techa.tech",
-        "terms_link": "https://www.techa.tech/terms",
-        "policy_link": "https://www.techa.tech/policy",
-        "cookie_link": "https://www.techa.tech/cookie",
-        "github_link": "https://github.com/russiantech",
-        "fb_link": "https://www.facebook.com/RussianTechs",
-        "x_link": "https://twitter.com/chris_jsmes",
-        "instagram_link": "https://www.instagram.com/chrisjsmz/",
-        "linkedin_link": "https://www.linkedin.com/in/chrisjsm",
-        "youtube_link": "https://www.youtube.com/@russian_developer",
-    }
-
-    return {
-        **app_data,
-        **products_links,
-    }
+    init_cors(app)

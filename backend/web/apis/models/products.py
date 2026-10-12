@@ -1,5 +1,5 @@
 from slugify import slugify
-from sqlalchemy import event, func, or_
+from sqlalchemy import event, func
 from sqlalchemy.orm import relationship
 
 from web.extensions import db
@@ -36,74 +36,49 @@ class Product(db.Model):
         return '<Product %r>' % self.name
     
     @staticmethod
-    def get_product(identifier: str):
-        """
-        Static method to fetch a product from the database by ID or slug.
-        
-        Args:
-            identifier (str): The product ID or slug to search for.
-        
-        Returns:
-            Product: The product object if found, otherwise None.
-        
-        Raises:
-            ValueError: If the identifier is empty.
-        """
-        if not identifier:
+    def get_product(identifier, include_deleted=False):
+        """Fetch by numeric id OR slug (never both: MySQL would cast '2-piece' to the id 2)."""
+        if identifier is None or str(identifier).strip() == "":
             raise ValueError("Identifier cannot be empty")
-        
-        # Attempt to fetch the product by either ID or slug
-        product = db.session.query(Product).filter(
-            or_(Product.id == identifier, Product.slug == identifier)
-        ).first()
-        
-        return product
+        ident = str(identifier).strip()
+        query = Product.query.filter(Product.id == int(ident)) if ident.isdigit() else Product.query.filter(Product.slug == ident)
+        if not include_deleted:
+            query = query.filter(Product.is_deleted.is_(False))
+        return query.first()
 
     def get_summary(self, include_user=False, include_page=False):
+        images = self.images.filter_by(is_deleted=False).all()
         data = {
             'id': self.id,
-            # 'user_id': self.users.id if self.users else None,
             'name': self.name,
+            'slug': self.slug,
+            'description': self.description,
             'price': self.price,
             'stock': self.stock,
-            'slug': self.slug,
+            'is_deleted': self.is_deleted,
             'comments_count': self.comments.count(),
             'tags': [{'id': t.id, 'name': t.name} for t in self.tags],
             'categories': [{'id': c.id, 'name': c.name} for c in self.categories],
-            # 'image_urls': [i.file_path for i in self.images],
-            'image_urls': [ image.file_path.replace('\\', '/') for image in self.images ] if self.images else None,
-            
-            'images': [
-                    {'id': img.id, 'url': str(img.file_path).replace('\\', '/') }
-                    for img in self.images
-                ] if hasattr(self, 'images') and self.images else [],
+            'image_urls': [str(i.file_path).replace('\\', '/') for i in images] or None,
+            'images': [{'id': i.id, 'url': str(i.file_path).replace('\\', '/')} for i in images],
+            'created_at': self.created_at,
+            'updated_at': self.updated_at,
         }
-        
-        if include_user and self.users:
-            data['users'] = [ user.get_summary() for user in self.users]
-            
-        if include_page and self.pages:
-            data['pages'] = [ page.get_summary() for page in self.pages]
-            
+        if include_user and self.users.count():
+            data['users'] = [user.get_summary() for user in self.users]
+        if include_page and self.pages.count():
+            data['pages'] = [page.get_summary() for page in self.pages]
         return data
-
-
-# @event.listens_for(Product.name, 'set')
-# def receive_set(target, value, oldvalue, initiator):
-#     target.slug = slugify(str(value))
 
 
 @event.listens_for(Product.name, 'set')
 def generate_product_slug(target, value, oldvalue, initiator):
-    if value and (not target.slug or value != oldvalue):
-        base_slug = slugify(value)
-        unique_slug = base_slug
-        counter = 1
-        
-        # Ensure slug uniqueness
-        while Product.query.filter(Product.slug == unique_slug).first():
-            unique_slug = f"{base_slug}-{counter}"
+    if not value or (target.slug and value == oldvalue):
+        return
+    base = slugify(value) or "product"
+    candidate, counter = base, 1
+    with db.session.no_autoflush:
+        while Product.query.filter(Product.slug == candidate, Product.id != (target.id or 0)).first():
+            candidate = f"{base}-{counter}"
             counter += 1
-            
-        target.slug = unique_slug
-        
+    target.slug = candidate

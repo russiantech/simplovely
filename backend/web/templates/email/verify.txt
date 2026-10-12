@@ -1,11 +1,7 @@
+Hello {{ user.name or user.username }},
 
-Hello {{user.name or user.username}} ,
+Please confirm your email address (link valid for 24 hours):
 
-Thank you for joining our global tech community.
+{{ link }}
 
-Kindly confirm your email address just by clicking below;
-
-{{ url_for('apis.process_token', token=token, _external=True) }}
-
-
-Dunis developers ...advanced technologies.
+SimplyLovely

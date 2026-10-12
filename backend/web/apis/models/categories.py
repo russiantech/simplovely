@@ -60,28 +60,30 @@ class Category(db.Model):
     #     return data
 
     def get_summary(self, include_products=None, depth=0, max_depth=5):
+        """Children are nested downwards only; the parent is a flat reference (no recursion loops)."""
         data = {
             'id': self.id,
             'parent_id': self.parent_id,
             'name': self.name,
+            'slug': self.slug,
             'description': self.description,
-            'image_urls': [image.file_path.replace('\\', '/') for image in self.images] if self.images else None,
-            'children': [child.get_summary(depth=depth + 1, max_depth=max_depth) for child in self.children] if self.children else None,
-            'parent': self.parent.get_summary(depth=depth + 1, max_depth=max_depth) if self.parent and depth < max_depth else None
+            'image_urls': [i.file_path.replace('\\', '/') for i in self.images if not i.is_deleted] or None,
+            'children': [c.get_summary(depth=depth + 1, max_depth=max_depth) for c in self.children.filter_by(is_deleted=False)]
+            if depth < max_depth and self.children.count() else None,
+            'parent': {'id': self.parent.id, 'name': self.parent.name} if self.parent else None,
+            'created_at': self.created_at,
         }
-        
-        if include_products and self.products:
-            data['products'] = [product.get_summary() for product in self.products]
-        
+        if include_products:
+            data['products'] = [p.get_summary() for p in self.products.filter_by(is_deleted=False)]
         return data
 
-    
     def __repr__(self):
         return self.name
 
 @event.listens_for(Category.name, 'set')
 def receive_set(target, value, oldvalue, initiator):
-    target.slug = slugify(value)  # Removed unicode() as it is not necessary in Python 3
+    if value:
+        target.slug = slugify(value)
 
 
 

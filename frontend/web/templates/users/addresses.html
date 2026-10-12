@@ -82,16 +82,8 @@
 (function() {
     "use strict";
 
-    function getApiUrl() {
-        if (window.location.hostname === 'simplylovely.ng') {
-            return 'https://api.simplylovely.ng/api'; // Production URL
-        } else {
-            return 'http://localhost:5001/api'; // Development URL
-        }
-    }
 
-    window.apiUrl = getApiUrl();
-
+    
     // ─── CONFIG ─────────────────────────────────────────────────────────────
     const API_BASE = window.apiUrl || '';
     const TOKEN_KEY = 'access_token';

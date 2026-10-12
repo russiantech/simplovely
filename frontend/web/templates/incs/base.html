@@ -12,42 +12,6 @@
     {% endblock content %}
 
 
-    <script>
-        // config.js
-
-        (function () {
-            "use strict";
-
-            function getApiUrl() {
-                if (window.location.hostname === 'simplylovely.ng') {
-                    return 'https://api.simplylovely.ng/api';
-                }
-
-                return 'http://localhost:5001/api';
-            }
-
-            // GLOBAL CONFIG OBJECT
-            window.APP_CONFIG = {
-                API_BASE: getApiUrl(),
-                TOKEN_KEY: 'access_token'
-            };
-
-            // GLOBAL HELPERS
-            window.getToken = function () {
-                return localStorage.getItem(window.APP_CONFIG.TOKEN_KEY);
-            };
-
-            window.getAuthHeaders = function () {
-                const token = window.getToken();
-
-                return token
-                    ? { Authorization: `Bearer ${token}` }
-                    : {};
-            };
-
-        })();
-
-    </script>
     {% include "incs/modals/email_verification_modal.html" %}
     {% include "incs/modals/response_modal.html" %}
     {% include "incs/modals/service_requests_modal.html" %}

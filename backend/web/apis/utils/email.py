@@ -1,79 +1,65 @@
+"""Transactional email. Sending never raises into a request: failures are logged and reported as False."""
+import logging
+from threading import Thread
+
 from flask import current_app, render_template
 from flask_mail import Message
-from threading import Thread
-import traceback
-# from web.apis.utils.helpers import error_response, success_response
+
 from web.extensions import mail
 
-def send_email(subject, sender=None, recipients=None, text_body='', html_body=''):
-    """
-    Sends an email asynchronously using Flask-Mail.
-    
-    Args:
-        subject (str): The subject of the email.
-        sender (str, optional): The email sender. Defaults to `MAIL_DEFAULT_SENDER` if not provided.
-        recipients (list, optional): List of recipient email addresses.
-        text_body (str, optional): The plain-text content of the email.
-        html_body (str, optional): The HTML content of the email.
+log = logging.getLogger("web")
 
-    """
-    def send_async_email(app, msg):
+
+def mail_configured():
+    cfg = current_app.config
+    return bool(cfg.get("MAIL_USERNAME") and cfg.get("MAIL_PASSWORD"))
+
+
+def _deliver(app, message):
+    with app.app_context():
         try:
-            with app.app_context():
-                mail.send(msg)
-                print("Success: Email sent successfully!")
-        except Exception:
-            traceback.print_exc()
+            mail.send(message)
+            log.info("Email sent to %s", message.recipients)
+        except Exception:  # noqa: BLE001
+            log.exception("Email delivery to %s failed", message.recipients)
 
-    # Use default sender from app configuration if sender is not provided
-    if sender is None:
-        sender = current_app.config.get('MAIL_DEFAULT_SENDER')
 
-     # Ensure the sender is in the format "Sender Name <email>"
-    if isinstance(sender, str) and '@' in sender:
-        sender = f"Techa <{sender}>"
-        
+def send_email(subject, recipients, text_body="", html_body="", sender=None, background=True):
+    """Queue an email. Returns False (and logs) if mail is unconfigured or the message is invalid."""
     if not recipients:
-        raise ValueError("Recipients list cannot be empty.")
+        return False
+    if not mail_configured() and not current_app.config.get("MAIL_SUPPRESS_SEND"):
+        log.warning("Email '%s' to %s not sent: MAIL_USERNAME/MAIL_PASSWORD are not configured.", subject, recipients)
+        return False
+    message = Message(subject, recipients=list(recipients), sender=sender or current_app.config["MAIL_DEFAULT_SENDER"])
+    message.body, message.html = text_body, html_body
+    if current_app.config.get("MAIL_SUPPRESS_SEND") or not background:
+        _deliver(current_app._get_current_object(), message)
+    else:
+        Thread(target=_deliver, args=(current_app._get_current_object(), message), daemon=True).start()
+    return True
 
-    # Create the email message
-    msg = Message(subject, sender=sender, recipients=recipients)
-    msg.body = text_body
-    msg.html = html_body
 
-    # Use Flask's application context in a separate thread
-    Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
+def _context(user, **extra):
+    cfg = current_app.config
+    return {"user": user, "logo_url": f"{cfg['FRONTEND_URL']}/static/img/logo_11.png", **extra}
 
-def reset_email(user):
-    token = user.make_token(token_type="reset_password")
-    send_email(
-        '[SimplyLovely] . Reset Your Password',
-        # sender="no-reply@techa.tech",
-        recipients=[user.email],
-        text_body=render_template('email/forgot.txt', user=user, token=token),
-        html_body=render_template('email/forgot.html', user=user, token=token)
-    )
 
-def verify_email(user):
-    token = user.make_token(token_type="verify_email")
-    print("verification-token-emails ->", token)
-    send_email(
-        '[SimplyLovely] . Verify Your Email Address.',
-        # sender="no-reply@techa.tech",
-        recipients=[user.email],
-        text_body=render_template('email/verify.txt', user=user, token=token),
-        html_body=render_template('email/verify.html', user=user, token=token)
-    )
-
-def confirm_email(user):
-    token = user.make_token(token_type="confirm_email")
-    send_email(
-        '[SimplyLovely] . Confirm Your Email Address.',
-        sender="no-reply@simplylovely.com",
-        recipients=[user.email],
-        text_body=render_template('email/verify.txt', user=user, token=token),
-        html_body=render_template('email/verify.html', user=user, token=token)
+def send_verification_email(user, link):
+    ctx = _context(user, link=link)
+    return send_email(
+        "[SimplyLovely] Verify your email address",
+        [user.email],
+        render_template("email/verify.txt", **ctx),
+        render_template("email/verify.html", **ctx),
     )
 
 
-
+def send_reset_email(user, link):
+    ctx = _context(user, link=link)
+    return send_email(
+        "[SimplyLovely] Reset your password",
+        [user.email],
+        render_template("email/forgot.txt", **ctx),
+        render_template("email/forgot.html", **ctx),
+    )

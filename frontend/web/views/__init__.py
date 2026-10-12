@@ -1,64 +1,39 @@
+"""Page routes. One table instead of one copy-pasted function per page."""
+from flask import render_template
 
-from flask import Blueprint
-api_bp = Blueprint('apis', __name__)
+PUBLIC_PAGES = {
+    "/": "index.html",
+    "/index": "index.html",
+    "/laundry": "laundry.html",
+    "/fashion": "fashion.html",
+    "/contact": "contact.html",
+    "/signin": "auth/signin.html",
+    "/signup": "auth/signup.html",
+    "/verify-email": "auth/verify_email.html",
+    "/reset-password": "auth/forgot.html",
+    "/reset-password/confirm": "auth/reset.html",
+}
 
-# web/apis/__init__.py
-from . import products
-# from . import pages
-from . import index
-from . import users
-# from . import baskets
-from . import orders
-# from . import addresses
-from . import favorites
-from . import comments
-from . import roles
-# from . import tags 
-# from .tags import Tag, ProductTag, products_tags
-# from . import chats
-# from .categories import Category, products_categories
-from . import categories
-# from .transactions import Transaction
+# Signed-in pages. Access is enforced by the API; the page script redirects visitors to /signin.
+DASHBOARD_PAGES = {
+    "/account": "users/account.html",
+    "/plans": "users/plans.html",
+    "/usage": "users/usage.html",
+    "/transactions": "users/transactions.html",
+    "/settings": "users/settings.html",
+    "/addresses": "users/addresses.html",
+    "/fashion-crud": "users/fashion_manager.html",
+    "/users": "users/users.html",
+}
 
-__all__ = [
-    
-    "users",
-    "products",
-    "basket",
-    
-    "addresses",
-    "product",
-    
-    "Page",
-    "products_pages",
-    "users_pages",
-    
-    "User",
-    "Basket",
-    "Favorite",
-    "Comment",
-    
-    "FileUpload",
-    "TagImage",
-    "CategoryImage",
-    "ProductImage",
-    
-    "Order",
-    "OrderItem",
-    
-    "Role",
-    "UserRole",
-    "users_roles",
-    
-    "Tag",
-    "ProductTag",
-    "products_tags",
-    
-    "Chat",
-    
-    "Category",
-    "products_categories",
-    
-    "Transaction"
-    
-]
+
+def _page(template):
+    def view():
+        return render_template(template)
+
+    return view
+
+
+def register_pages(app):
+    for rule, template in {**PUBLIC_PAGES, **DASHBOARD_PAGES}.items():
+        app.add_url_rule(rule, endpoint=rule.strip("/").replace("/", "_") or "home", view_func=_page(template))

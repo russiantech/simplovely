@@ -20,9 +20,6 @@
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const AppConfig = Object.freeze({
-    PROD_HOSTNAME:   'simplylovely.ng',
-    PROD_API:        'https://api.simplylovely.ng/api',
-    DEV_API:         'http://localhost:5001/api',
     MODAL_Z_INDEX:   1058,
     LOGIN_PATH:      '/signin',
     TOKEN_KEYS: {
@@ -81,7 +78,7 @@ const Utils = {
         try {
             window.history.replaceState(
                 {}, document.title,
-                window.location.href.split('?')[0]
+                window.location.href.split('?')[0].split('#')[0]
             );
         } catch (_) {}
     },
@@ -113,20 +110,14 @@ const Utils = {
         }
     },
 
-    /** Best-effort CSRF token extraction from common cookie names */
-    getCsrfToken() {
-        return this.getCookie('csrf_token')
-            || this.getCookie('XSRF-TOKEN')
-            || this.getCookie('csrftoken');
-    },
-
     /** Human-readable error from a failed fetch/API call */
     friendlyError(error) {
         console.error('Error:', error);
         if (!error) return 'An unexpected error occurred.';
         const msg = error.message || String(error);
-        if (msg === 'Failed to fetch' || msg.includes('NetworkError') || msg.includes('network')) {
-            return 'Unable to connect to the server. Please check your internet connection and try again.';
+        if (error.isNetworkError) return msg; // already worded by HttpClient
+        if (/failed to fetch|networkerror|load failed|network request failed/i.test(msg)) {
+            return NetworkMessage.build();
         }
         // Do NOT map 401/unauthorized generically — that masks real login errors.
         // The explicit "session expired" message is thrown by HttpClient only on
@@ -135,31 +126,37 @@ const Utils = {
     },
 };
 
+// Network failures: say what is actually wrong (offline vs. server unreachable) and log the URL.
+const NetworkMessage = {
+    build() {
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            return 'You appear to be offline. Please check your internet connection and try again.';
+        }
+        return 'We could not reach the server. Please try again in a moment.';
+    },
+};
+
 // ─── ApiConfig ────────────────────────────────────────────────────────────────
 
+/**
+ * The API URL is decided ONCE on the server (see web.api_base_for_host) and injected by
+ * templates/incs/metas.html as window.APP_CONFIG.API_BASE. Nothing else may guess it.
+ */
 const ApiConfig = {
     apiUrl:  null,
     planUrl: null,
 
     init() {
-        this.apiUrl  = this._resolveUrl();
+        const injected = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || window.apiUrl;
+        if (!injected) console.error('APP_CONFIG.API_BASE is missing: check templates/incs/metas.html');
+        this.apiUrl  = String(injected || `${window.location.origin}/api`).replace(/\/+$/, '');
         this.planUrl = `${this.apiUrl}/plans`;
-
-        // Global compat
-        window.apiUrl  = this.apiUrl;
+        window.apiUrl  = this.apiUrl;   // global compat for page scripts
         window.planUrl = this.planUrl;
     },
 
-    _resolveUrl() {
-        const h = window.location.hostname;
-        if (h === AppConfig.PROD_HOSTNAME || h.endsWith('.' + AppConfig.PROD_HOSTNAME)) {
-            return AppConfig.PROD_API;
-        }
-        return AppConfig.DEV_API;
-    },
-
     get() {
-        return this.apiUrl || this._resolveUrl();
+        return this.apiUrl || (this.init(), this.apiUrl);
     },
 };
 
@@ -202,7 +199,17 @@ const TokenManager = {
         }
     },
 
-    async refresh() {
+    _inflight: null,
+
+    /** One refresh at a time: parallel 401s share the same request. */
+    refresh() {
+        if (!this._inflight) {
+            this._inflight = this._refresh().finally(() => { this._inflight = null; });
+        }
+        return this._inflight;
+    },
+
+    async _refresh() {
         const rt = this.getRefresh();
         if (!Utils.isValidJwt(rt)) return false;
 
@@ -210,10 +217,10 @@ const TokenManager = {
             // Use raw fetch (not HttpClient) to avoid infinite recursion.
             // credentials: 'omit' prevents stale JWT cookies from triggering
             // CSRF errors on the refresh endpoint.
+            // The refresh token travels in the Authorization header (the API only reads headers).
             const res = await fetch(`${ApiConfig.get()}/users/refresh-token`, {
                 method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ refresh_token: rt }),
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${rt}` },
                 credentials: 'omit',
             });
             if (!res.ok) return false;
@@ -229,12 +236,15 @@ const TokenManager = {
 
 // ─── HttpClient ───────────────────────────────────────────────────────────────
 
+const PUBLIC_ENDPOINT = /\/(signin|signup|refresh-token|reset-password|verify-email|resend-verification|authorize|callback|message)\b/;
+
 const HttpClient = {
     async request(url, options = {}) {
         if (!url) throw new Error('URL is required');
 
         const path = Utils.getPathFromUrl(url);
-        const isAuthEndpoint = /\/(signin|signup|refresh-token)\b/.test(path);
+        // Public endpoints never get an Authorization header (an expired token there would only cause a 401)
+        const isAuthEndpoint = PUBLIC_ENDPOINT.test(path);
 
         // ── Auth header: only for non-auth endpoints AND only if JWT is well-formed ──
         const token   = isAuthEndpoint ? null : TokenManager.getAccess();
@@ -246,18 +256,8 @@ const HttpClient = {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
-        // ── CSRF protection: best-effort header if cookie exists ──
-        // Helps when backend uses Flask-WTF CSRFProtect or similar.
-        const csrfToken = Utils.getCsrfToken();
-        if (csrfToken) {
-            headers['X-CSRFToken']  = csrfToken;
-            headers['X-XSRF-TOKEN'] = csrfToken;
-        }
-
-        // ── Credentials: NEVER send cookies on auth endpoints ──
-        // Sending stale JWT cookies to /signin causes Flask-JWT cookie+CSRF
-        // checks to fire a 401 BEFORE the route body ever runs.
-        const credentials = isAuthEndpoint ? 'omit' : (options.credentials || 'include');
+        // The API authenticates with bearer tokens only: no cookies, hence no CSRF headers either.
+        const credentials = 'omit';
 
         const opts = {
             ...options,
@@ -270,11 +270,7 @@ const HttpClient = {
         try {
             res = await fetch(url, opts);
         } catch (networkErr) {
-            const friendly = Utils.friendlyError(networkErr);
-            const err = new Error(friendly);
-            err.isNetworkError = true;
-            console.error('Network error:', url, networkErr.message);
-            throw err;
+            throw networkErr.isNetworkError ? networkErr : Object.assign(new Error(NetworkMessage.build()), { isNetworkError: true });
         }
 
         // ── 401 handling ──
@@ -286,26 +282,19 @@ const HttpClient = {
                     const body = await res.json();
                     errMsg = body.error || body.message || errMsg;
                 } catch (_) {}
-                throw new Error(errMsg);
+                throw Object.assign(new Error(errMsg), { status: res.status });
             }
 
-            // Non-auth endpoint: try silent refresh once
+            // Non-auth endpoint: the fetch wrapper below already tried a silent refresh + retry.
             const hadTokenBefore = TokenManager.hasToken();
-            const refreshed = await TokenManager.refresh();
-            if (refreshed) {
-                const newToken = TokenManager.getAccess();
-                if (newToken) opts.headers['Authorization'] = `Bearer ${newToken}`;
-                return this.request(url, opts);
-            }
-
-            // Refresh failed → session is dead. Clear everything and redirect.
+            // Session is dead. Clear everything and redirect.
             TokenManager.clear();
             if (hadTokenBefore) {
                 // Only redirect if we actually had a session (avoid kicking
                 // logged-out visitors on public pages to login).
                 TokenManager.logout();
             }
-            throw new Error('Your session has expired. Please sign in again.');
+            throw Object.assign(new Error('Your session has expired. Please sign in again.'), { status: 401 });
         }
 
         if (!res.ok) {
@@ -314,12 +303,47 @@ const HttpClient = {
                 const body = await res.json();
                 errMsg = body.error || body.message || errMsg;
             } catch (_) {}
-            throw new Error(errMsg);
+            throw Object.assign(new Error(errMsg), { status: res.status });
         }
 
         return res.json();
     },
 };
+
+// ─── API-aware fetch ──────────────────────────────────────────────────────────
+// Every request to the API (from HttpClient AND from page scripts that call fetch directly):
+//   • never sends cookies (bearer tokens only)
+//   • on 401 for a protected endpoint: refreshes the access token once and retries
+//   • turns browser network failures into one accurate, friendly message
+(function installApiFetch() {
+    const nativeFetch = window.fetch.bind(window);
+    window.nativeFetch = nativeFetch;
+
+    window.fetch = async function (input, init) {
+        const url = typeof input === 'string' ? input : (input && input.url) || '';
+        if (!url.startsWith(ApiConfig.get())) return nativeFetch(input, init);
+
+        const opts = { ...(init || {}), credentials: 'omit' };
+        let res;
+        try {
+            res = await nativeFetch(input, opts);
+        } catch (networkErr) {
+            console.error('Network error calling', url, '-', networkErr.message,
+                          '(is the API up? ' + ApiConfig.get() + '/health)');
+            throw Object.assign(new Error(NetworkMessage.build()), { isNetworkError: true });
+        }
+
+        const protectedCall = !PUBLIC_ENDPOINT.test(Utils.getPathFromUrl(url));
+        if (res.status === AppConfig.HTTP.UNAUTHORIZED && protectedCall && Utils.isValidJwt(TokenManager.getRefresh())) {
+            if (await TokenManager.refresh()) {
+                const headers = new Headers(opts.headers || {});
+                headers.set('Authorization', `Bearer ${TokenManager.getAccess()}`);
+                return nativeFetch(input, { ...opts, headers });
+            }
+        }
+        return res;
+    };
+})();
 
 // ─── UIManager ────────────────────────────────────────────────────────────────
 
@@ -394,7 +418,7 @@ const FormHandler = {
     init() {
         const configs = [
             { id: 'reset_password_modal', endpoint: 'users/reset-password' },
-            { id: 'message_form',         endpoint: 'users/send-message'   },
+            { id: 'message_form',         endpoint: 'users/message'        },
             { id: 'add_plan_form',        endpoint: 'plans'                },
             { id: 'add_address_form',     endpoint: 'addresses'            },
             { id: 'service_form',         endpoint: 'services', onSuccess: FormHandler._onServiceSuccess },
@@ -423,7 +447,7 @@ const FormHandler = {
             const data = Object.fromEntries(new FormData(form).entries());
 
             // Detect auth endpoints by the endpoint path (consistent with HttpClient)
-            const isAuthEndpoint = /(signin|signup|refresh-token)/.test(endpoint);
+            const isAuthEndpoint = /(signin|signup)/.test(endpoint);
 
             // Scrub stale tokens before hitting auth endpoints so we don't send
             // a stale Bearer token that triggers a 401 before the route runs.
@@ -487,42 +511,37 @@ const OAuthHandler = {
     async initiate(provider) {
         try {
             const res  = await fetch(`${ApiConfig.get()}/users/authorize/${provider}`, {
-                headers: {
-                    'Client-Callback-Url': window.location.href,
-                    'Content-Type':        'application/json',
-                },
+                headers: { 'Client-Callback-Url': window.location.origin + '/signin' },
                 credentials: 'omit',
             });
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
             if (res.ok && data.redirect) {
                 window.location.href = data.redirect;
             } else {
-                UIManager.showModal('Failed to initiate sign-in. Please try again.', 'danger');
+                UIManager.showModal(data.error || 'Failed to initiate sign-in. Please try again.', 'danger');
             }
         } catch (err) {
             UIManager.showModal(Utils.friendlyError(err), 'danger');
         }
     },
 
+    /** The API redirects back with the result in the URL fragment (never sent to servers or logs). */
     _handleCallback() {
-        const params = Utils.getUrlParams();
+        const raw = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : '';
+        const params = new URLSearchParams(raw || window.location.search);
         const success = params.get('success');
-        const access  = params.get('access_token');
-        const refresh = params.get('refresh_token');
+        if (!success) return;
 
-        if (!success && !access) return;
-
-        if (success === 'True') {
-            TokenManager.setTokens(access, refresh);
+        if (success.toLowerCase() === 'true' && params.get('access_token')) {
+            TokenManager.setTokens(params.get('access_token'), params.get('refresh_token'));
+            Utils.cleanUrl();
             UIManager.showModal('Sign-in successful! Redirecting…', 'success');
             const redirect = params.get('redirect');
-            if (Utils.isValidString(redirect)) {
-                setTimeout(() => { window.location.href = redirect.trim(); }, 1500);
-            }
+            setTimeout(() => { window.location.href = Utils.isValidString(redirect) && redirect.startsWith('/') ? redirect : '/account'; }, 1200);
         } else {
-            UIManager.showModal('Sign-in failed. Please try again.', 'danger');
+            Utils.cleanUrl();
+            UIManager.showModal(params.get('error') || 'Sign-in failed. Please try again.', 'danger');
         }
-        Utils.cleanUrl();
     },
 };
 
@@ -590,6 +609,9 @@ window.handleFormSubmit = (id, endpoint) => FormHandler.submit(id, endpoint);
 window.Utils            = Utils;
 window.TokenManager     = TokenManager;
 window.get_user_home    = ()             => UserDataManager.load();
+window.showToast        = (msg, type)    => UIManager.showToast(msg, type);
+window.getToken         = ()             => TokenManager.getAccess();
+window.getAuthHeaders   = ()             => (Utils.isValidJwt(TokenManager.getAccess()) ? { Authorization: `Bearer ${TokenManager.getAccess()}` } : {});
 
 document.addEventListener('DOMContentLoaded', () => App.init());
 

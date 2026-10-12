@@ -1,131 +1,59 @@
-from flask import Blueprint
+"""One place that turns every failure into a JSON response (CORS headers are added afterwards)."""
+import logging
+
+from flask import current_app
+from flask_limiter.errors import RateLimitExceeded
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from werkzeug.exceptions import HTTPException
 
 from web.apis.utils.serializers import error_response
+from web.extensions import db
 
-error_bp = Blueprint('errors', __name__)
-# from web.extensions import bp as error_bp
+log = logging.getLogger("web")
 
-@error_bp.app_errorhandler(422)
-def error_422(error):
-    """
-    Handle 422 errors with a JSON response.
-    """
-    try:
-        
-        return error_response("unprocessible entity, ensure you send valid data & format to the server. confirm your jwt token is correct.", 422)
-    except Exception as e:
-        # Log the exception (e.g., using Flask's logger)
-        error_bp.logger.error(f"Error handling 422: {str(e)}")
-        return error_response("An error occurred while processing the 422 error", 422)
-    
-@error_bp.app_errorhandler(405)
-def error_405(error):
-    """
-    Handle 405 errors with a JSON response.
-    """
-    try:
-        
-        return error_response("Method not allowed.", 405)
-    except Exception as e:
-        # Log the exception (e.g., using Flask's logger)
-        error_bp.logger.error(f"Error handling 405: {str(e)}")
-        return error_response("An error occurred while processing the 405 error", 405)
-    
-@error_bp.app_errorhandler(404)
-def error_404(error):
-    """
-    Handle 404 errors with a JSON response.
-    """
-    try:
-        
-        return error_response("Resource not found", 404)
-    
-    except Exception as e:
-        # Log the exception (e.g., using Flask's logger)
-        error_bp.logger.error(f"Error handling 404: {str(e)}")
-        return error_response("An error occurred while processing the 404 error", 404)
+_MESSAGES = {
+    400: "Bad request.",
+    401: "Authentication required.",
+    403: "Access forbidden.",
+    404: "Resource not found.",
+    405: "Method not allowed.",
+    409: "This record already exists or conflicts with another one.",
+    413: "The uploaded file is too large.",
+    415: "Unsupported media type.",
+    422: "Unprocessable request. Check the data you sent.",
+    429: "Too many requests. Please slow down and try again shortly.",
+}
 
-@error_bp.app_errorhandler(403)
-def error_403(error):
-    """
-    Handle 403 errors with a JSON response.
-    """
-    try:
-        return error_response("Access forbidden", 403)
-    except Exception as e:
-        # Log the exception
-        error_bp.logger.error(f"Error handling 403: {str(e)}")
-        return error_response("An error occurred while processing the 403 error", 403)
 
-@error_bp.app_errorhandler(413)
-def error_413(error):
-    """
-    Handle 413 errors with a JSON response.
-    """
-    try:
-        return error_response("Request entity too large", 413)
-    except Exception as e:
-        # Log the exception
-        error_bp.logger.error(f"Error handling 413: {str(e)}")
-        return error_response("An error occurred while processing the 413 error", 413)
-    
-@error_bp.app_errorhandler(415)
-def error_415(error):
-    """
-    Handle 415 errors with a JSON response.
-    """
-    try:
-        return error_response("Unsupported media type", 415)
-    except Exception as e:
-        # Log the exception
-        error_bp.logger.error(f"Error handling 415: {str(e)}")
-        return error_response("An error occurred while processing the 415 error", 415)
+def register_error_handlers(app):
+    @app.errorhandler(RateLimitExceeded)
+    def _rate_limited(exc):
+        response, status = error_response(_MESSAGES[429], 429)
+        retry = getattr(exc, "retry_after", None) or getattr(getattr(exc, "limit", None), "limit", None)
+        if isinstance(retry, int):
+            response.headers["Retry-After"] = str(retry)
+        return response, status
 
-@error_bp.app_errorhandler(409)
-def error_409(error):
-    """
-    Handle 409 errors with a JSON response.
-    """
-    try:
-        return error_response("Integrity/Duplicate Entires Deteccted", 409)
-    except Exception as e:
-        # Log the exception
-        error_bp.logger.error(f"Error handling 409: {str(e)}")
-        return error_response("An error occurred while processing the 409 error", 409)
-    
-@error_bp.app_errorhandler(429)
-def error_429(error):
-    """
-    Handle 429 errors with a JSON response.
-    """
-    try:
-        return error_response("Too many requests in just a few seconds, be calming down my gee.", 429)
-    except Exception as e:
-        # Log the exception
-        error_bp.logger.error(f"Error handling 413: {str(e)}")
-        return error_response("An error occurred while processing the 429 error", 429)
-    
-@error_bp.app_errorhandler(500)
-def error_500(error):
-    """
-    Handle 500 errors with a JSON response.
-    """
-    try:
-        return error_response("Internal server error", 500)
-    except Exception as e:
-        # Log the exception
-        error_bp.logger.error(f"Error handling 500: {str(e)}")
-        return error_response("An error occurred while processing the 500 error", 500)
-    
-from jwt.exceptions import ExpiredSignatureError
-@error_bp.app_errorhandler(ExpiredSignatureError)
-def handle_expired_jwt_token(error):
-    """
-    Handle handle_expired_jwt_token errors with a JSON response.
-    """
-    try:
-        return error_response(f"Unexpected Error: {str(error)}", 401)
-    except Exception as e:
-        # Log the exception
-        error_bp.logger.error(f"handle_expired_jwt_token: {str(e)}")
-        return error_response("An error occurred while processing the expired_jwt_token", 500)
+    @app.errorhandler(HTTPException)
+    def _http(exc):
+        code = exc.code or 500
+        return error_response(_MESSAGES.get(code) or exc.description or "Request failed.", code)
+
+    @app.errorhandler(IntegrityError)
+    def _integrity(exc):
+        db.session.rollback()
+        log.warning("Integrity error: %s", exc.orig)
+        return error_response(_MESSAGES[409], 409)
+
+    @app.errorhandler(SQLAlchemyError)
+    def _database(exc):
+        db.session.rollback()
+        log.exception("Database error")
+        return error_response("The database is temporarily unavailable. Please try again shortly.", 503)
+
+    @app.errorhandler(Exception)
+    def _unexpected(exc):
+        db.session.rollback()
+        log.exception("Unhandled error on %s", exc.__class__.__name__)
+        message = str(exc) if current_app.debug else "Something went wrong on our side. Please try again."
+        return error_response(message, 500)

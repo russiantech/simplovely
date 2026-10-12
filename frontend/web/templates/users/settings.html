@@ -182,13 +182,7 @@
     // const API_BASE = window.apiUrl || '';
     // const TOKEN_KEY = 'access_token';
 
-    function getApiUrl() {
-        if (window.location.hostname === 'simplylovely.ng') {
-            return 'https://api.simplylovely.ng/api';
-        }
-        return 'http://localhost:5001/api';
-    }
-    const API_BASE = getApiUrl();
+    const API_BASE = window.apiUrl;
     const TOKEN_KEY = 'access_token';
 
     // ─── HELPERS ────────────────────────────────────────────────────────────

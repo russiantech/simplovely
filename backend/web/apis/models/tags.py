@@ -1,4 +1,3 @@
-from datetime import datetime
 
 from slugify import slugify
 from sqlalchemy import event, Column, Integer, ForeignKey, UniqueConstraint, func

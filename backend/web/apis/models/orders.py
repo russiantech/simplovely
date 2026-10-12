@@ -11,7 +11,6 @@ class OrderStatus(enum.IntEnum):
     unknown = 5
 '''
 from sqlalchemy import func
-from sqlalchemy.orm import relationship
 from web.extensions import db
 
 ORDER_STATUS = ['processed', 'shipped', 'in transit', 'delivered']

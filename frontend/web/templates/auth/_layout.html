@@ -1,0 +1,35 @@
+{# Shared shell for the small account-recovery pages (same look as sign-in). Child blocks: title, heading, body, scripts #}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light" data-pwa="true">
+<head>
+  {% include "incs/metas.html" %}
+  <title>{% block title %}Simply Lovely{% endblock %}</title>
+</head>
+<body>
+<main class="content-wrapper w-100 px-3 ps-lg-5 pe-lg-4 mx-auto" style="max-width:1920px">
+  <div class="d-lg-flex">
+    <div class="d-flex flex-column min-vh-100 w-100 py-4 mx-auto me-lg-5" style="max-width:416px">
+      <header class="navbar px-0 pb-4 mt-n2 mt-sm-0 mb-2 mb-md-3 mb-lg-4">
+        <a href="./" class="navbar-brand pt-0">
+          <span class="d-flex flex-shrink-0 text-primary me-2"><img src="./static/img/logo_11.png" alt="Simply Lovely"></span>
+          Simply Lovely
+        </a>
+        <a class="nav-link badge text-decoration-none rounded-pill p-1 text-bg-info" href="./signin"><i class="fi-skip-back fs-md"></i> Sign in</a>
+      </header>
+      <div class="mt-auto">{% block body %}{% endblock %}</div>
+      <footer class="mt-auto pt-4"><p class="fs-xs mb-0">&copy; Simply Lovely</p></footer>
+    </div>
+    <div class="d-none d-lg-block w-100 py-4 ms-auto" style="max-width:1034px">
+      <div class="d-flex flex-column justify-content-end h-100 rounded-5 overflow-hidden">
+        <span class="position-absolute top-0 start-0 w-100 h-100 d-none-dark" style="background:linear-gradient(-90deg,#accbee 0%,#e7f0fd 100%)"></span>
+        <span class="position-absolute top-0 start-0 w-100 h-100 d-none d-block-dark" style="background:linear-gradient(-90deg,#1b273a 0%,#1f2632 100%)"></span>
+        <div class="ratio position-relative z-2" style="--cz-aspect-ratio:calc(1030/1032*100%)"><img src="./static/img/fashion/03.jpg" alt="Simply Lovely Fashion"></div>
+      </div>
+    </div>
+  </div>
+</main>
+{% include "incs/modals/response_modal.html" %}
+{% include "incs/bottom_js.html" %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

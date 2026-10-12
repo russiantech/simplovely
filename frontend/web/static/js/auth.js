@@ -12,7 +12,10 @@ function decodeJwtPayload(token) {
         if (typeof token !== 'string' || !token.trim()) return null;
         const parts = token.split('.');
         if (parts.length !== 3) return null;
-        return JSON.parse(atob(parts[1]));
+        // JWTs are base64url (-, _, no padding) and UTF-8: plain atob() fails on many valid tokens.
+        const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(parts[1].length / 4) * 4, '=');
+        const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+        return JSON.parse(new TextDecoder().decode(bytes));
     } catch (_) {
         return null;
     }
@@ -54,32 +57,38 @@ function hasRequiredRoles(userRoles, requiredRoles) {
     return requiredRoles.every(role => userRoles.includes(role));
 }
 
+const ADMIN_ROLES = ['admin', 'dev'];
+
+function isAdminToken(token) {
+    return getRolesFromDecodedToken(token).some(r => ADMIN_ROLES.includes(r));
+}
+
 /**
- * Guard a page by auth/role requirements.
- * Redirects to /signin if unauthenticated; to /account if missing roles.
+ * Guard a page by auth/role requirements. Returns a Promise<boolean>.
+ * An expired access token is silently renewed with the refresh token before giving up.
+ * Redirects to /signin if unauthenticated; to /account if the roles are missing
+ * (admins/devs always satisfy any role requirement).
  */
-function authRequired(requiredRoles = []) {
-    const token = localStorage.getItem('access_token');
+async function authRequired(requiredRoles = []) {
+    let token = localStorage.getItem('access_token');
+
+    if ((!token || !isValidToken(token)) && window.TokenManager) {
+        if (await window.TokenManager.refresh()) token = localStorage.getItem('access_token');
+    }
 
     if (!token || !isValidToken(token)) {
-        if (window.response_modal) {
-            window.response_modal('Access denied: please sign in to continue.');
-        }
-        setTimeout(() => { window.location.href = '/signin'; }, 1800);
+        if (window.response_modal) window.response_modal('Please sign in to continue.');
+        setTimeout(() => { window.location.href = '/signin'; }, 1500);
         return false;
     }
 
-    if (requiredRoles.length > 0) {
-        const userRoles = getRolesFromDecodedToken(token);
-        if (!hasRequiredRoles(userRoles, requiredRoles)) {
-            if (window.response_modal) {
-                window.response_modal('Access denied: you do not have the required permissions.');
-            }
-            setTimeout(() => { window.location.href = '/account'; }, 1800);
+    if (requiredRoles.length > 0 && !isAdminToken(token)) {
+        if (!hasRequiredRoles(getRolesFromDecodedToken(token), requiredRoles)) {
+            if (window.response_modal) window.response_modal('Access denied: you do not have the required permissions.');
+            setTimeout(() => { window.location.href = '/account'; }, 1500);
             return false;
         }
     }
-
     return true;
 }
 
@@ -92,7 +101,7 @@ function authRequired(requiredRoles = []) {
 function applyAdminVisibility() {
     const token = localStorage.getItem('access_token');
     const roles = getRolesFromDecodedToken(token);
-    const isAdmin = roles.includes('admin');
+    const isAdmin = roles.some(r => ADMIN_ROLES.includes(r));
 
     // Toggle .admin-only elements
     document.querySelectorAll('.admin-only').forEach(el => {
@@ -128,6 +137,7 @@ window.isValidToken             = isValidToken;
 window.getCookie                = getCookie;
 window.hasRequiredRoles         = hasRequiredRoles;
 window.authRequired             = authRequired;
+window.isAdminToken             = isAdminToken;
 window.getRolesFromDecodedToken = getRolesFromDecodedToken;
 window.decodeJwtPayload         = decodeJwtPayload;
 

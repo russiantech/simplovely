@@ -1,94 +1,17 @@
-from web.extensions import db
-from sqlalchemy import func
-
-class BaseModel(db.Model):
-    id = db.Column(db.Integer, index=True, primary_key=True)
-    is_deleted = db.Column(db.Boolean(), nullable=False, default=False)
-    created_at = db.Column(db.DateTime, index=True, nullable=False, default=func.now())
-    updated_at = db.Column(db.DateTime, nullable=False, default=func.now(), onupdate=func.now())
-
-    def get_or_default(self, ident, default=None):
-        return self.get(ident) or default
-
-# from web.models.* import *
-# web/apis/models/__init__.py
-from .addresses import Address, Country, State, City
-from .products import Product
-from .pages import Page, products_pages, users_pages
-from .users import User
-from .baskets import Basket
-from .favorites import Favorite
-from .comments import Comment
-from .file_uploads import FileUpload, TagImage, CategoryImage, ProductImage
-from .orders import Order, OrderItem
-from .roles import Role, users_roles #, UserRole
-from .tags import Tag, ProductTag, products_tags
-from .categories import Category, products_categories
-from .transactions import Transaction
-from .plans import Plan, Subscription, Usage
-from .services import *
-
-__all__ = [
-    
-    "Address",
-    "Product",
-    
-    "Plan",
-    "Services",
-    
-    "Pages",
-    "Subscription",
-    "Usage",
-    
-    "User",
-    "Basket",
-    "Favorite",
-    "Comment",
-    
-    "FileUpload",
-    "TagImage",
-    "CategoryImage",
-    "ProductImage",
-    
-    "Order",
-    "OrderItem",
-    
-    "Role",
-    # "UserRole",
-    "users_roles",
-    
-    "Tag",
-    "ProductTag",
-    "products_tags",
-    
-    "Chat",
-    
-    "Category",
-    "products_categories",
-    
-    "Transaction"
-]
-
-
-
-# web/models/__init__.py
-# import importlib
-# import os
-
-# # def load_models():
-# #     package = os.path.dirname(__file__)
-# #     for module in os.listdir(package):
-# #         if module.endswith('.py') and module != '__init__.py':
-# #             importlib.import_module(f"web.models.{module[:-3]}")
-
-
-# # def load_models():
-# #     package = os.path.dirname(__file__)
-# #     for module in os.listdir(package):
-# #         if module.endswith('.py') and module != '__init__.py':
-# #             try:
-# #                 importlib.import_module(f"web.models.{module[:-3]}")
-# #             except Exception as e:
-# #                 print(f"Error importing {module}: {e}")
-
-# # load_models()
+"""Importing this package registers every SQLAlchemy model."""
+from .addresses import Address, City, Country, State  # noqa: F401
+from .baskets import Basket  # noqa: F401
+from .categories import Category, products_categories  # noqa: F401
+from .comments import Comment  # noqa: F401
+from .favorites import Favorite  # noqa: F401
+from .file_uploads import CategoryImage, FileUpload, ProductImage, TagImage  # noqa: F401
+from .orders import Order, OrderItem  # noqa: F401
+from .pages import Page, products_pages, users_pages  # noqa: F401
+from .plans import Plan, Subscription, Usage  # noqa: F401
+from .products import Product  # noqa: F401
+from .roles import Role, users_roles  # noqa: F401
+from .services import Area, Service, ServiceCategory, ServiceRequest  # noqa: F401
+from .tags import ProductTag, Tag, products_tags  # noqa: F401
+from .tokens import RevokedToken  # noqa: F401
+from .transactions import Transaction  # noqa: F401
+from .users import User  # noqa: F401

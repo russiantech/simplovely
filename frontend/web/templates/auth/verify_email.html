@@ -1,0 +1,28 @@
+{% extends "auth/_layout.html" %}
+{% block title %}Verify email - Simply Lovely{% endblock %}
+{% block body %}
+<div id="verification-loading" class="verification-state text-center">
+  <div class="spinner-border text-primary mb-3" role="status"></div><h1 class="h4">Verifying your email&hellip;</h1>
+</div>
+<div id="verification-success" class="verification-state d-none text-center">
+  <i class="fi-check-circle text-success display-4"></i><h1 class="h3 mt-3">Email verified</h1>
+  <p class="fs-sm">Thank you! Taking you to sign in&hellip;</p><a class="btn btn-primary" href="./signin">Sign in</a>
+</div>
+<div id="verification-already" class="verification-state d-none text-center">
+  <i class="fi-check-circle text-info display-4"></i><h1 class="h3 mt-3">Already verified</h1>
+  <p class="fs-sm">This email address is already confirmed.</p><a class="btn btn-primary" href="./signin">Sign in</a>
+</div>
+<div id="verification-error" class="verification-state d-none text-center">
+  <i class="fi-alert-circle text-danger display-4"></i><h1 class="h3 mt-3">We couldn't verify your email</h1>
+  <p class="fs-sm" id="error-message"></p>
+  <button type="button" id="resend-verification" class="btn btn-outline-primary">Send a new link</button>
+  <div id="resend-form" class="d-none mt-3 text-start">
+    <form id="resend-verification-form">
+      <input type="email" id="resend-email" class="form-control mb-2" placeholder="Your email address" required>
+      <div class="d-flex gap-2"><button type="submit" class="btn btn-primary">Send</button>
+      <button type="button" id="cancel-resend" class="btn btn-link">Cancel</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="./static/js/pages/verify_email.js"></script>{% endblock %}

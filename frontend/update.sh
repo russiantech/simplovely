@@ -1,35 +1,27 @@
 #!/bin/bash
-# /home/simpdinr/frontend/update.sh
-# Pulls only frontend/ folder from shared repo, deploys in place
-
-set -e
+# Deploys the frontend/ folder of the shared repo in place (cPanel / Passenger).
+# Server-only state (.env, virtualenv, logs) is protected from rsync --delete.
+set -euo pipefail
 
 REPO="https://github.com/russiantech/simplovely.git"
-TMP_DIR="/tmp/simplovely-frontend-$$"
-CLONE_DIR="$TMP_DIR/frontend"
+TMP_DIR="$(mktemp -d /tmp/simplovely-frontend-XXXXXX)"
+trap 'rm -rf "$TMP_DIR"' EXIT
 
 echo "[+] Fetching latest frontend..."
+git clone --depth 1 "$REPO" "$TMP_DIR"
 
-# Shallow clone to temp, extract frontend/
-git clone --depth 1 "$REPO" "$TMP_DIR" 2>/dev/null || {
-    echo "[!] Clone failed, retrying with fetch..."
-    cd "$TMP_DIR" && git fetch --depth 1 && git reset --hard origin/main
-}
-
-# Sync frontend/ contents into ~/frontend (preserve local config, logs)
-rsync -avz --delete "$CLONE_DIR/" ~/frontend/ \
+rsync -az --delete "$TMP_DIR/frontend/" ~/frontend/ \
     --exclude='.git' \
+    --exclude='env/' \
+    --exclude='.env' \
+    --exclude='web/.env' \
     --exclude='__pycache__' \
     --exclude='*.pyc' \
-    --exclude='tmp/restart.txt' \
+    --exclude='tmp/' \
     --exclude='stderr.log' \
-    --exclude='passenger_wsgi.py'  # keep local copy if customized
+    --exclude='passenger_wsgi.py'
 
-# Restart Passenger (if frontend runs under Passenger)
-touch ~/frontend/tmp/restart.txt 2>/dev/null || true
-
-# Cleanup
-rm -rf "$TMP_DIR"
-
+cd ~/frontend
+if [ -d env ]; then source env/bin/activate && pip install -r requirements.txt -q; fi
+mkdir -p tmp && touch tmp/restart.txt
 echo "[+] Frontend deployed at $(date)"
-

@@ -1,456 +1,135 @@
-{% raw %}
-<script type="text/babel">
-/* ─── React Fabric / Service Request Form ──────────────────────────────────── */
-
-const { useState, useEffect, useCallback } = React;
-
-/* ── helpers ── */
-const getApiUrl = () => window.apiUrl || 'https://api.simplylovely.ng/api';
-
-const apiFetch = async (path, opts = {}) => {
-    const token = localStorage.getItem('access_token');
-    const headers = { 'Content-Type': 'application/json', ...opts.headers };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${getApiUrl()}${path}`, { ...opts, headers });
-    if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || body.message || `HTTP ${res.status}`);
-    }
-    return res.json();
-};
-
-/* ── sub-components ── */
-
-const StepIndicator = ({ current, total }) => (
-    <div className="d-flex justify-content-center gap-2 mb-3">
-        {Array.from({ length: total }, (_, i) => (
-            <div key={i}
-                 className={`rounded-pill`}
-                 style={{
-                     height: 6,
-                     width:  i <= current ? 36 : 18,
-                     background: i <= current ? 'var(--bs-info)' : 'var(--bs-border-color)',
-                     transition: 'all .3s ease',
-                 }}
-            />
-        ))}
-    </div>
-);
-
-const FormField = ({ label, error, children, required }) => (
-    <div className="mb-3">
-        <label className="form-label fw-medium">
-            {label}{required && <span className="text-danger ms-1">*</span>}
-        </label>
-        {children}
-        {error && <div className="invalid-feedback d-block">{error}</div>}
-    </div>
-);
-
-const SuccessScreen = ({ onClose }) => (
-    <div className="text-center py-5 px-4">
-        <div className="mb-3" style={{ fontSize: 56 }}>🎉</div>
-        <h4 className="fw-bold mb-2">Request Received!</h4>
-        <p className="text-body-secondary mb-4">
-            Thank you! Your service request has been submitted.<br/>
-            Our team will contact you shortly to confirm pickup details.
-        </p>
-        <button className="btn btn-info rounded-pill px-4" onClick={onClose}>
-            Close
-        </button>
-    </div>
-);
-
-/* ── main component ── */
-
-const STEPS = ['Your Info', 'Service Details', 'Review'];
-
-function ServiceRequestForm({ onClose }) {
-    const [step, setStep]   = useState(0);
-    const [areas,    setAreas]    = useState([]);
-    const [services, setServices] = useState([]);
-    const [loading,  setLoading]  = useState(false);
-    const [submitting, setSubmitting] = useState(false);
-    const [submitted,  setSubmitted]  = useState(false);
-    const [errors,   setErrors]   = useState({});
-
-    const [form, setForm] = useState({
-        name: '', email: '', phone: '',
-        service_type: '', quantity: '', area: '', address: '',
-        privacy: false,
-    });
-
-    /* load reference data */
-    useEffect(() => {
-        const loadData = async () => {
-            setLoading(true);
-            try {
-                const [aRes, sRes] = await Promise.allSettled([
-                    apiFetch('/areas'),
-                    apiFetch('/services'),
-                ]);
-                if (aRes.status === 'fulfilled' && aRes.value?.areas) {
-                    setAreas(aRes.value.areas);
-                } else {
-                    /* fallback static areas */
-                    setAreas([
-                        { id: 'ajah',       area_name: 'Ajah',       price: 2000  },
-                        { id: 'vgc',        area_name: 'VGC',        price: 4000  },
-                        { id: 'chevron',    area_name: 'Chevron',    price: 3000  },
-                        { id: 'lekki',      area_name: 'Lekki',      price: 4000  },
-                        { id: 'lbs',        area_name: 'LBS',        price: 10000 },
-                        { id: 'sangotedo',  area_name: 'Sangotedo',  price: 13000 },
-                        { id: 'awoyaya',    area_name: 'Awoyaya',    price: 11000 },
-                        { id: 'ado_road',   area_name: 'Ado Road',   price: null  },
-                        { id: 'badore',     area_name: 'Badore',     price: null  },
-                        { id: 'adesanya',   area_name: 'Adesanya',   price: null  },
-                        { id: 'graceland',  area_name: 'Graceland',  price: null  },
-                        { id: 'scheme2',    area_name: 'Scheme 2',   price: null  },
-                        { id: 'ogombo',     area_name: 'Ogombo',     price: null  },
-                    ]);
-                }
-                if (sRes.status === 'fulfilled' && sRes.value?.services) {
-                    setServices(sRes.value.services);
-                } else {
-                    setServices([
-                        { id: 'fashion', name: 'Fashion'  },
-                        { id: 'laundry', name: 'Laundry'  },
-                    ]);
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadData();
-    }, []);
-
-    const set = (field) => (e) => {
-        const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-        setForm(f => ({ ...f, [field]: val }));
-        setErrors(err => ({ ...err, [field]: undefined }));
-    };
-
-    /* per-step validation */
-    const validate = useCallback(() => {
-        const errs = {};
-        if (step === 0) {
-            if (!form.name.trim())                          errs.name  = 'Name is required.';
-            if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) errs.email = 'Valid email required.';
-            if (!form.phone.match(/^[0-9+\s\-()]{7,15}$/)) errs.phone = 'Valid phone number required.';
-        }
-        if (step === 1) {
-            if (!form.service_type) errs.service_type = 'Please choose a service.';
-            if (!form.quantity || Number(form.quantity) < 1) errs.quantity = 'Enter a valid quantity.';
-            if (!form.area)         errs.area  = 'Please select your area.';
-            if (!form.privacy)      errs.privacy = 'You must accept the Privacy Policy.';
-        }
-        return errs;
-    }, [step, form]);
-
-    const next = () => {
-        const errs = validate();
-        if (Object.keys(errs).length) { setErrors(errs); return; }
-        setStep(s => s + 1);
-    };
-
-    const back = () => setStep(s => s - 1);
-
-    const submit = async () => {
-        const errs = validate();
-        if (Object.keys(errs).length) { setErrors(errs); return; }
-        setSubmitting(true);
-        try {
-            await apiFetch('/services', {
-                method: 'POST',
-                body: JSON.stringify({
-                    name:         form.name,
-                    email:        form.email,
-                    phone:        form.phone,
-                    service_type: form.service_type,
-                    quantity:     Number(form.quantity),
-                    area:         form.area,
-                    address:      form.address,
-                }),
-            });
-            setSubmitted(true);
-        } catch (err) {
-            const msg = err.message && !err.message.includes('HTTP')
-                ? err.message
-                : 'Unable to submit request right now. Please try again or call us directly.';
-            setErrors({ submit: msg });
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const selectedArea    = areas.find(a => String(a.id) === String(form.area));
-    const selectedService = services.find(s => String(s.id) === String(form.service_type));
-
-    if (submitted) return <SuccessScreen onClose={onClose} />;
-
-    return (
-        <div>
-            {/* header */}
-            <div className="modal-header border-0 px-4 pt-4 pb-0">
-                <div className="w-100">
-                    <div className="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <h5 className="modal-title fw-bold mb-0" id="serviceRequestModalLabel">
-                                {step === 0 && '📋 Service Request'}
-                                {step === 1 && '📦 Service Details'}
-                                {step === 2 && '✅ Review & Confirm'}
-                            </h5>
-                            <p className="text-body-secondary fs-sm mb-0">
-                                Step {step + 1} of {STEPS.length} — {STEPS[step]}
-                            </p>
-                        </div>
-                        <button type="button" className="btn-close" onClick={onClose} aria-label="Close" />
-                    </div>
-                    <StepIndicator current={step} total={STEPS.length} />
-                </div>
+{# Pickup / service request wizard (3 steps). Dependency-free; posts to POST /service-requests. #}
+<div class="modal fade" id="modalServiceRequests" tabindex="-1" aria-labelledby="serviceRequestModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title" id="serviceRequestModalLabel">Request a pickup</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="sr-steps" class="d-flex justify-content-center gap-2 mb-3"></div>
+        <form id="sr-form" novalidate>
+          <section data-step="0">
+            <div class="mb-3"><label class="form-label fw-medium" for="sr-name">Full name <span class="text-danger">*</span></label><input id="sr-name" class="form-control" autocomplete="name"><div class="invalid-feedback"></div></div>
+            <div class="mb-3"><label class="form-label fw-medium" for="sr-email">Email <span class="text-danger">*</span></label><input id="sr-email" type="email" class="form-control" autocomplete="email"><div class="invalid-feedback"></div></div>
+            <div class="mb-1"><label class="form-label fw-medium" for="sr-phone">Phone <span class="text-danger">*</span></label><input id="sr-phone" type="tel" class="form-control" autocomplete="tel" placeholder="08012345678"><div class="invalid-feedback"></div></div>
+          </section>
+          <section data-step="1" class="d-none">
+            <div class="mb-3"><label class="form-label fw-medium" for="sr-service">Service <span class="text-danger">*</span></label><select id="sr-service" class="form-select"><option value="">Loading&hellip;</option></select><div class="invalid-feedback"></div></div>
+            <div class="row g-3 mb-3">
+              <div class="col-5"><label class="form-label fw-medium" for="sr-qty">Quantity <span class="text-danger">*</span></label><input id="sr-qty" type="number" min="1" max="1000" step="1" class="form-control"><div class="invalid-feedback"></div></div>
+              <div class="col-7"><label class="form-label fw-medium" for="sr-area">Your area <span class="text-danger">*</span></label><select id="sr-area" class="form-select"><option value="">Loading&hellip;</option></select><div class="invalid-feedback"></div></div>
             </div>
-
-            {/* body */}
-            <div className="modal-body px-4 pt-2 pb-4">
-                {loading ? (
-                    <div className="text-center py-5">
-                        <div className="spinner-border text-info" role="status">
-                            <span className="visually-hidden">Loading…</span>
-                        </div>
-                        <p className="text-body-secondary mt-3 fs-sm">Loading options…</p>
-                    </div>
-                ) : (
-                    <>
-                        {/* ── Step 0: Personal Info ── */}
-                        {step === 0 && (
-                            <div>
-                                <p className="text-body-secondary fs-sm mb-4">
-                                    Tell us who you are so we can reach you.
-                                </p>
-                                <div className="row">
-                                    <div className="col-md-6">
-                                        <FormField label="Full Name" error={errors.name} required>
-                                            <input
-                                                className={`form-control form-control-lg ${errors.name ? 'is-invalid' : ''}`}
-                                                placeholder="e.g. Amaka Obi"
-                                                value={form.name} onChange={set('name')}
-                                            />
-                                        </FormField>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <FormField label="Phone Number" error={errors.phone} required>
-                                            <input
-                                                type="tel"
-                                                className={`form-control form-control-lg ${errors.phone ? 'is-invalid' : ''}`}
-                                                placeholder="e.g. 08012345678"
-                                                value={form.phone} onChange={set('phone')}
-                                            />
-                                        </FormField>
-                                    </div>
-                                    <div className="col-12">
-                                        <FormField label="Email Address" error={errors.email} required>
-                                            <input
-                                                type="email"
-                                                className={`form-control form-control-lg ${errors.email ? 'is-invalid' : ''}`}
-                                                placeholder="e.g. amaka@email.com"
-                                                value={form.email} onChange={set('email')}
-                                            />
-                                        </FormField>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* ── Step 1: Service Details ── */}
-                        {step === 1 && (
-                            <div>
-                                <p className="text-body-secondary fs-sm mb-4">
-                                    Tell us what you need and where we should pick up.
-                                </p>
-                                <div className="row">
-                                    <div className="col-md-6">
-                                        <FormField label="Service Type" error={errors.service_type} required>
-                                            <select
-                                                className={`form-select form-select-lg ${errors.service_type ? 'is-invalid' : ''}`}
-                                                value={form.service_type} onChange={set('service_type')}
-                                            >
-                                                <option value="">Choose a service…</option>
-                                                {services.map(s => (
-                                                    <option key={s.id} value={s.id}>{s.name}</option>
-                                                ))}
-                                            </select>
-                                        </FormField>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <FormField label="Quantity of Fabrics / Items" error={errors.quantity} required>
-                                            <input
-                                                type="number" min="1"
-                                                className={`form-control form-control-lg ${errors.quantity ? 'is-invalid' : ''}`}
-                                                placeholder="e.g. 3"
-                                                value={form.quantity} onChange={set('quantity')}
-                                            />
-                                        </FormField>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <FormField label="Your Area" error={errors.area} required>
-                                            <select
-                                                className={`form-select form-select-lg ${errors.area ? 'is-invalid' : ''}`}
-                                                value={form.area} onChange={set('area')}
-                                            >
-                                                <option value="">Select your area…</option>
-                                                {areas.map(a => (
-                                                    <option key={a.id} value={a.id}>
-                                                        {a.area_name}{a.price ? ` — ₦${Number(a.price).toLocaleString()}` : ''}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </FormField>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <FormField label="Full Address / Landmark" error={errors.address}>
-                                            <input
-                                                className={`form-control form-control-lg ${errors.address ? 'is-invalid' : ''}`}
-                                                placeholder="Street, estate or nearest landmark"
-                                                value={form.address} onChange={set('address')}
-                                            />
-                                        </FormField>
-                                    </div>
-                                    <div className="col-12">
-                                        <div className={`form-check mt-1 ${errors.privacy ? 'is-invalid' : ''}`}>
-                                            <input
-                                                type="checkbox" id="privacy_check"
-                                                className={`form-check-input ${errors.privacy ? 'is-invalid' : ''}`}
-                                                checked={form.privacy} onChange={set('privacy')}
-                                            />
-                                            <label htmlFor="privacy_check" className="form-check-label">
-                                                I have read and accept the{' '}
-                                                <a href="#!" className="text-dark-emphasis">Privacy Policy</a>
-                                            </label>
-                                        </div>
-                                        {errors.privacy && (
-                                            <div className="text-danger fs-xs mt-1">{errors.privacy}</div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* ── Step 2: Review ── */}
-                        {step === 2 && (
-                            <div>
-                                <p className="text-body-secondary fs-sm mb-4">
-                                    Please confirm your details before submitting.
-                                </p>
-
-                                <div className="rounded-3 border p-3 mb-3">
-                                    <h6 className="fw-semibold mb-3 text-info">
-                                        <i className="fi-user me-2"></i>Contact Info
-                                    </h6>
-                                    <div className="row g-2 fs-sm">
-                                        <div className="col-sm-4 text-body-secondary">Name</div>
-                                        <div className="col-sm-8 fw-medium">{form.name}</div>
-                                        <div className="col-sm-4 text-body-secondary">Email</div>
-                                        <div className="col-sm-8 fw-medium">{form.email}</div>
-                                        <div className="col-sm-4 text-body-secondary">Phone</div>
-                                        <div className="col-sm-8 fw-medium">{form.phone}</div>
-                                    </div>
-                                </div>
-
-                                <div className="rounded-3 border p-3 mb-3">
-                                    <h6 className="fw-semibold mb-3 text-info">
-                                        <i className="fi-package me-2"></i>Service Details
-                                    </h6>
-                                    <div className="row g-2 fs-sm">
-                                        <div className="col-sm-4 text-body-secondary">Service</div>
-                                        <div className="col-sm-8 fw-medium">
-                                            {selectedService?.name || form.service_type}
-                                        </div>
-                                        <div className="col-sm-4 text-body-secondary">Quantity</div>
-                                        <div className="col-sm-8 fw-medium">{form.quantity} item(s)</div>
-                                        <div className="col-sm-4 text-body-secondary">Area</div>
-                                        <div className="col-sm-8 fw-medium">
-                                            {selectedArea?.area_name || form.area}
-                                            {selectedArea?.price
-                                                ? ` — ₦${Number(selectedArea.price).toLocaleString()} pickup fee`
-                                                : ''}
-                                        </div>
-                                        {form.address && <>
-                                            <div className="col-sm-4 text-body-secondary">Address</div>
-                                            <div className="col-sm-8 fw-medium">{form.address}</div>
-                                        </>}
-                                    </div>
-                                </div>
-
-                                {errors.submit && (
-                                    <div className="alert alert-danger fs-sm py-2 px-3" role="alert">
-                                        {errors.submit}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </>
-                )}
-            </div>
-
-            {/* footer / nav */}
-            {!loading && (
-                <div className="modal-footer border-top-0 px-4 pb-4 pt-0 d-flex justify-content-between">
-                    {step > 0 ? (
-                        <button className="btn btn-outline-secondary rounded-pill px-4" onClick={back}>
-                            <i className="fi-chevron-left me-1"></i> Back
-                        </button>
-                    ) : (
-                        <button className="btn btn-link text-body-secondary text-decoration-none" onClick={onClose}>
-                            Cancel
-                        </button>
-                    )}
-
-                    {step < STEPS.length - 1 ? (
-                        <button className="btn btn-info rounded-pill px-4" onClick={next}>
-                            Continue <i className="fi-chevron-right ms-1"></i>
-                        </button>
-                    ) : (
-                        <button
-                            className="btn btn-info rounded-pill px-4"
-                            onClick={submit}
-                            disabled={submitting}
-                        >
-                            {submitting
-                                ? <><span className="spinner-border spinner-border-sm me-2"></span>Submitting…</>
-                                : <>Submit Request <i className="fi-check ms-1"></i></>
-                            }
-                        </button>
-                    )}
-                </div>
-            )}
+            <div class="mb-3"><label class="form-label fw-medium" for="sr-address">Pickup address <span class="text-danger">*</span></label><input id="sr-address" class="form-control" autocomplete="street-address"><div class="invalid-feedback"></div></div>
+            <div class="form-check"><input id="sr-privacy" type="checkbox" class="form-check-input"><label for="sr-privacy" class="form-check-label fs-sm">I agree to the <a href="{{ policy_link }}" target="_blank" rel="noopener">Privacy Policy</a>.</label><div class="invalid-feedback"></div></div>
+          </section>
+          <section data-step="2" class="d-none"><dl class="row mb-0" id="sr-review"></dl></section>
+          <div id="sr-error" class="alert alert-danger fs-sm mt-3 mb-0 d-none"></div>
+        </form>
+        <div id="sr-success" class="text-center py-4 d-none">
+          <div class="display-4 mb-2">&#127881;</div><h4 class="fw-bold mb-2">Request received!</h4>
+          <p class="text-body-secondary mb-4">Our team will contact you shortly to confirm pickup details.</p>
+          <button class="btn btn-info rounded-pill px-4" data-bs-dismiss="modal">Close</button>
         </div>
-    );
-}
+      </div>
+      <div class="modal-footer border-0 pt-0 justify-content-between" id="sr-footer">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" id="sr-back">Cancel</button>
+        <button type="button" class="btn btn-info rounded-pill px-4" id="sr-next">Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  const STEPS = ['Your info', 'Details', 'Review'];
+  const el = document.getElementById('modalServiceRequests');
+  if (!el) return;
+  const $ = (id) => document.getElementById(id);
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let step = 0, loaded = false, areas = [], services = [];
 
-/* ── mount ── */
+  function renderSteps() {
+    $('sr-steps').innerHTML = STEPS.map((_, i) => `<div class="rounded-pill" style="height:6px;width:${i <= step ? 36 : 18}px;background:${i <= step ? 'var(--bs-info)' : 'var(--bs-border-color)'};transition:all .3s"></div>`).join('');
+    el.querySelectorAll('section[data-step]').forEach((s) => s.classList.toggle('d-none', Number(s.dataset.step) !== step));
+    $('sr-back').textContent = step === 0 ? 'Cancel' : 'Back';
+    $('sr-next').textContent = step === STEPS.length - 1 ? 'Submit request' : 'Continue';
+    if (step === 2) renderReview();
+  }
 
-function ServiceRequestApp() {
-    const handleClose = () => {
-        const el = document.getElementById('modalServiceRequests');
-        if (el && window.bootstrap) {
-            const inst = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
-            inst.hide();
-        }
-    };
-    return <ServiceRequestForm onClose={handleClose} />;
-}
+  function fieldError(id, msg) {
+    const input = $(id); input.classList.toggle('is-invalid', Boolean(msg));
+    const fb = input.parentElement.querySelector('.invalid-feedback'); if (fb) fb.textContent = msg || '';
+  }
 
-/* Mount once when the modal is shown for the first time */
-const modalEl = document.getElementById('modalServiceRequests');
-if (modalEl) {
-    let mounted = false;
-    modalEl.addEventListener('show.bs.modal', () => {
-        if (!mounted) {
-            const root = ReactDOM.createRoot(document.getElementById('service-request-root'));
-            root.render(<ServiceRequestApp />);
-            mounted = true;
-        }
-    });
-}
+  function validate() {
+    const v = (id) => $(id).value.trim();
+    const checks = step === 0 ? [
+      ['sr-name', !v('sr-name') && 'Name is required.'],
+      ['sr-email', !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('sr-email')) && 'A valid email is required.'],
+      ['sr-phone', !/^\+?[0-9\s\-()]{7,18}$/.test(v('sr-phone')) && 'A valid phone number is required.'],
+    ] : step === 1 ? [
+      ['sr-service', !v('sr-service') && 'Please choose a service.'],
+      ['sr-qty', !(Number(v('sr-qty')) >= 1 && Number.isInteger(Number(v('sr-qty')))) && 'Enter a whole number, 1 or more.'],
+      ['sr-area', !v('sr-area') && 'Please select your area.'],
+      ['sr-address', !v('sr-address') && 'Pickup address is required.'],
+      ['sr-privacy', !$('sr-privacy').checked && 'Please accept the Privacy Policy.'],
+    ] : [];
+    checks.forEach(([id, msg]) => fieldError(id, msg));
+    return checks.every(([, msg]) => !msg);
+  }
+
+  function renderReview() {
+    const area = areas.find((a) => String(a.id) === $('sr-area').value);
+    const svc = services.find((s) => String(s.id) === $('sr-service').value);
+    const rows = [['Name', $('sr-name').value], ['Email', $('sr-email').value], ['Phone', $('sr-phone').value], ['Service', svc && svc.name],
+      ['Quantity', $('sr-qty').value], ['Area', area && `${area.area_name}${area.price ? ` (delivery ₦${Number(area.price).toLocaleString('en-NG')})` : ''}`], ['Address', $('sr-address').value]];
+    $('sr-review').innerHTML = rows.map(([k, val]) => `<dt class="col-4 text-body-secondary fw-normal">${k}</dt><dd class="col-8 fw-medium">${esc(val)}</dd>`).join('');
+  }
+
+  async function loadReferenceData() {
+    try {
+      const [a, s] = await Promise.all([window.make_request(`${window.apiUrl}/areas`), window.make_request(`${window.apiUrl}/services`)]);
+      areas = a.areas || []; services = s.services || [];
+      $('sr-area').innerHTML = '<option value="">Select your area&hellip;</option>' + areas.map((x) => `<option value="${x.id}">${esc(x.area_name)}</option>`).join('');
+      $('sr-service').innerHTML = '<option value="">Select a service&hellip;</option>' + services.map((x) => `<option value="${x.id}">${esc(x.name)}</option>`).join('');
+      loaded = true;
+    } catch (err) {
+      $('sr-error').textContent = window.Utils.friendlyError(err); $('sr-error').classList.remove('d-none');
+    }
+  }
+
+  function prefillFromSession() {
+    const p = window.decodeJwtPayload && window.decodeJwtPayload(localStorage.getItem('access_token'));
+    if (p && !$('sr-name').value) { $('sr-name').value = p.name || p.username || ''; $('sr-email').value = p.email || ''; }
+  }
+
+  async function submit() {
+    const btn = $('sr-next'); btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting…';
+    $('sr-error').classList.add('d-none');
+    try {
+      await window.make_request(`${window.apiUrl}/service-requests`, { method: 'POST', body: JSON.stringify({
+        name: $('sr-name').value.trim(), email: $('sr-email').value.trim(), phone: $('sr-phone').value.trim(),
+        quantity: Number($('sr-qty').value), address: $('sr-address').value.trim(),
+        area_id: Number($('sr-area').value), service_id: Number($('sr-service').value) }) });
+      $('sr-form').classList.add('d-none'); $('sr-steps').classList.add('d-none'); $('sr-footer').classList.add('d-none'); $('sr-success').classList.remove('d-none');
+    } catch (err) {
+      $('sr-error').textContent = window.Utils.friendlyError(err); $('sr-error').classList.remove('d-none');
+      btn.disabled = false; btn.textContent = 'Submit request';
+    }
+  }
+
+  $('sr-next').addEventListener('click', () => {
+    if (!validate()) return;
+    if (step < STEPS.length - 1) { step += 1; renderSteps(); } else submit();
+  });
+  $('sr-back').addEventListener('click', () => {
+    if (step === 0) bootstrap.Modal.getOrCreateInstance(el).hide(); else { step -= 1; renderSteps(); }
+  });
+  el.addEventListener('show.bs.modal', () => {
+    step = 0; $('sr-form').classList.remove('d-none'); $('sr-steps').classList.remove('d-none'); $('sr-footer').classList.remove('d-none'); $('sr-success').classList.add('d-none');
+    $('sr-error').classList.add('d-none'); $('sr-next').disabled = false;
+    prefillFromSession(); renderSteps(); if (!loaded) loadReferenceData();
+  });
+})();
 </script>
-{% endraw %}

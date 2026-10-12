@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
 
                 if (data.success) {
-                    if (data.data && data.data.already_verified) {
+                    if (data.already_verified) {
                         this.showAlreadyVerified();
                     } else {
                         this.showSuccess(data.message);
