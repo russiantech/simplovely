@@ -34,6 +34,9 @@
 
 
 # v2 - Deploy script for backend and frontend, with optional target argument.
+# Usage: ./deploy.sh [backend|frontend|all]
+# Keep just one file but tell it exactly what to deploy, existing script to looks for arguments (like ./deploy.sh backend or ./deploy.sh frontend).
+
 #!/bin/bash
 set -e
 REPO="https://github.com"
